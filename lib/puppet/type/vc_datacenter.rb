@@ -15,6 +15,7 @@ Puppet::Type.newtype(:vc_datacenter) do
 
   newparam(:path) do
     desc "The path to the datacenter."
+    isnamevar
   end
 
   newparam(:connection) do
