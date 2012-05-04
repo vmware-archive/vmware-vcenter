@@ -1,5 +1,5 @@
-Puppet::Type.newtype(:vc_datacenter) do
-  @doc = "Manage vCenter datacenters."
+Puppet::Type.newtype(:vc_folder) do
+  @doc = "Manage vCenter folders."
 
   ensurable do
     newvalue(:present) do
@@ -14,13 +14,17 @@ Puppet::Type.newtype(:vc_datacenter) do
   end
 
   newparam(:path) do
-    desc "The path to the datacenter."
+    desc "The path to the folder."
     isnamevar
   end
 
   newparam(:connection) do
     desc "The connectivity to vCenter."
     # username:password@hostname
+  end
+
+  autorequire(:vc_datacenter) do
+    # autorequire parent datacenter
   end
 
   autorequire(:vc_folder) do
