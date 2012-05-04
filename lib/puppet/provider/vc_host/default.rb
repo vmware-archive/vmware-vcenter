@@ -1,4 +1,6 @@
 require 'rbvmomi'
+require 'puppet/modules/vcenter'
+include Puppet::Modules::VCenter
 
 Puppet::Type.type(:vc_host).provide(:vc_host) do
   @doc = "Manages vCenter hosts."
@@ -11,7 +13,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
                                    :user => user,
                                    :password => pwd,
                                    :insecure => true
-    @rootFolder ||= @conn.serviceInstance.content.rootFolder
+    @root_folder ||= @conn.serviceInstance.content.rootFolder
 
     @hostname ||= @resource[:name]
     @username ||= @resource[:username]
@@ -22,30 +24,10 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
   def get_should_immediate_parent
     # FIXME @resource[:path] must be in the form of '/foo/bar/'
     parent_lvs = @resource[:path][1..@resource[:path].size-2].split('/')
-    current_lv = @rootFolder
-
-    parent_lvs.each do |lv|
-      # TODO ASSUMPTION each level is either a Folder (has a find method)
-      # or a Datacenter (.hostFolder has a find method)
-
-      # Under the above assumption, if current_lv is doesn't have a find
-      # method, we actually want its hostFolder
-      unless current_lv.class.method_defined? 'find'
-        current_lv = current_lv.hostFolder
-      end
-
-      # Go one level deeper.  Raise an error if we can't.
-      current_lv = current_lv.find lv
-      unless current_lv
-        raise Puppet::Error.new("Invalid path for host #{@resource[:path]}")
-      end
-    end
-
-    if current_lv.is_a? RbVmomi::VIM::Datacenter
-      current_lv.hostFolder 
-    else
-      current_lv
-    end
+    Puppet::Modules::VCenter.find_immediate_parent(
+                    @root_folder,
+                    parent_lvs,
+                    "Invalid path for host #{@resource[:path]}")
   end
 
   # recursively traverse the tree
@@ -112,7 +94,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
   end
 
   def path
-    find_host @rootFolder
+    find_host @root_folder
     @existing_path
   end
 
@@ -125,8 +107,8 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
   def exists?
     # verify if host exists
     connect
-    find_host @rootFolder
-    @existing_host
+    find_host @root_folder
+    !!@existing_host
   end
 end
 
