@@ -16,12 +16,9 @@ Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter) do
   end
 
   def destroy
-    dc = @immediate_parent.find_child_by_name(@dcname)
-    if dc.instance_of?(RbVmomi::VIM::Datacenter)
-      dc.Destroy_Task.wait_for_completion 
-    else
-      raise Puppet::Error.new("#{@resource[:path]} isn't a Datacenter.")
-    end
+    @immediate_parent.destroy_child(@dcname,
+                                    RbVmomi::VIM::Datacenter,
+                                    "#{@resource[:path]} isn't a Datacenter.")
   end
 
   def exists?

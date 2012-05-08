@@ -17,12 +17,9 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
   end
 
   def destroy
-    cluster = @immediate_parent.find_child_by_name(@cluster_name)
-    if cluster.is_a?(RbVmomi::VIM::ClusterComputeResource)
-      cluster.Destroy_Task.wait_for_completion
-    else
-      raise Puppet::Error.new("#{@resource[:path]} isn't a Cluster.")
-    end
+    @immediate_parent.destroy_child(@cluster_name,
+                                    RbVmomi::VIM::ClusterComputeResource,
+                                    "#{@resource[:path]} isn't a Cluster.")
   end
 
   def exists?

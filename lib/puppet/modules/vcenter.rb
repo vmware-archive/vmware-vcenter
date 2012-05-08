@@ -28,7 +28,7 @@ module Puppet::Modules
     def find_immediate_parent(root_folder, parent_lvs, error_msg)
       prev_lv = root_folder
       parent_lvs.each do |lv|
-        # instead of prev_lv.class
+        # Ruby trick: can't use prev_lv.class b/c case uses ===
         case prev_lv
         when RbVmomi::VIM::Folder
           current_lv = prev_lv.find(lv)
@@ -56,13 +56,13 @@ module Puppet::Modules
       rescue
         raise Puppet::Error.new(error_msg)
       end
-
     end
 
     class Container
       @doc = "Wrapper type of Folder, Datacenter, or Cluster"
 
       # TODO do this by opening class?
+      # TODO or use a dispatcher?
 
       def initialize real_container
         unless [RbVmomi::VIM::Folder,
@@ -167,6 +167,15 @@ module Puppet::Modules
           raise Puppet::Error.new(error_msg)
         else
           raise Puppet::Error.new('Unknown internal container type.')
+        end
+      end
+
+      def destroy_child(child_name, child_class, error_msg)
+        child = find_child_by_name(child_name)
+        if child.instance_of?(child_class)
+          child.Destroy_Task.wait_for_completion
+        else
+          raise Puppet::Error.new(error_msg)
         end
       end
 

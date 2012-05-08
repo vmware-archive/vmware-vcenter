@@ -16,12 +16,9 @@ Puppet::Type.type(:vc_folder).provide(:vc_folder) do
   end
 
   def destroy
-    folder = @immediate_parent.find_child_by_name(@folder_name)
-    if folder.is_a?(RbVmomi::VIM::Folder)
-      folder.Destroy_Task.wait_for_completion
-    else
-      raise Puppet::Error.new("#{@resource[:path]} isn't a Folder.")
-    end
+    @immediate_parent.destroy_child(@folder_name,
+                                    RbVmomi::VIM::Folder,
+                                    "#{@resource[:path]} isn't a Folder.")
   end
 
   def exists?
