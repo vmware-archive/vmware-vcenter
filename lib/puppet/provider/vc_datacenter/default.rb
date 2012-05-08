@@ -3,57 +3,36 @@ require 'puppet/modules/vcenter'
 include Puppet::Modules::VCenter
 
 Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter) do
-  @doc = "Manages vCenter datacenters."
-
-  def setup
-    # connect to vCenter.
-    # FIXME handle parsing errors (URI.parse?)
-    user, pwd, host = @resource[:connection].split(%r{[:@]})
-    @conn ||= RbVmomi::VIM.connect :host => host,
-                                   :user => user,
-                                   :password => pwd,
-                                   :insecure => true
-    @root_folder ||= @conn.serviceInstance.content.rootFolder
-
-    # FIXME for now path must be in the form of '/foo/bar/dc/'
-    @parent_lvs ||= @resource[:path][1..@resource[:path].size-2].split('/')
-    # dcname is the last part
-    @dcname ||= @parent_lvs.pop
-    @immediate_parent ||= find_immediate_parent
-  end
-
-  # return a Folder at @resource[:path]
-  def find_immediate_parent
-    Puppet::Modules::VCenter.find_immediate_parent(
-                      @root_folder,
-                      @parent_lvs,
-                      "Invalid path for datacenter #{@resource[:path]}")
-  end
+  @doc = "Manages vCenter Datacenters."
 
   def self.instances
-    # list all instances of datacenter in vCenter.
+    # list all instances of Datacenter in vCenter.
   end
 
   def create
-    # TODO If there's a datacenter at any level in the path (not only
-    # the immediate-parent level), this is not going to work due to the
-    # rule of vcenter itself.  We can let vcenter report it or we can
-    # report it ourselves.  Currently we leave it to vcenter.  The bad
-    # thing about it is ensuring /folder/dc/folder/dc/ present is gonna
-    # fail but ensuring its absence will succeed.
-    @immediate_parent.CreateDatacenter :name => @dcname
+    @immediate_parent.create_datacenter(
+        @dcname,
+        "Invalid path for Datacenter #{@resource[:path]}")
   end
 
   def destroy
-    dc = @immediate_parent.find @dcname
-    dc.Destroy_Task.wait_for_completion if dc.is_a? RbVmomi::VIM::Datacenter
+    dc = @immediate_parent.find_child_by_name(@dcname)
+    if dc.instance_of?(RbVmomi::VIM::Datacenter)
+      dc.Destroy_Task.wait_for_completion 
+    else
+      raise Puppet::Error.new("#{@resource[:path]} isn't a Datacenter.")
+    end
   end
 
   def exists?
-    # verify if datacenter exists
-    setup
-    dc = @immediate_parent.find @dcname
-    !!dc.is_a?(RbVmomi::VIM::Datacenter)
+    lvs = parse_path(@resource[:path])
+    @dcname = lvs.pop
+    parent_lvs = lvs
+    @immediate_parent ||= find_immediate_parent(
+        get_root_folder(@resource[:connection]),
+        parent_lvs,
+        "Invalid path for Datacenter #{@resource[:path]}")
+    @immediate_parent.find_child_by_name(@dcname).instance_of?(RbVmomi::VIM::Datacenter)
   end
 end
 

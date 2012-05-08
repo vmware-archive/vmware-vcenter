@@ -11,19 +11,9 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
 
   def create
     # TODO Cluster spec?
-    case
-    when @immediate_parent.is_folder?
-      # may report error if there's no Datacenter in the path
-      @immediate_parent.real_container.CreateClusterEx(
-        :name => @cluster_name, :spec => {})
-    when @immediate_parent.is_datacenter?
-      @immediate_parent.real_container.hostFolder.CreateClusterEx(
-        :name => @cluster_name, :spec => {})
-    when @immediate_parent.is_cluster?
-      raise Puppet::Error.new("Invalid path for Cluster #{@resource[:path]}")
-    else
-      raise Puppet::Error.new('Unknown internal container type.')
-    end
+    @immediate_parent.create_cluster(
+        cluster_name,
+        "Invalid path for Cluster #{@resource[:path]}")
   end
 
   def destroy
@@ -36,9 +26,11 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
   end
 
   def exists?
-    @cluster_name, parent_lvs = parse_path(@resource[:path])
+    lvs = parse_path(@resource[:path])
+    @cluster_name = lvs.pop
+    parent_lvs = lvs
     @immediate_parent ||= find_immediate_parent(
-        @resource[:connection],
+        get_root_folder(@resource[:connection]),
         parent_lvs,
         "Invalid path for Cluster #{@resource[:path]}")
     @immediate_parent.find_child_by_name(@cluster_name).instance_of?(RbVmomi::VIM::ClusterComputeResource)
