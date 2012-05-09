@@ -28,7 +28,7 @@ module Puppet::Modules
     def find_immediate_parent(root_folder, parent_lvs, error_msg)
       prev_lv = root_folder
       parent_lvs.each do |lv|
-        # Ruby trick: can't use prev_lv.class b/c case uses ===
+        # Ruby trick: can't use prev_lv.class b/c case stmt uses ===
         case prev_lv
         when RbVmomi::VIM::Folder
           current_lv = prev_lv.find(lv)
@@ -188,9 +188,19 @@ module Puppet::Modules
           @real_container.hostFolder.MoveIntoFolder_Task(
             :list => [host]).wait_for_completion
         when is_cluster?
+          # need host to be a HostSystem when moving into a Cluster
+          if host.instance_of?(RbVmomi::VIM::ComputeResource)
+            host = host.host
+          elsif host.instance_of?(RbVmomi::VIM::HostSystem)
+            # host might already be a HostSystem
+            # if it's currently under another cluster
+            host = [host]
+          else
+            raise Puppet::Error.new('Unknown host type.')
+          end
           # there is another similar method called MoveHostInto_Task
           @real_container.MoveInto_Task(
-            :host => host.host).wait_for_completion
+            :host => host).wait_for_completion
         else
           raise Puppet::Error.new('Unknown internal container type.')
         end
