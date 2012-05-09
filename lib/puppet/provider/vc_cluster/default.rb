@@ -12,7 +12,7 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
   def create
     # TODO Cluster spec?
     @immediate_parent.create_cluster(
-        cluster_name,
+        @cluster_name,
         "Invalid path for Cluster #{@resource[:path]}")
   end
 
