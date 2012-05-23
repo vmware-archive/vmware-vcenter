@@ -203,6 +203,8 @@ module Puppet::Modules
         end
 
         def move_host_into(host)
+          # TODO host needs to be in maintenance mode
+          # when moved out of a cluster
           case
           when is_folder?
             @real_container.MoveIntoFolder_Task(
