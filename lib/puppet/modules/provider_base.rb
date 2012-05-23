@@ -5,7 +5,15 @@ module Puppet::Modules
 
     def self.included(base)
       # only require RbVmomi when this module gets mixed in
-      require 'rbvmomi'
+      begin
+        require 'rbvmomi'
+      rescue LoadError => exc
+         msg = "Could not load the required rbvmomi library [#{exc.message}]"
+         Puppet.err msg
+         error = Puppet::Error.new(msg)
+         error.set_backtrace exc.backtrace
+         raise error
+       end
     end
 
     # connect to vCenter and get the rootFolder.
