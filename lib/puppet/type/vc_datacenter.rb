@@ -1,3 +1,5 @@
+require 'puppet/modules/vcenter/type_base'
+
 Puppet::Type.newtype(:vc_datacenter) do
   @doc = "Manage vCenter Datacenters."
 
@@ -24,6 +26,7 @@ Puppet::Type.newtype(:vc_datacenter) do
   end
 
   autorequire(:vc_folder) do
-    # autorequrie parent Folder.
+    # autorequrie immediate parent Folder.
+    Puppet::Modules::VCenter::TypeBase.get_immediate_parent(self[:path])
   end
 end

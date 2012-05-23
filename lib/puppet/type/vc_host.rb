@@ -36,15 +36,18 @@ Puppet::Type.newtype(:vc_host) do
   end
 
   autorequire(:vc_datacenter) do
-    # autorequire parent Datacenter
+    # autorequire immediate parent Datacenter
+    self[:path]
   end
 
   autorequire(:vc_folder) do
-    # autorequrie parent Folder.
+    # autorequrie immediate parent Folder.
+    self[:path]
   end
 
   autorequire(:vc_cluster) do
-    # autorequrie parent Cluster.
+    # autorequrie immediate parent Cluster.
+    self[:path]
   end
 end
 
