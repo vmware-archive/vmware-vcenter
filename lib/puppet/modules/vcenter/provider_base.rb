@@ -52,12 +52,12 @@ module Puppet::Modules
             # Folder/Datacenter/ClusterComputeResource under a ClusterComputeResource
             current_lv = nil
           else
-            raise Puppet::Error.new(error_msg)
+            raise PathNotFoundError.new(error_msg, __LINE__, __FILE__)
           end
 
           # raise an error if lv isn't found
           unless current_lv
-            raise Puppet::Error.new(error_msg)
+            raise PathNotFoundError.new(error_msg, __LINE__, __FILE__)
           end
 
           # go one level deeper
@@ -65,9 +65,11 @@ module Puppet::Modules
         end
 
         begin
+          # may raise exception if the last prev_lv is not
+          # a container type (Cluster, Datacenter, or Folder)
           Container.new(prev_lv)
         rescue
-          raise Puppet::Error.new(error_msg)
+          raise PathNotFoundError.new(error_msg, __LINE__, __FILE__)
         end
       end
 
@@ -82,7 +84,9 @@ module Puppet::Modules
                   RbVmomi::VIM::Datacenter,
                   RbVmomi::VIM::ClusterComputeResource].include?(real_container.class)
             raise Puppet::Error.new(
-              "Container must be initialized with a Folder, a Datacenter, or a ClusterComputeResource.")
+              "Container must be initialized with a Folder, a Datacenter, or a ClusterComputeResource.",
+              __LINE__,
+              __FILE__)
           end
           @real_container = real_container
         end
@@ -99,7 +103,8 @@ module Puppet::Modules
               host if host.name = child
             end
           else
-            raise Puppet::Error.new('Unknown internal container type.')
+            raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
           end
         end
 
@@ -112,7 +117,8 @@ module Puppet::Modules
           when is_cluster?
             @real_container.host
           else
-            raise Puppet::Error.new('Unknown internal container type.')
+            raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
           end
         end
 
@@ -133,7 +139,8 @@ module Puppet::Modules
                     :spec => host_spec,
                     :asConnected => true).wait_for_completion
               else
-                raise Puppet::Error.new('Unknown internal container type.')
+                raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
               end
               break
             rescue RbVmomi::VIM::SSLVerifyFault
@@ -150,9 +157,10 @@ module Puppet::Modules
           when is_datacenter?
             @real_container.hostFolder.CreateClusterEx(:name => cluster_name, :spec => {})
           when is_cluster?
-            raise Puppet::Error.new(error_msg)
+            raise Puppet::Error.new(error_msg, __LINE__, __FILE__)
           else
-            raise Puppet::Error.new('Unknown internal container type.')
+            raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
           end
         end
 
@@ -164,9 +172,10 @@ module Puppet::Modules
             # won't work but we want vCenter to report the error so do it anyway
             @real_container.hostFolder.CreateDatacenter(:name => dcname)
           when is_cluster?
-            raise Puppet::Error.new(error_msg)
+            raise Puppet::Error.new(error_msg, __LINE__, __FILE__)
           else
-            raise Puppet::Error.new('Unknown internal container type.')
+            raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
           end
         end
 
@@ -177,9 +186,10 @@ module Puppet::Modules
           when is_datacenter?
             @real_container.hostFolder.CreateFolder(:name => folder_name)
           when is_cluster?
-            raise Puppet::Error.new(error_msg)
+            raise Puppet::Error.new(error_msg, __LINE__, __FILE__)
           else
-            raise Puppet::Error.new('Unknown internal container type.')
+            raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
           end
         end
 
@@ -188,7 +198,7 @@ module Puppet::Modules
           if child.instance_of?(child_class)
             child.Destroy_Task.wait_for_completion
           else
-            raise Puppet::Error.new(error_msg)
+            raise Puppet::Error.new(error_msg, __LINE__, __FILE__)
           end
         end
 
@@ -209,13 +219,15 @@ module Puppet::Modules
               # if it's currently under another cluster
               host = [host]
             else
-              raise Puppet::Error.new('Unknown host type.')
+              raise Puppet::Error.new('Unknown host type.',
+                                        __LINE__, __FILE__)
             end
             # there is another similar method called MoveHostInto_Task
             @real_container.MoveInto_Task(
               :host => host).wait_for_completion
           else
-            raise Puppet::Error.new('Unknown internal container type.')
+            raise Puppet::Error.new('Unknown internal container type.',
+                                        __LINE__, __FILE__)
           end
         end
 
@@ -230,6 +242,9 @@ module Puppet::Modules
         def is_cluster?
           @real_container.instance_of?(RbVmomi::VIM::ClusterComputeResource)
         end
+      end
+
+      class PathNotFoundError < Puppet::Error
       end
 
     end

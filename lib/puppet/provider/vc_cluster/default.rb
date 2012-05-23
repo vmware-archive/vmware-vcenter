@@ -10,9 +10,13 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
 
   def create
     # TODO Cluster spec?
-    @immediate_parent.create_cluster(
-        @cluster_name,
-        "Invalid path for Cluster #{@resource[:path]}")
+    err_msg = "Invalid path for Cluster #{@resource[:path]}"
+    if @immediate_parent
+      @immediate_parent.create_cluster(@cluster_name, err_msg)
+    else
+      raise Puppet::Modules::VCenter::ProviderBase::PathNotFoundError.new(
+        err_msg, __LINE__, __FILE__)
+    end
   end
 
   def destroy
@@ -25,11 +29,16 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
     lvs = parse_path(@resource[:path])
     @cluster_name = lvs.pop
     parent_lvs = lvs
-    @immediate_parent ||= find_immediate_parent(
-        get_root_folder(@resource[:connection]),
-        parent_lvs,
-        "Invalid path for Cluster #{@resource[:path]}")
-    @immediate_parent.find_child_by_name(@cluster_name).instance_of?(RbVmomi::VIM::ClusterComputeResource)
+    begin
+      @immediate_parent ||= find_immediate_parent(
+          get_root_folder(@resource[:connection]),
+          parent_lvs,
+          "Invalid path for Cluster #{@resource[:path]}")
+      @immediate_parent.find_child_by_name(@cluster_name).instance_of?(
+                              RbVmomi::VIM::ClusterComputeResource)
+    rescue Puppet::Modules::VCenter::ProviderBase::PathNotFoundError
+      false
+    end
   end
 end
 
