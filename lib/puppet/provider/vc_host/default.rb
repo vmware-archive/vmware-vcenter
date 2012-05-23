@@ -1,6 +1,6 @@
 Puppet::Type.type(:vc_host).provide(:vc_host) do
-  require 'puppet/modules/provider_base'
-  include Puppet::Modules::ProviderBase
+  require 'puppet/modules/vcenter/provider_base'
+  include Puppet::Modules::VCenter::ProviderBase
 
   @doc = "Manages vCenter hosts."
 

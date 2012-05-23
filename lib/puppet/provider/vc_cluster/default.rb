@@ -1,6 +1,6 @@
 Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
-  require 'puppet/modules/provider_base'
-  include Puppet::Modules::ProviderBase
+  require 'puppet/modules/vcenter/provider_base'
+  include Puppet::Modules::VCenter::ProviderBase
 
   @doc = "Manages vCenter Clusters."
 
