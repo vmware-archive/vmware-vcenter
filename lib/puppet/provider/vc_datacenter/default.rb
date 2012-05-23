@@ -1,8 +1,7 @@
-require 'rbvmomi'
-require 'puppet/modules/vcenter'
-include Puppet::Modules::VCenter
-
 Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter) do
+  require 'puppet/modules/provider_base'
+  include Puppet::Modules::ProviderBase
+
   @doc = "Manages vCenter Datacenters."
 
   def self.instances

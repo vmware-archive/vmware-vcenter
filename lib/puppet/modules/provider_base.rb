@@ -1,8 +1,12 @@
 module Puppet::Modules
   module ProviderBase
-    require 'rbvmomi'
 
     @doc = "Shared code among vCenter providers."
+
+    def self.included(base)
+      # only require RbVmomi when this module gets mixed in
+      require 'rbvmomi'
+    end
 
     # connect to vCenter and get the rootFolder.
     def get_root_folder(connection_url)

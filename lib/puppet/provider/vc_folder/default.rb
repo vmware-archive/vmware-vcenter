@@ -1,8 +1,7 @@
-require 'rbvmomi'
-require 'puppet/modules/vcenter'
-include Puppet::Modules::VCenter
-
 Puppet::Type.type(:vc_folder).provide(:vc_folder) do
+  require 'puppet/modules/provider_base'
+  include Puppet::Modules::ProviderBase
+
   @doc = "Manages vCenter Folders."
 
   def self.instances

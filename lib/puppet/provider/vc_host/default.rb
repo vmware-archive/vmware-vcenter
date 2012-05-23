@@ -1,8 +1,7 @@
-require 'rbvmomi'
-require 'puppet/modules/vcenter'
-include Puppet::Modules::VCenter
-
 Puppet::Type.type(:vc_host).provide(:vc_host) do
+  require 'puppet/modules/provider_base'
+  include Puppet::Modules::ProviderBase
+
   @doc = "Manages vCenter hosts."
 
   # recursively traverse the tree
@@ -27,7 +26,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
       if child.instance_of?(RbVmomi::VIM::ComputeResource) or child.instance_of?(RbVmomi::VIM::HostSystem)
         return child, '' if child.name == @hostname
       else
-        host, path = find_host_aux(Container.new(child))
+        host, path = find_host_aux(Puppet::Modules::ProviderBase::Container.new(child))
         return host, "#{child.name}/#{path}" if host
       end
     end
@@ -76,7 +75,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
   def exists?
     @hostname = @resource[:name]
     @root_folder = get_root_folder(@resource[:connection])
-    find_host(Container.new(@root_folder))
+    find_host(Puppet::Modules::ProviderBase::Container.new(@root_folder))
     !!@existing_host
   end
 end
