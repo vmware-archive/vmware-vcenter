@@ -26,7 +26,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
       if child.instance_of?(RbVmomi::VIM::ComputeResource) or child.instance_of?(RbVmomi::VIM::HostSystem)
         return child, '' if child.name == @hostname
       else
-        host, path = find_host_aux(Puppet::Modules::ProviderBase::Container.new(child))
+        host, path = find_host_aux(Puppet::Modules::VCenter::ProviderBase::Container.new(child))
         return host, "#{child.name}/#{path}" if host
       end
     end
@@ -75,7 +75,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
   def exists?
     @hostname = @resource[:name]
     @root_folder = get_root_folder(@resource[:connection])
-    find_host(Puppet::Modules::ProviderBase::Container.new(@root_folder))
+    find_host(Puppet::Modules::VCenter::ProviderBase::Container.new(@root_folder))
     !!@existing_host
   end
 end
