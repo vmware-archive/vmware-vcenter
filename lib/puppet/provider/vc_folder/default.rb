@@ -5,7 +5,7 @@ Puppet::Type.type(:vc_folder).provide(:vc_folder) do
   @doc = "Manages vCenter Folders."
 
   def self.instances
-    # list all instances of folder in vCenter.
+    # list all instances of Folder in vCenter.
   end
 
   def create

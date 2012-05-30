@@ -35,7 +35,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host) do
   end
 
   def self.instances
-    # list all instances of datacenter in vCenter.
+    # list all instances of host in vCenter.
   end
 
   def create

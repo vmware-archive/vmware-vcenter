@@ -20,6 +20,7 @@ module Puppet::Modules
       # connect to vCenter and get the rootFolder.
       def get_root_folder(connection_url)
         # FIXME handle parsing errors (URI.parse?)
+        # TODO handle wrong connection_url?
         # TODO insecure?
         user, pwd, host = connection_url.split(%r{[:@]})
         conn = RbVmomi::VIM.connect(:host => host,
@@ -75,6 +76,7 @@ module Puppet::Modules
 
       class Container
         @doc = "Wrapper type of Folder, Datacenter, or Cluster"
+        attr_reader :real_container
 
         # TODO do this by opening class?
         # TODO or use a dispatcher?

@@ -5,7 +5,7 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
   @doc = "Manages vCenter Clusters."
 
   def self.instances
-    # list all instances of Clusters in vCenter.
+    # list all instances of Cluster in vCenter.
   end
 
   def create
