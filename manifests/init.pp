@@ -18,10 +18,6 @@ class vcenter (
     require  => User['VCENTER'],
   }
 
-  file { 'c:\\odbc.reg':
-    content => template('vcenter/odbc.reg.erb'),
-  }
-
   service { 'SQLSERVERAGENT':
     ensure  => running,
     require => Class['mssql'],
@@ -35,22 +31,49 @@ class vcenter (
     require => Class['mssql'],
   }
 
-  # Obsolete packages.
-  # staging::file { 'sqlncli.msi':
-  #   source => 'http://go.microsoft.com/fwlink/?LinkId=123718&clcid=0x409'
-  # }
+  registry_key { 'HKLM\SOFTWARE\ODBC\ODBC.INI':
+    ensure => present,
+  }
 
-  # package { 'SQL_native_client':
-  #   ensure => present,
-  #   source => 'C:\\Programdata\\PuppetLabs\\staging\\windows\sqlncli.msi',
-  #   require => Staging::File['sqlncli.msi'],
-  # }
+  Registry::Value {
+    require => Registry_key['HKLM\SOFTWARE\ODBC\ODBC.INI'],
+    notify  => Exec['create_database'],
+  }
 
-  exec { 'vCenter_ODBC':
-    command   => 'C:\Windows\SysNative\cmd.exe /C "regedit /S c:\\odbc.reg"',
-    path      => $::path,
-    require   => File['c:\\odbc.reg'],
-    subscribe => Exec['create_database'],
+  registry::value { 'VMware VirtualCenter':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources',
+    value => 'SQL Server Native Client 10.0',
+    type  => string,
+  }
+
+  registry::value { 'Driver':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter',
+    value => "C:\\Windows\\system32\\sqlncli10.dll",
+    type  => string,
+  }
+
+  registry::value { 'Server':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter',
+    value => '(local)',
+    type  => string,
+  }
+
+  registry::value { 'Database':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter',
+    value => 'vcenter',
+    type  => string,
+  }
+
+  registry::value { 'LastUser':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter',
+    value => 'Administrator',
+    type  => string,
+  }
+
+  registry::value { 'Trusted_Connection':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter',
+    value => 'Yes',
+    type  => string,
   }
 
   exec { 'install_vCenter':
