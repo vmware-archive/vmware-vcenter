@@ -14,7 +14,7 @@ Paramaters:
 
 Example:
 
-   class vcenter {
-     media => 's:\\',
-     jvm_memory_option => 'M',
-   }
+    class vcenter {
+      media => 's:\\',
+      jvm_memory_option => 'M',
+    }
