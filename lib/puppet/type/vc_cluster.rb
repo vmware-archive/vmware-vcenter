@@ -18,11 +18,18 @@ Puppet::Type.newtype(:vc_cluster) do
   newparam(:path) do
     desc "The path to the Cluster."
     isnamevar
+
+    validate(&Puppet::Modules::VCenter::TypeBase.get_validate_path_block)
+    munge(&Puppet::Modules::VCenter::TypeBase.get_munge_path_block)
+
   end
 
   newparam(:connection) do
     desc "The connectivity to vCenter."
+
     # username:password@hostname
+    validate(&Puppet::Modules::VCenter::TypeBase.get_validate_connection_block)
+
   end
 
   autorequire(:vc_folder) do

@@ -28,11 +28,18 @@ Puppet::Type.newtype(:vc_host) do
 
   newparam(:connection) do
     desc "The connectivity to vCenter."
-    # username:password@vcenter_host
+
+    # username:password@hostname
+    validate(&Puppet::Modules::VCenter::TypeBase.get_validate_connection_block)
+
   end
 
   newproperty(:path) do
     desc "The path to the host.  Used when the host is created or moved."
+
+    validate(&Puppet::Modules::VCenter::TypeBase.get_validate_path_block)
+    munge(&Puppet::Modules::VCenter::TypeBase.get_munge_path_block)
+
   end
 
   autorequire(:vc_datacenter) do
