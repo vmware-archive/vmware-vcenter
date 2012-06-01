@@ -1,5 +1,6 @@
 class vcenter (
   $media             = 'D:\\',
+  $sql_media         = 'D:\\',
   $username          = 'VCENTER',
   $password          = 'vCenter2008demo',
   $jvm_memory_option = 'S',
@@ -14,6 +15,7 @@ class vcenter (
 
   class { 'mssql':
     features => 'SQL,CONN,SSMS,ADV_SSMS',
+    media    => $sql_media,
     admin    => "Administrator\" \"${username}",
     require  => User['VCENTER'],
   }
@@ -35,13 +37,21 @@ class vcenter (
     ensure => present,
   }
 
+  registry_key { 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources':
+    ensure => present,
+  }
+
+  registry_key { 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter':
+    ensure => present,
+  }
+
   Registry::Value {
     require => Registry_key['HKLM\SOFTWARE\ODBC\ODBC.INI'],
     notify  => Exec['create_database'],
   }
 
-  registry::value { 'VMware VirtualCenter':
-    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources',
+  registry::value { 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources'
+    key   => 'VMware VirtualCenter',
     value => 'SQL Server Native Client 10.0',
     type  => string,
   }
