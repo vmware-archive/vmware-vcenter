@@ -84,6 +84,7 @@ class vcenter (
 
   exec { 'install_vCenter':
     command => 'vCenter-Server\\VMware-vcserver.exe /s /w /L1033 /v"/qr USERNAME=Administrator COMPANYNAME=Puppet DB_SERVER_TYPE=Custom DB_DSN=\"VMWARE VirtualCenter\" DB_DSN_WINDOWS_AUTH=1 FORMAT_DB=1"',
+    creates => 'C:\Program Files\VMware\Infrastructure\VirtualCenter Server',
     path    => $media,
     timeout => 1200,
     require => Class['mssql'],
@@ -92,10 +93,16 @@ class vcenter (
   if $client {
     exec { 'install_vSphere_client':
       command => 'vSphere-Client\\VMware-viclient.exe /s /w /L1033 /v" /qr"',
+      creates => 'C:\Program Files (x86)\VMware\Infrastructure\Virtual Infrastructure Client',
       path    => $media,
       timeout => 600,
       require => Exec['install_vCenter'],
     }
+  }
+
+  package { 'rbvmomi':
+    ensure   => present,
+    provider => gem,
   }
 
 }
