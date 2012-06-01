@@ -33,25 +33,19 @@ class vcenter (
     require => Class['mssql'],
   }
 
-  registry_key { 'HKLM\SOFTWARE\ODBC\ODBC.INI':
-    ensure => present,
-  }
-
-  registry_key { 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources':
-    ensure => present,
-  }
-
-  registry_key { 'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter':
+  registry_key { [ 'HKLM\SOFTWARE\ODBC',
+                   'HKLM\SOFTWARE\ODBC\ODBC.INI',
+                   'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources',
+                   'HKLM\SOFTWARE\ODBC\ODBC.INI\VMware VirtualCenter' ]:
     ensure => present,
   }
 
   Registry::Value {
-    require => Registry_key['HKLM\SOFTWARE\ODBC\ODBC.INI'],
     notify  => Exec['create_database'],
   }
 
-  registry::value { 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources'
-    key   => 'VMware VirtualCenter',
+  registry::value { 'VMware VirtualCenter':
+    key   => 'HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources',
     value => 'SQL Server Native Client 10.0',
     type  => string,
   }
