@@ -41,7 +41,8 @@ class vcenter (
   }
 
   Registry::Value {
-    notify  => Exec['create_database'],
+    notify => Exec['create_database'],
+    before => Exec['install_vCenter'],
   }
 
   registry::value { 'VMware VirtualCenter':
@@ -84,6 +85,7 @@ class vcenter (
     command => 'vCenter-Server\\VMware-vcserver.exe /s /w /L1033 /v"/qr USERNAME=Administrator COMPANYNAME=Puppet DB_SERVER_TYPE=Custom DB_DSN=\"VMWARE VirtualCenter\" DB_DSN_WINDOWS_AUTH=1 FORMAT_DB=1"',
     path    => $media,
     timeout => 900,
+    require => Class['mssql'],
   }
 
   if $client {
