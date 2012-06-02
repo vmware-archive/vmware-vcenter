@@ -1,4 +1,5 @@
-require 'puppet/modules/vcenter/type_base'
+require 'pathname' # WORK_AROUND #14073
+require Pathname.new(__FILE__).dirname.dirname.expand_path + 'modules/vcenter/type_base'
 
 Puppet::Type.newtype(:vc_folder) do
   @doc = "Manage vCenter folders."

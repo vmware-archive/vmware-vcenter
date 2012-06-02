@@ -1,5 +1,6 @@
 Puppet::Type.type(:vc_cluster).provide(:vc_cluster) do
-  require 'puppet/modules/vcenter/provider_base'
+  require 'pathname' # WORK_AROUND #14073
+  require Pathname.new(__FILE__).dirname.dirname.dirname.expand_path + 'modules/vcenter/provider_base'
   include Puppet::Modules::VCenter::ProviderBase
 
   @doc = "Manages vCenter Clusters."
