@@ -7,7 +7,7 @@ module Puppet::Modules
       def self.included(base)
         # only require RbVmomi when this module gets mixed in
         begin
-          require 'rbvmomi'
+          require 'rbvmomi' unless Puppet.run_mode.master?
         rescue LoadError => exc
            msg = "Could not load the required rbvmomi library [#{exc.message}]"
            Puppet.err msg
