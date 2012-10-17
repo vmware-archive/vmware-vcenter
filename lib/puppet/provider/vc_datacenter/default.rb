@@ -1,7 +1,9 @@
-Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter) do
-  require 'pathname' # WORK_AROUND #14073
-  require Pathname.new(__FILE__).dirname.dirname.dirname.expand_path + 'modules/vcenter/provider_base'
-  include Puppet::Modules::VCenter::ProviderBase
+require 'lib/puppet/provider/vcenter'
+
+Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter, :parent => Puppet::Provider::Vcenter) do
+  #require 'pathname' # WORK_AROUND #14073
+  #require Pathname.new(__FILE__).dirname.dirname.dirname.expand_path + 'modules/vcenter/provider_base'
+  #include Puppet::Modules::VCenter::ProviderBase
 
   @doc = "Manages vCenter Datacenters."
 
@@ -14,8 +16,7 @@ Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter) do
     if @immediate_parent
       @immediate_parent.create_datacenter(@dcname, err_msg)
     else
-      raise Puppet::Modules::VCenter::ProviderBase::PathNotFoundError.new(
-        err_msg, __LINE__, __FILE__)
+      raise PathNotFoundError.new(err_msg) #, __LINE__, __FILE__)
     end
   end
 
@@ -36,7 +37,7 @@ Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter) do
           "Invalid path for Datacenter #{@resource[:path]}")
       @immediate_parent.find_child_by_name(@dcname).instance_of?(
                                             RbVmomi::VIM::Datacenter)
-    rescue Puppet::Modules::VCenter::ProviderBase::PathNotFoundError
+    rescue PathNotFoundError
       false
     end
   end

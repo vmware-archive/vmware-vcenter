@@ -1,7 +1,7 @@
 Puppet::Type.type(:vc_folder).provide(:vc_folder) do
-  require 'pathname' # WORK_AROUND #14073
-  require Pathname.new(__FILE__).dirname.dirname.dirname.expand_path + 'modules/vcenter/provider_base'
-  include Puppet::Modules::VCenter::ProviderBase
+  #require 'pathname' # WORK_AROUND #14073
+  #require Pathname.new(__FILE__).dirname.dirname.dirname.expand_path + 'modules/vcenter/provider_base'
+  #include Puppet::Modules::VCenter::ProviderBase
 
   @doc = "Manages vCenter Folders."
 
