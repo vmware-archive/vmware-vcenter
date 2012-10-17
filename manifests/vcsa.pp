@@ -1,18 +1,16 @@
-define vcenter::vcsa(
-  # vCSA connectivity:
-  $username = 'root',
-  $password = 'vmware',
-  $server,
-  # database settings:
+# vCSA appliance configuration.
+define vcenter::vcsa (
+  $username = 'root',   #: vCSA appliance username
+  $password = 'vmware', #: vCSA appliance password
+  $server,              #: vCSA appliance server name or ip address
   $db_type     = 'embedded',
   $db_server   = undef,
   $db_port     = undef,
   $db_instance = undef,
   $db_user     = undef,
   $db_password = undef,
-
-  $capacity      = 'small', #: accepts small, medium, large
-  $java_max_heap = undef    #: user can specify JMX size.
+  $capacity      = 'small', #: inventory accepts small, medium, large
+  $java_max_heap = undef    #: manual jmx heap max size configuration
 ) {
 
   case $capacity {

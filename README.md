@@ -34,8 +34,8 @@ Parameters:
 
 Example:
 
-    class vcenter {
-      media => 's:\\',
+    class vcenter::server {
+      media             => 's:\\',
       jvm_memory_option => 'M',
     }
 

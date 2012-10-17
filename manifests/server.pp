@@ -1,11 +1,13 @@
-class vcenter (
-  $media             = 'D:\\',
-  $sql_media         = 'D:\\',
-  $username          = 'VCENTER',
-  $password          = 'vC3nt!2008demo',
-  $jvm_memory_option = 'S',
-  $client            = true
-) {
+# Deploys vCenter Server.
+class vcenter::server (
+  $media             = 'D:\\',           #: vCenter installation media
+  $sql_media         = 'D:\\',           #: Microsoft SQL 2008R2 installation media
+  $username          = 'VCENTER',        #: vCenter service username
+  $password          = 'vC3nt!2008demo', #: vCenter service password
+  $jvm_memory_option = 'S',              #: Inventory size (S, M, L)
+  $client            = true              #: Install vSphere client
+  $provider          = $vcenter::params::provider
+) inherits vcenter::params {
 
   user { $username:
     comment  => 'VMware vCenter account.',
@@ -100,9 +102,10 @@ class vcenter (
     }
   }
 
+  # Install rbvmomi gem for vc_* resources.
   package { 'rbvmomi':
     ensure   => present,
-    provider => gem,
+    provider => $provider,
   }
 
 }
