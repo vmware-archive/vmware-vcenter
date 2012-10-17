@@ -61,6 +61,17 @@ define vcenter::vcsa(
     transport => Vcsa_transport[$name],
   } ->
 
+  vcsa_sso { $name:
+    ensure    => present,
+    dbtype    => $db_type,
+    server    => $db_server,
+    port      => $db_port,
+    instance  => $db_instance,
+    user      => $db_user,
+    password  => $db_password,
+    transport => Vcsa_transport[$name],
+  } ->
+
   vcsa_java { $name:
     ensure    => present,
     inventory => $jmx['is'],

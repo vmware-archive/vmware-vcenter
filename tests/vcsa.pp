@@ -1,4 +1,4 @@
 vcenter::vcsa { 'demo':
-  server  => '192.168.101.157',
+  server  => '192.168.1.96',
   db_type => 'embedded',
 }
