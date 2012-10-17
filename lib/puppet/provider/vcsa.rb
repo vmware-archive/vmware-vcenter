@@ -11,5 +11,4 @@ class Puppet::Provider::Vcsa <  Puppet::Provider
   def transport
     self.class.transport(resource)
   end
-
 end
