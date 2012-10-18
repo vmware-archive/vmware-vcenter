@@ -1,25 +1,26 @@
 require 'pathname'
-require 'rbvmomi' unless Puppet.run_mode.master?
-
-class PathNotFoundError < Puppet::Error
-end
+require 'lib/puppet/modules/vcenter/transport'
 
 class Puppet::Provider::Vcenter <  Puppet::Provider
 
   private
-  # connect to vCenter and get the rootFolder.
-  def get_root_folder(connection_url)
-    # TODO: move this to a transport.
-    user, pwd, host = connection_url.split(%r{[:@]})
-    @conn = RbVmomi::VIM.connect(:host => host,
-                                :user => user,
-                                :password => pwd,
-                                :insecure => true)
-    @conn.serviceInstance.content.rootFolder
+
+  def self.transport(resource)
+    name = Puppet::Resource.new(nil, resource[:transport].to_s).title
+    trans = resource.catalog.resource(resource[:transport].to_s).to_hash
+    Puppet::Modules::Vcenter::Transport.current(name) || Puppet::Modules::Vcenter::Transport.new(trans[:name], trans[:username], trans[:password], trans[:server])
+  end
+
+  def transport
+    @transport ||= self.class.transport(resource)
+  end
+
+  def vim
+    transport.vim
   end
 
   def rootfolder
-    @rootfolder ||= get_root_folder(resource[:connection])
+    @rootfolder ||= vim.serviceInstance.content.rootFolder
   end
 
   # Always return a folder
@@ -29,7 +30,7 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     else
       vmfolder = locate(path)
     end
-    raise PathNotFoundError.new("Invalid path: #{path}") unless vmfolder
+    raise Pupept::Error.new("Invalid path: #{path}") unless vmfolder
     return_folder(vmfolder)
   end
 
@@ -41,8 +42,10 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
       folder.hostFolder
     when RbVmomi::VIM::ClusterComputeResource
       folder
+    when NilClass
+      raise Puppet::Error.new("Invalid path: #{@resource[:path]}.")
     else
-      raise Puppet::Error.new("vmfolder unknown container type")
+      raise Puppet::Error.new("Unknown container type: #{folder.class}")
     end
   end
 

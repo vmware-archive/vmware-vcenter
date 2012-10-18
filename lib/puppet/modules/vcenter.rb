@@ -1,2 +1,2 @@
-module puppet::modules::vcenter
+module Puppet::Modules::Vcenter
 end

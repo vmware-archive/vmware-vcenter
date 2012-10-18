@@ -37,7 +37,7 @@ define vcenter::vcsa (
     }
   }
 
-  vcsa_transport { $name:
+  transport { $name:
     username => $username,
     password => $password,
     server   => $server,
@@ -45,7 +45,7 @@ define vcenter::vcsa (
 
   vcsa_eula { $name:
     ensure    => accept,
-    transport => Vcsa_transport[$name],
+    transport => Transport[$name],
   } ->
 
   vcsa_db { $name:
@@ -56,7 +56,7 @@ define vcenter::vcsa (
     instance  => $db_instance,
     user      => $db_user,
     password  => $db_password,
-    transport => Vcsa_transport[$name],
+    transport => Transport[$name],
   } ->
 
   vcsa_sso { $name:
@@ -67,7 +67,7 @@ define vcenter::vcsa (
     instance  => $db_instance,
     user      => $db_user,
     password  => $db_password,
-    transport => Vcsa_transport[$name],
+    transport => Transport[$name],
   } ->
 
   vcsa_java { $name:
@@ -75,11 +75,11 @@ define vcenter::vcsa (
     inventory => $jmx['is'],
     sps       => $jmx['sps'],
     tomcat    => $jmx['tomcat'],
-    transport => Vcsa_transport[$name],
+    transport => Transport[$name],
   } ~>
 
   vcsa_service { 'demo':
     ensure    => running,
-    transport => Vcsa_transport[$name],
+    transport => Transport[$name],
   }
 }

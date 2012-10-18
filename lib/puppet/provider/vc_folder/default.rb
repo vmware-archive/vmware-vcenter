@@ -1,7 +1,6 @@
 require 'lib/puppet/provider/vcenter'
 
 Puppet::Type.type(:vc_folder).provide(:vc_folder, :parent => Puppet::Provider::Vcenter) do
-
   @doc = "Manages vCenter Folders."
 
   def create

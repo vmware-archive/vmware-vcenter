@@ -9,13 +9,12 @@ Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter, :parent => Puppet::Pro
   end
 
   def destroy
-    dc = rootfolder.traverse(@resource[:path], RbVmomi::VIM::Datacenter)
+    dc = locate(@resource[:path], RbVmomi::VIM::Datacenter)
     dc.Destroy_Task.wait_for_completion
   end
 
   def exists?
-    result = rootfolder.traverse(@resource[:path], RbVmomi::VIM::Datacenter)
-    result = vmfolder.children.find{|x| x.name == basename}
+    result = locate(@resource[:path])
     result.is_a? RbVmomi::VIM::Datacenter
   end
 end

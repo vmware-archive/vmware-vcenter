@@ -1,6 +1,3 @@
-require 'pathname' # WORK_AROUND #14073
-require Pathname.new(__FILE__).dirname.dirname.expand_path + 'modules/vcenter/type_base'
-
 Puppet::Type.newtype(:vc_cluster) do
   @doc = "Manage vCenter Clusters."
 
@@ -16,31 +13,25 @@ Puppet::Type.newtype(:vc_cluster) do
     defaultto(:present)
   end
 
-  newparam(:path) do
+  newparam(:path, :namevar => true) do
     desc "The path to the Cluster."
-    isnamevar
 
-    validate(&Puppet::Modules::VCenter::TypeBase.get_validate_path_block)
-    munge(&Puppet::Modules::VCenter::TypeBase.get_munge_path_block)
-
+    validate do |path|
+      raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(path)
+    end
   end
 
-  newparam(:connection) do
+  newparam(:transport) do
     desc "The connectivity to vCenter."
-
-    # username:password@hostname
-    validate(&Puppet::Modules::VCenter::TypeBase.get_validate_connection_block)
-
   end
 
+  # autorequire immediate parent path (can be datacenter or folder)
   autorequire(:vc_folder) do
-    # autorequrie immediate parent Folder.
-    Puppet::Modules::VCenter::TypeBase.get_immediate_parent(self[:path])
+    Pathname.new(self[:path]).parent.to_s
   end
 
   autorequire(:vc_datacenter) do
-    # autorequrie immediate parent Datacenters.
-    Puppet::Modules::VCenter::TypeBase.get_immediate_parent(self[:path])
+    Pathname.new(self[:path]).parent.to_s
   end
 end
 
