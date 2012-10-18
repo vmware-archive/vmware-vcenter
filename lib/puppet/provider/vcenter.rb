@@ -30,7 +30,7 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     else
       vmfolder = locate(path)
     end
-    raise Pupept::Error.new("Invalid path: #{path}") unless vmfolder
+    raise Puppet::Error.new("Invalid path: #{path}") unless vmfolder
     return_folder(vmfolder)
   end
 

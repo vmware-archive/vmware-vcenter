@@ -78,7 +78,7 @@ define vcenter::vcsa (
     transport => Transport[$name],
   } ~>
 
-  vcsa_service { 'demo':
+  vcsa_service { $name:
     ensure    => running,
     transport => Transport[$name],
   }
