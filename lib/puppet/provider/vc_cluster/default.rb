@@ -13,8 +13,7 @@ Puppet::Type.type(:vc_cluster).provide(:vc_cluster, :parent => Puppet::Provider:
   end
 
   def exists?
-    result = locate(@resource[:path])
-    result.is_a? RbVmomi::VIM::ClusterComputeResource
+    locate(@resource[:path], RbVmomi::VIM::ClusterComputeResource)
   end
 end
 

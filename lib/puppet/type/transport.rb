@@ -1,8 +1,8 @@
 Puppet::Type.newtype(:transport) do
-  @doc = "Manage transport connectivity info."
+  @doc = "Manage transport connectivity info such as username, password, server."
 
   newparam(:name, :namevar => true) do
-    desc "The name of the vcsa transport."
+    desc "The name of the network transport."
   end
 
   newparam(:username) do

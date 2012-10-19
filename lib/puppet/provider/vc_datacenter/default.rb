@@ -14,8 +14,7 @@ Puppet::Type.type(:vc_datacenter).provide(:vc_datacenter, :parent => Puppet::Pro
   end
 
   def exists?
-    result = locate(@resource[:path])
-    result.is_a? RbVmomi::VIM::Datacenter
+    locate(@resource[:path], RbVmomi::VIM::Datacenter)
   end
 end
 
