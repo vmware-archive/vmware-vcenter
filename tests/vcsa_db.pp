@@ -1,4 +1,4 @@
-vcsa_transport { 'demo':
+transport { 'demo':
   username => 'root',
   password => 'vmware',
   server   => '192.168.101.157',
@@ -7,5 +7,5 @@ vcsa_transport { 'demo':
 vcsa_db { 'demo':
   ensure    => present,
   type      => 'embedded',
-  transport => Vcsa_transport['demo'],
+  transport => Transport['demo'],
 }
