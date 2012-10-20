@@ -62,6 +62,13 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     end
   end
 
+  def walk(path, type, order=:ascend)
+    Pathname.new(path).send(order) do |folder|
+      obj = vim.searchIndex.FindByInventoryPath({:inventoryPath => folder.to_s})
+      return obj if obj.is_a? type
+    end
+  end
+
   def parent
     @parent ||= Pathname.new(resource[:path]).parent.to_s
   end

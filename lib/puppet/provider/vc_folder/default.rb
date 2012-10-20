@@ -13,8 +13,7 @@ Puppet::Type.type(:vc_folder).provide(:vc_folder, :parent => Puppet::Provider::V
   end
 
   def exists?
-    result = locate(@resource[:path])
-    result.is_a? RbVmomi::VIM::Folder
+    locate(@resource[:path], RbVmomi::VIM::Folder)
   end
 end
 
