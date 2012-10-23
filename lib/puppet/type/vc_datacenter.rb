@@ -21,10 +21,6 @@ Puppet::Type.newtype(:vc_datacenter) do
     end
   end
 
-  newparam(:transport) do
-    desc "The connectivity to vCenter."
-  end
-
   autorequire(:vc_folder) do
     Pathname.new(self[:path]).parent.to_s
   end

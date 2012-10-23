@@ -16,8 +16,4 @@ Puppet::Type.newtype(:vcsa_service) do
 
   newparam(:name, :namevar => true) do
   end
-
-  newparam(:transport) do
-    desc 'Reference the appropriate vCSA transport resource.'
-  end
 end

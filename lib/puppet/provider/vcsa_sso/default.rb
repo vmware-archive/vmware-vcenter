@@ -4,12 +4,12 @@ Puppet::Type.type(:vcsa_sso).provide(:vcsa_sso, :parent => Puppet::Provider::Vcs
   @doc = 'Manages vCSA sso'
 
   def create
-    transport.send("vpxd_servicecfg sso write #{resource[:dbtype]} #{resource[:server]} #{resource[:port]} #{resource[:instance]} #{resource[:user]} #{resource[:password]}")
+    transport.exec!("vpxd_servicecfg sso write #{resource[:dbtype]} #{resource[:server]} #{resource[:port]} #{resource[:instance]} #{resource[:user]} #{resource[:password]}")
   end
 
   def exists?
-    transport.send('vpxd_servicecfg sso read')
-    result = Hash[*transport.result.split("\n").map{|x| x.split("=",2) if x =~ /^(?!Key not found)/ }.compact.flatten]
+    result = transport.exec!('vpxd_servicecfg sso read')
+    result = Hash[*result.split("\n").map{|x| x.split("=",2) if x =~ /^(?!Key not found)/ }.compact.flatten]
     result['SSO_TYPE'] != ""
   end
 end

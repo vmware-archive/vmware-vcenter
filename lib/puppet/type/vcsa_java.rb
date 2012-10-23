@@ -20,8 +20,4 @@ Puppet::Type.newtype(:vcsa_java) do
     desc 'vCSA jmx sps'
     newvalues(/\d+/)
   end
-
-  newparam(:transport) do
-    desc 'Reference the appropriate vCSA transport resource.'
-  end
 end

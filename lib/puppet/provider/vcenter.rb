@@ -1,22 +1,14 @@
 require 'pathname'
-require 'lib/puppet/modules/vcenter/transport'
+require 'lib/puppet/modules/transport'
+require 'lib/puppet/modules/transport/vsphere'
 
 class Puppet::Provider::Vcenter <  Puppet::Provider
 
   private
 
-  def self.transport(resource)
-    name = Puppet::Resource.new(nil, resource[:transport].to_s).title
-    trans = resource.catalog.resource(resource[:transport].to_s).to_hash
-    Puppet::Modules::Vcenter::Transport.current(name) || Puppet::Modules::Vcenter::Transport.new(trans[:name], trans[:username], trans[:password], trans[:server])
-  end
-
-  def transport
-    @transport ||= self.class.transport(resource)
-  end
-
   def vim
-    transport.vim
+    @transport ||= Puppet::Modules::Transport.retrieve(resource[:transport], resource.catalog, 'vsphere')
+    @transport.vim
   end
 
   def rootfolder

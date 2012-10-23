@@ -29,8 +29,4 @@ Puppet::Type.newtype(:vcsa_db) do
   newparam(:password) do
     desc 'vCSA database password.'
   end
-
-  newparam(:transport) do
-    desc 'Reference the appropriate vCSA transport resource.'
-  end
 end

@@ -24,9 +24,5 @@ Puppet::Type.newtype(:vcsa_sso) do
 
   newparam(:password) do
   end
-
-  newparam(:transport) do
-    desc 'Reference the appropriate vCSA transport resource.'
-  end
 end
 

@@ -36,10 +36,6 @@ Puppet::Type.newtype(:vc_host) do
     defaultto(false)
   end
 
-  newparam(:transport) do
-    desc "The connectivity to vCenter."
-  end
-
   newproperty(:path) do
     desc "The path to the host."
 

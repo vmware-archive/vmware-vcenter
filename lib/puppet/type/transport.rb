@@ -13,4 +13,9 @@ Puppet::Type.newtype(:transport) do
 
   newparam(:server) do
   end
+
+end
+
+Puppet::Type.newmetaparam(:transport) do
+  desc "Provide a new metaparameter for all resources called transport."
 end
