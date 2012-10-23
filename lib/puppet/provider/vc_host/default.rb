@@ -1,84 +1,59 @@
-Puppet::Type.type(:vc_host).provide(:vc_host) do
-  require 'pathname' # WORK_AROUND #14073
-  require Pathname.new(__FILE__).dirname.dirname.dirname.expand_path + 'modules/vcenter/provider_base'
-  include Puppet::Modules::VCenter::ProviderBase
+require 'lib/puppet/provider/vcenter'
 
+Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts."
 
-  # recursively traverse the tree
-  # if the host is found
-  #   @existing_host = the host (a ComputeResource object)
-  #   @existing_path = the path (a string)
-  # else
-  #   @existing_host = nil
-  #   @existing_path = nil
-  def find_host(container)
-    host, path = find_host_aux(container)
-    if host
-      @existing_host, @existing_path = host, "/#{path}"
-    else
-      @existing_host, @existing_path = nil, nil
-    end
-  end
-
-  # recursion helper for find_host
-  def find_host_aux(container)
-    container.children.each do |child|
-      if child.instance_of?(RbVmomi::VIM::ComputeResource) or child.instance_of?(RbVmomi::VIM::HostSystem)
-        return child, '' if child.name == @hostname
-      else
-        host, path = find_host_aux(
-          Puppet::Modules::VCenter::ProviderBase::Container.new(child))
-        return host, "#{child.name}/#{path}" if host
-      end
-    end
-    return nil, nil
-  end
-
-  def self.instances
-    # list all instances of host in vCenter.
-  end
-
   def create
-    @username ||= @resource[:username]
-    @password ||= @resource[:password]
+    sslThumbprint = resource[:sslthumbprint]
+    retry_attempt = 0
 
-    parent_lvs = parse_path(@resource[:path])
-    @should_immediate_parent ||= find_immediate_parent(
-        @root_folder,
-        parent_lvs,
-        "Invalid path for Host #{@resource[:path]}")
-    # TODO security, force
-    host_spec = { :force => true,
-                  :hostName => @hostname,
-                  :userName => @username,
-                  :password => @password,
-                  :sslThumbprint => nil }
-    @should_immediate_parent.add_host(host_spec)
+    begin
+      spec = {
+        :force         => true,
+        :hostName      => resource[:name],
+        :userName      => resource[:username],
+        :password      => resource[:password],
+        :sslThumbprint => sslThumbprint,
+      }
+
+      vmfolder(resource[:path]).AddStandaloneHost_Task(:spec => spec, :addConnected => true).wait_for_completion
+    rescue RbVmomi::VIM::SSLVerifyFault
+      unless resource[:secure]
+        sslThumbprint = $!.fault.thumbprint
+        Puppet.debug "Trusting insecure SSL Thumbprint: #{sslThumbprint}"
+        retry_attempt += 1
+        retry if retry_attempt <= 1
+      end
+      raise
+    end
   end
 
   def destroy
-    @existing_host.Destroy_Task.wait_for_completion
+    @host.Destroy_Task.wait_for_completion
   end
 
+  # TODO: implement real path checking.
   def path
-    @existing_path
+    resource[:path]
   end
 
   def path=(value)
-    parent_lvs = parse_path(@resource[:path])
-    @should_immediate_parent ||= find_immediate_parent(
-        @root_folder,
-        parent_lvs,
-        "Invalid path for Host #{@resource[:path]}")
-    @should_immediate_parent.move_host_into(@existing_host)
   end
 
   def exists?
-    @hostname = @resource[:name]
-    @root_folder = get_root_folder(@resource[:connection])
-    find_host(Puppet::Modules::VCenter::ProviderBase::Container.new(@root_folder))
-    !!@existing_host
+    find_host ? true : false
+  end
+
+  private
+
+  def walk_dc(path=resource[:path])
+    @datacenter = walk(path, RbVmomi::VIM::Datacenter)
+    raise Puppet::Error.new( "No datacenter in path: #{path}") unless @datacenter
+    @datacenter
+  end
+
+  def find_host
+    @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:name], :vmSearch => false)
   end
 end
 
