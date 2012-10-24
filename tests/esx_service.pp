@@ -4,7 +4,9 @@ transport { 'vcenter':
   server   => '192.168.232.147',
 }
 
-esx_ntpconfig { '192.168.232.240':
-  server    => ['ntp.puppetlabs.com'],
+notify { 'trigger': }
+
+esx_service { '192.168.232.240:ntpd':
   transport => Transport['vcenter'],
+  subscribe => Notify['trigger'],
 }

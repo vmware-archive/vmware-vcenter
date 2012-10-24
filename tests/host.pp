@@ -10,7 +10,7 @@ vcenter::host { '192.168.232.240':
   password  => 'password',
   dateTimeConfig => {
     'ntpConfig' => {
-      'server' => 'ntp.puppetlabs.com',
+      'server' => 'ntp.puppetlabs.lan',
     },
     'timeZone' => {
       'key' => 'UTC',

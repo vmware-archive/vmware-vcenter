@@ -17,7 +17,7 @@ Puppet::Type.type(:esx_ntpconfig).provide(:esx_ntpconfig, :parent => Puppet::Pro
   private
 
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
+    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
   end
 end
 

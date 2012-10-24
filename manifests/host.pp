@@ -3,8 +3,8 @@ define vcenter::host (
   $path,
   $username,
   $password,
-  $transport,
   $dateTimeConfig = undef,
+  # transport is a metaparameter
 ) {
 
   $default = {
@@ -24,14 +24,11 @@ define vcenter::host (
   }
 
   esx_ntpconfig { $name:
-    ensure    => present,
     server    => $dtconf['ntpConfig']['server'],
     transport => $transport,
   }
 
-  #esx_service { "${name}:ntp":
-  #  ensure    => running,
-  #  subscribe => Vc_host_config_datetimeinfo_ntpconfig[$name],
-  #}
-
+  esx_service { "${name}:ntpd":
+    subscribe => Esx_ntpconfig[$name],
+  }
 }

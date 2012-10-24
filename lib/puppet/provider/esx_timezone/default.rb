@@ -15,7 +15,7 @@ Puppet::Type.type(:esx_timezone).provide(:esx_timezone, :parent => Puppet::Provi
   private
 
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
+    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
   end
 end
 
