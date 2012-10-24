@@ -6,9 +6,6 @@ Puppet::Type.newtype(:esx_service) do
 
     munge do |value|
       @resource[:host], @resource[:service] = value.split(':',2)
-      puts value
-      puts @resource[:host]
-      puts @resource[:service]
       value
     end
   end

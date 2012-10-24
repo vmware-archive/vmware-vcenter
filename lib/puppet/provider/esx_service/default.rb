@@ -6,7 +6,6 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   def restart
     if host.config.service.service.find{|x| x.key == resource[:service]}.running
       host.configManager.serviceSystem.RestartService(:id => resource[:service])
-      host.configManager.serviceSystem.RefreshServices
     else
       Puppet.debug "ESX service #{resource[:service]} is not running."
     end
@@ -15,9 +14,6 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   private
 
   def host
-
-    puts @resource[:host]
-    puts resource[:host]
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
   end
 end

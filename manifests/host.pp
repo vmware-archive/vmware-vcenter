@@ -9,7 +9,7 @@ define vcenter::host (
 
   $default = {
     'ntpConfig' => {
-      'server' => 'ntp.puppetlabs.lan',
+      'server' => ['ntp.puppetlabs.lan'],
     },
   }
 

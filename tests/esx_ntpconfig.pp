@@ -5,6 +5,6 @@ transport { 'vcenter':
 }
 
 esx_ntpconfig { '192.168.232.240':
-  server    => ['ntp.puppetlabs.com'],
+  server    => ['ntp.puppetlabs.com','ntp.puppetlabs.lan'],
   transport => Transport['vcenter'],
 }
