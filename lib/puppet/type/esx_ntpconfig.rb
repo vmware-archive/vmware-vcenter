@@ -9,7 +9,15 @@ Puppet::Type.newtype(:esx_ntpconfig) do
     desc "ntp server"
     defaultto([])
     munge do |value|
-      [value] unless value.is_a? Array
+      case value
+      when Array
+        raise Puppet::Error, "ESX only accepts a single ntp server."
+        value.first
+      when String
+        value
+      else
+        raise Puppet::Error, "Unknown ntp server value: #{value}"
+      end
     end
   end
 

@@ -4,7 +4,7 @@ Puppet::Type.type(:esx_timezone).provide(:esx_timezone, :parent => Puppet::Provi
   @doc = "Manages vCenter hosts timezone configuration."
 
   def key
-    find_host.config.dateTimeInfo.timeZone.key
+    host.config.dateTimeInfo.timeZone.key
   end
 
   def key=(value)
@@ -14,8 +14,8 @@ Puppet::Type.type(:esx_timezone).provide(:esx_timezone, :parent => Puppet::Provi
 
   private
 
-  def find_host
-    @host = vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
+  def host
+    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
   end
 end
 

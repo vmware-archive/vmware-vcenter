@@ -1,7 +1,7 @@
 transport { 'vcenter':
   username => 'root',
   password => 'vmware',
-  server   => '192.168.101.244',
+  server   => '192.168.232.147',
 }
 
 vc_datacenter { 'dc1':
@@ -16,6 +16,11 @@ vc_folder { '/dc1/sub_folder1':
 }
 
 vc_folder { '/folder':
+  ensure    => present,
+  transport => Transport['vcenter'],
+}
+
+vc_folder { '/folderx':
   ensure    => present,
   transport => Transport['vcenter'],
 }

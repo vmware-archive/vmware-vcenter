@@ -4,7 +4,6 @@ Puppet::Type.type(:esx_ntpconfig).provide(:esx_ntpconfig, :parent => Puppet::Pro
   @doc = "Manages vCenter hosts ntp configuration."
 
   def server
-    require 'ruby-debug'; debugger
     host.config.dateTimeInfo.ntpConfig.server
   end
 
@@ -18,11 +17,7 @@ Puppet::Type.type(:esx_ntpconfig).provide(:esx_ntpconfig, :parent => Puppet::Pro
   private
 
   def host
-    @host ||= find_host
-  end
-
-  def find_host
-    vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
+    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
   end
 end
 
