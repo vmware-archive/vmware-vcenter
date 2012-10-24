@@ -4,7 +4,6 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   @doc = "Manages vCenter hosts service."
 
   def restart
-    require 'ruby-debug'; debugger
     if host.config.service.service.find{|x| x.key == resource[:service]}.running
       host.configManager.serviceSystem.RestartService(:id => resource[:service])
       host.configManager.serviceSystem.RefreshServices
