@@ -1,13 +1,13 @@
 require 'pathname'
-require 'lib/puppet/modules/transport'
-require 'lib/puppet/modules/transport/vsphere'
+require 'lib/puppet_x/puppetlabs/transport'
+require 'lib/puppet_x/puppetlabs/transport/vsphere'
 
 class Puppet::Provider::Vcenter <  Puppet::Provider
 
   private
 
   def vim
-    @transport ||= Puppet::Modules::Transport.retrieve(resource[:transport], resource.catalog, 'vsphere')
+    @transport ||= PuppetX::Puppetlabs::Transport.retrieve(resource[:transport], resource.catalog, 'vsphere')
     @transport.vim
   end
 

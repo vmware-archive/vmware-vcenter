@@ -1,6 +1,6 @@
 require 'rbvmomi' unless Puppet.run_mode.master?
 
-module Puppet::Modules::Transport
+module PuppetX::Puppetlabs::Transport
   class Vsphere
     attr_accessor :vim
     attr_reader :name, :user, :password, :host

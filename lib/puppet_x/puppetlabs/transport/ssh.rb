@@ -1,6 +1,6 @@
 require 'net/ssh' unless Puppet.run_mode.master?
 
-module Puppet::Modules::Transport
+module Puppet_X::Puppetlabs::Transport
   class Ssh
     attr_accessor :ssh
     attr_reader :name, :user, :password, :host
