@@ -4,7 +4,7 @@ require 'lib/puppet_x/puppetlabs/transport/ssh'
 class Puppet::Provider::Vcsa <  Puppet::Provider
 
   def self.transport(resource)
-    @transport ||= PuppetX::PuppetLabs::Transport.retrieve(resource[:transport], resource.catalog, 'ssh')
+    @transport ||= PuppetX::Puppetlabs::Transport.retrieve(resource[:transport], resource.catalog, 'ssh')
   end
 
   def transport
