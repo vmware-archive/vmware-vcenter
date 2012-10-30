@@ -21,7 +21,7 @@ module PuppetX::Puppetlabs::Transport
     def exec!(command)
       Puppet.debug("Executing on #{@host}:\n#{command}")
       result = @ssh.exec!(command)
-      Puppet.debug("Execution result:\n#{@result}")
+      Puppet.debug("Execution result:\n#{result}")
       result
     end
 
