@@ -16,6 +16,14 @@ Puppet::Type.newtype(:esx_service) do
   newparam(:host) do
   end
 
+  newproperty(:running) do
+    newvalues(:true, :false)
+  end
+
+  newproperty(:policy) do
+    newvalues("on", "off")
+  end
+
   def refresh
     provider.restart
   end

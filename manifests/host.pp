@@ -28,6 +28,7 @@ define vcenter::host (
     transport => $transport,
   }
 
+  # We do not need to manage the enure state.
   esx_service { "${name}:ntpd":
     subscribe => Esx_ntpconfig[$name],
   }
