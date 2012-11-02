@@ -34,6 +34,8 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
       folder.hostFolder
     when RbVmomi::VIM::ClusterComputeResource
       folder
+    when RbVmomi::VIM::ComputeResource
+      folder.resourcePool
     when NilClass
       raise Puppet::Error.new("Invalid path: #{@resource[:path]}.")
     else
