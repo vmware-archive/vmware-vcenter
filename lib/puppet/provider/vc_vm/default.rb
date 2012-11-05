@@ -70,5 +70,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def vm
     @vm = locate(File.join(resource[:path], resource[:name]), RbVmomi::VIM::VirtualMachine)
   end
+
+  def walk_dc(path=resource[:path])
+    @datacenter = walk(path, RbVmomi::VIM::Datacenter)
+    raise Puppet::Error.new( "No datacenter in path: #{path}") unless @datacenter
+    @datacenter
+  end
 end
 
