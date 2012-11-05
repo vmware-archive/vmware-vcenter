@@ -21,7 +21,7 @@ Puppet::Type.newtype(:esx_service) do
   end
 
   newproperty(:policy) do
-    newvalues("on", "off")
+    newvalues(:off, :on, :automatic)
   end
 
   def refresh
