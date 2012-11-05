@@ -3,13 +3,18 @@ define vcenter::host (
   $path,
   $username,
   $password,
-  $dateTimeConfig = undef,
+  $dateTimeConfig = {},
   # transport is a metaparameter
 ) {
 
   $default = {
-    'ntpConfig' => {
-      'server' => ['ntp.puppetlabs.lan'],
+    ntpConfig => {
+      running => true,
+      policy => 'automatic',
+      server => [ '0.pool.ntp.org', '1.pool.ntp.org', ],
+    },
+    timeZone => {
+      key => 'UTC',
     },
   }
 
@@ -30,6 +35,8 @@ define vcenter::host (
 
   # We do not need to manage the enure state.
   esx_service { "${name}:ntpd":
+    policy  => $dtconf['ntpConfig']['policy'],
+    running => $dtconf['ntpConfig']['running'],
     subscribe => Esx_ntpconfig[$name],
   }
 }
