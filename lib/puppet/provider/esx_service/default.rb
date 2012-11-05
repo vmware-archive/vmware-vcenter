@@ -18,10 +18,8 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
 
   def running=(value)
     if value == :true
-      Puppet.debug "ESX service #{resource[:name]} starting"
       host.configManager.serviceSystem.StartService(:id => resource[:service])
     else
-      Puppet.debug "ESX service #{resource[:name]} stopping"
       host.configManager.serviceSystem.StopService(:id => resource[:service])
     end
   end
@@ -32,7 +30,6 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   end
 
   def policy=(value)
-    Puppet.debug "ESX service #{resource[:name]} setting policy to #{value}"
     host.configManager.serviceSystem.UpdateServicePolicy(:id => resource[:service], :policy => value)
   end
 
