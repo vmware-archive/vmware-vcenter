@@ -7,7 +7,7 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
     if host.config.service.service.find{|x| x.key == resource[:service]}.running
       host.configManager.serviceSystem.RestartService(:id => resource[:service])
     else
-      Puppet.debug "ESX service #{resource[:service]} is not running."
+      Puppet.debug "ESX service #{resource[:name]} restart ignored - not running"
     end
   end
 
@@ -30,7 +30,7 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   end
 
   def policy=(value)
-    # TODO:
+    host.configManager.serviceSystem.UpdateServicePolicy(:id => resource[:service], :policy => value)
   end
 
   private
