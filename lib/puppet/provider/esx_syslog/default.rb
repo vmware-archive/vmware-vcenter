@@ -1,4 +1,4 @@
-require 'lib/puppet/provider/vcenter'
+require 'puppet/provider/vcenter'
 
 Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts syslog configuration."
