@@ -5,36 +5,29 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
 
   def initialize(args)
     @prefix       = 'Syslog.global.'
-    @changedvalue = []
-
-    # TODO: we lose camelcase when properties are created.
-    @propmap = {
-      :logdir        => 'logDir',
-      :loghost       => 'logHost',
-      :logdirunique  => 'logDirUnique',
-      :defaultrotate => 'defaultRotate',
-      :defaultsize   => 'defaultSize',
-    }
+    @changed_value = []
 
     super(args)
   end
 
   Puppet::Type.type(:esx_syslog).properties.collect{|x| x.name}.each do |prop|
+    camel_prop = prop.to_s.camelize(:lower).to_sym
+
     define_method(prop) do
-      config[prop]
+      config[camel_prop]
     end
 
     define_method("#{prop}=") do |value|
       # TODO: rbvmomi automatically cast numbers to long, and we need to query
       # the property and do this manually for RbVmomi::BasicTypes::Int.new.
       # This is pending Ruby 1.8.7 fix.
-      @changedvalue << { :key => "#{@prefix}#{@propmap[prop] || prop}", :value => value }
+      @changed_value << { :key => "#{@prefix}#{camel_prop}", :value => value }
     end
   end
 
   def flush
     begin
-      host.configManager.advancedOption.UpdateOptions(:changedValue => @changedvalue)
+      host.configManager.advancedOption.UpdateOptions(:changedValue => @changed_value)
     rescue Exception => e
       raise Puppet::Error, "UpdateOptions failed: #{e.argument}"
     end
@@ -48,7 +41,7 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
 
   def key_value(object, prefix)
     subset = object.select{ |x| x.key=~ /^#{Regexp.escape(prefix)}/ }
-    result = Hash[* subset.collect{ |x| [x.key.gsub(/^#{Regexp.escape(prefix)}/,'').downcase.to_sym, x.value] }.flatten ]
+    result = Hash[* subset.collect{ |x| [x.key.gsub(/^#{Regexp.escape(prefix)}/,'').to_sym, x.value] }.flatten ]
   end
 
   def host

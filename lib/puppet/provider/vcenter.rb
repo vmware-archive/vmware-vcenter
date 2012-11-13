@@ -1,6 +1,7 @@
 require 'pathname'
 require 'lib/puppet_x/puppetlabs/transport'
 require 'lib/puppet_x/puppetlabs/transport/vsphere'
+require 'lib/puppet_x/vmware/util'
 
 class Puppet::Provider::Vcenter <  Puppet::Provider
 
@@ -43,6 +44,21 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     end
   end
 
+  def findvm(folder)
+    vms = []
+    folder.children.each do |c|
+      puts c.class
+      case c
+      when RbVmomi::VIM::Folder
+        puts c
+        vms += findvm(c)
+      when RbVmomi::VIM::VirtualMachine
+        vms << c
+      end
+    end
+    vms
+  end
+
   def locate(path, type=nil)
     folder = rootfolder
     Pathname.new(path).each_filename do |dir|
@@ -63,11 +79,11 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     end
   end
 
-  def parent
-    @parent ||= Pathname.new(resource[:path]).parent.to_s
+  def parent(path=resource[:path])
+    Pathname.new(path).parent.to_s
   end
 
-  def basename
-    @basename ||= Pathname.new(resource[:path]).basename.to_s
+  def basename(path=resource[:path])
+    Pathname.new(path).basename.to_s
   end
 end

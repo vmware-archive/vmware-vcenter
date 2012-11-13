@@ -7,7 +7,8 @@ transport { 'vcenter':
 notify { 'trigger': }
 
 esx_service { '192.168.232.240:ntpd':
-  running   => true,
+  running   => false,
+  policy    => 'on',
   transport => Transport['vcenter'],
   subscribe => Notify['trigger'],
 }

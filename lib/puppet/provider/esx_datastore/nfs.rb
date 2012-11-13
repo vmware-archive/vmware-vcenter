@@ -1,6 +1,5 @@
 require 'lib/puppet/provider/vcenter'
 
-# TODO: not sure if it makes sense writting this as different providers.
 Puppet::Type.type(:esx_datastore).provide(:nfs, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter CIFS/NFS datastore."
 
@@ -10,19 +9,18 @@ Puppet::Type.type(:esx_datastore).provide(:nfs, :parent => Puppet::Provider::Vce
   has_features :remote
 
   def create
-    volume = {
-      :remoteHost => resource[:remotehost],
-      :remotePath => resource[:remotepath],
-      :localPath  => resource[:localpath],
-      :accessMode => resource[:accessmode],
-    }
+
+    volume = {}
+    [:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
+      volume[prop.to_s.camelize.to_sym] = resource[prop]
+    end
 
     case resource[:type]
     when 'NFS'
       host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
     when 'CIFS'
       volume[:type] = 'CIFS'
-      volume[:username] = resource[:username] if resource[:username]
+      volume[:userName] = resource[:user_name] if resource[:user_name]
       volume[:password] = resource[:password] if resource[:password]
       host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
     end
@@ -40,11 +38,11 @@ Puppet::Type.type(:esx_datastore).provide(:nfs, :parent => Puppet::Provider::Vce
     warn "Can not change resource type."
   end
 
-  def remotehost
+  def remote_host
     @datastore.info.nas.remoteHost
   end
 
-  def remotepath
+  def remote_path
     @datastore.info.nas.remotePath
   end
 

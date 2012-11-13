@@ -9,7 +9,7 @@ Puppet::Type.newtype(:esx_datastore) do
     munge do |value|
       @resource[:host], @resource[:datastore] = value.split(':',2)
       # TODO: not sure if this is good assumption.
-      @resource[:localpath] = @resource[:datastore]
+      @resource[:local_path] = @resource[:datastore]
       value
     end
   end
@@ -33,10 +33,10 @@ Puppet::Type.newtype(:esx_datastore) do
     end
   end
 
-  newparam(:localPath) do
+  newparam(:local_path) do
   end
 
-  newparam(:accessMode) do
+  newparam(:access_mode) do
     desc 'Enum - HostMountMode: Defines the access mode of the datastore.'
     newvalues('readOnly', 'readWrite')
     defaultto('readWrite')
@@ -46,22 +46,22 @@ Puppet::Type.newtype(:esx_datastore) do
   end
 
   # CIFS/NFS only properties.
-  newproperty(:remoteHost, :required_features => :remote) do
+  newproperty(:remote_host, :required_features => :remote) do
   end
 
-  newproperty(:remotePath, :required_features => :remote) do
+  newproperty(:remote_path, :required_features => :remote) do
   end
 
   # CIFS only parameters.
-  newparam(:userName) do
+  newparam(:user_name) do
   end
 
   newparam(:password) do
   end
 
   validate do
-    raise Puppet::Error, "Missing remoteHost property" unless self[:remotehost]
-    raise Puppet::Error, "Missing remotePath property" unless self[:remotepath]
+    raise Puppet::Error, "Missing remoteHost property" unless self[:remote_host]
+    raise Puppet::Error, "Missing remotePath property" unless self[:remote_path]
   end
 
   autorequire(:vc_host) do

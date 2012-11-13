@@ -1,3 +1,5 @@
+require 'lib/puppet/property/vc_bool'
+
 Puppet::Type.newtype(:esx_service) do
   @doc = "Manage vCenter esx hosts service."
 
@@ -18,6 +20,11 @@ Puppet::Type.newtype(:esx_service) do
 
   newproperty(:running) do
     newvalues(:true, :false)
+    defaultto(false)
+
+    munge do |value|
+      value
+    end
   end
 
   newproperty(:policy) do
