@@ -60,8 +60,8 @@ Puppet::Type.newtype(:esx_datastore) do
   end
 
   validate do
-    raise Puppet::Error, "Missing remoteHost property" unless self[:remote_host]
-    raise Puppet::Error, "Missing remotePath property" unless self[:remote_path]
+    raise Puppet::Error, "Missing remote_host property" unless self[:remote_host]
+    raise Puppet::Error, "Missing remote_path property" unless self[:remote_path]
   end
 
   autorequire(:vc_host) do

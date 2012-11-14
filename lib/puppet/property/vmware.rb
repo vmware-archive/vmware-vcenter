@@ -1,11 +1,14 @@
 require 'puppet_x/vmware/util'
 
 class Puppet::Property::VMware < Puppet::Property
+
+  include PuppetX::VMware::Util
+
   def camel_munge(value, uppercase = false)
     case value
     when Hash
       value.each do |k, v|
-        value[k.to_s.camelize(:lower)] = camel_munge v
+        value[camelize(k, :lower)] = camel_munge v
         value.delete k
       end
     else
@@ -14,7 +17,7 @@ class Puppet::Property::VMware < Puppet::Property
   end
 
   def camel_name
-    self.class.name.camelize(:lower)
+    camelize(self.class.name, :lower)
   end
 end
 

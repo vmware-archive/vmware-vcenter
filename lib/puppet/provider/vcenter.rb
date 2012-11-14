@@ -7,6 +7,8 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
 
   private
 
+  include PuppetX::VMware::Util
+
   def vim
     @transport ||= PuppetX::Puppetlabs::Transport.retrieve(resource[:transport], resource.catalog, 'vsphere')
     @transport.vim

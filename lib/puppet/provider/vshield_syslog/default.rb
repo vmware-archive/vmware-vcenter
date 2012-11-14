@@ -5,7 +5,7 @@ Puppet::Type.type(:vshield_syslog).provide(:vs_syslog, :parent => Puppet::Provid
 
   def server_info
     result = get('services/syslog/config')
-    parse(result, ['syslogServerConfig', 'serverInfo'])
+    result['syslogServerConfig']['serverInfo']
   end
 
   def server_info=(value)

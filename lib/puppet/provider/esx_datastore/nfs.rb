@@ -12,7 +12,7 @@ Puppet::Type.type(:esx_datastore).provide(:nfs, :parent => Puppet::Provider::Vce
 
     volume = {}
     [:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
-      volume[prop.to_s.camelize.to_sym] = resource[prop]
+      volume[camelize(prop, :lower).to_sym] = resource[prop]
     end
 
     case resource[:type]
