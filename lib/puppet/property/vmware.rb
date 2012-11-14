@@ -8,8 +8,9 @@ class Puppet::Property::VMware < Puppet::Property
     case value
     when Hash
       value.each do |k, v|
-        value[PuppetX::VMware::Util.camelize(k, :lower)] = camel_munge v
-        value.delete k
+        camel_k = PuppetX::VMware::Util.camelize(k, :lower)
+        value[camel_k] = camel_munge v
+        value.delete k unless k == camel_k
       end
     else
       value
