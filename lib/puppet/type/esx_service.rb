@@ -1,5 +1,3 @@
-require 'lib/puppet/property/vc_bool'
-
 Puppet::Type.newtype(:esx_service) do
   @doc = "Manage vCenter esx hosts service."
 
