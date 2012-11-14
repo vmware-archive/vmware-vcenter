@@ -11,7 +11,7 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
   end
 
   Puppet::Type.type(:esx_syslog).properties.collect{|x| x.name}.each do |prop|
-    camel_prop = camelize(prop, :lower).to_sym
+    camel_prop = PuppetX::VMware::Util.camelize(prop, :lower).to_sym
 
     define_method(prop) do
       config[camel_prop]

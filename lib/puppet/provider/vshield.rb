@@ -1,6 +1,7 @@
 require 'pathname'
-require 'lib/puppet_x/puppetlabs/transport'
-require 'lib/puppet_x/puppetlabs/transport/vshield'
+require 'puppet_x/puppetlabs/transport'
+require 'puppet_x/puppetlabs/transport/vshield'
+require 'puppet_x/vmware/util'
 
 unless Puppet.run_mode.master?
   # Using Savon's library:

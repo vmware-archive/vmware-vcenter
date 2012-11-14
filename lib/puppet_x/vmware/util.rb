@@ -1,7 +1,7 @@
 module PuppetX
   module VMware
     module Util
-      def camelize(snake_case, first_letter = :upper)
+      def self.camelize(snake_case, first_letter = :upper)
         case first_letter
         when :upper
           snake_case.to_s.gsub(/\/(.?)/){ "::" + $1.upcase }.gsub(/(^|_)(.)/) { $2.upcase }
