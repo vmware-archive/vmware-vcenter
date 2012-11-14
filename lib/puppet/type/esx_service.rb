@@ -18,6 +18,11 @@ Puppet::Type.newtype(:esx_service) do
 
   newproperty(:running) do
     newvalues(:true, :false)
+    defaultto(false)
+
+    munge do |value|
+      value
+    end
   end
 
   newproperty(:policy) do

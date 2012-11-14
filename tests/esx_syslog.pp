@@ -5,7 +5,7 @@ transport { 'vcenter':
 }
 
 esx_syslog { '192.168.232.240':
-  defaultrotate => 8,
-  defaultsize   => 2048,
-  transport     => Transport['vcenter'],
+  default_rotate => 8,
+  default_size   => 2048,
+  transport      => Transport['vcenter'],
 }

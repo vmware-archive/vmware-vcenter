@@ -1,0 +1,21 @@
+require 'rest_client' unless Puppet.run_mode.master?
+
+module PuppetX::Puppetlabs::Transport
+  class Vshield
+    attr_accessor :rest
+    attr_reader :name, :user, :password, :host
+
+    def initialize(option)
+      @name     = option[:name]
+      @user     = option[:username]
+      @password = option[:password]
+      @host     = option[:server]
+      Puppet.debug("#{self.class} initializing connection to: #{@host}")
+    end
+
+    def connect
+      @rest ||= RestClient::Resource.new("https://#{@host}/api/2.0", :user => @user, :password => @password)
+    end
+
+  end
+end
