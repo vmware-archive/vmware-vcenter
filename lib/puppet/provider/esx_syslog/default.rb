@@ -27,7 +27,9 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
 
   def flush
     begin
-      host.configManager.advancedOption.UpdateOptions(:changedValue => @changed_value)
+      unless @changed_value.empty?
+        host.configManager.advancedOption.UpdateOptions(:changedValue => @changed_value)
+      end
     rescue Exception => e
       raise Puppet::Error, "UpdateOptions failed: #{e.argument}"
     end

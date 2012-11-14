@@ -1,7 +1,7 @@
 require 'puppet/provider/vshield'
 
-Puppet::Type.type(:vs_syslog).provide(:vs_syslog, :parent => Puppet::Provider::Vshield) do
-  @doc = 'Manages vShild hosts syslog configuration.'
+Puppet::Type.type(:vshield_syslog).provide(:vs_syslog, :parent => Puppet::Provider::Vshield) do
+  @doc = 'Manages vShield hosts syslog configuration.'
 
   def server_info
     result = get('services/syslog/config')
@@ -14,4 +14,3 @@ Puppet::Type.type(:vs_syslog).provide(:vs_syslog, :parent => Puppet::Provider::V
     put('services/syslog/config', setting)
   end
 end
-

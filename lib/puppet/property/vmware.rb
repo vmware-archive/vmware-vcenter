@@ -1,7 +1,6 @@
 require 'puppet_x/vmware/util'
 
-class Vshield < Puppet::Property
-
+class Puppet::Property::VMware < Puppet::Property
   def camel_munge(value, uppercase = false)
     case value
     when Hash
@@ -17,7 +16,9 @@ class Vshield < Puppet::Property
   def camel_name
     self.class.name.camelize(:lower)
   end
+end
 
+class Puppet::Property::VMware::Hash < Puppet::Property::VMware
   def munge(value)
     value = camel_munge(value)
   end

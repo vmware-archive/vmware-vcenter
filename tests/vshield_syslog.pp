@@ -4,7 +4,7 @@ transport { 'vshield':
   server   => '192.168.232.149',
 }
 
-vs_syslog { '192.168.232.149':
-  server_info => '192.168.232.1:1000',
+vshield_syslog { '192.168.232.149':
+  server_info => '192.168.232.2:1000',
   transport   => Transport['vshield'],
 }
