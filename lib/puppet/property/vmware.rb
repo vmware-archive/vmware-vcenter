@@ -1,3 +1,4 @@
+require 'hashdiff'
 require 'puppet_x/vmware/util'
 
 class Puppet::Property::VMware < Puppet::Property
@@ -12,6 +13,7 @@ class Puppet::Property::VMware < Puppet::Property
         value[camel_k] = camel_munge v
         value.delete k unless k == camel_k
       end
+      value
     else
       value
     end
@@ -22,8 +24,24 @@ class Puppet::Property::VMware < Puppet::Property
   end
 end
 
-class Puppet::Property::VMware::Hash < Puppet::Property::VMware
+class Puppet::Property::VMware_Hash < Puppet::Property::VMware
+
   def munge(value)
     value = camel_munge(value)
+  end
+
+  def is_to_s(v)
+    v.inspect
+  end
+
+  def should_to_s(v)
+    v.inspect
+  end
+
+  def insync?(current)
+    desire = @should.first
+    current ||= {}
+    diff = HashDiff.diff(desire, current)
+    diff.empty? or diff.select{|x| x.first != '+'}.empty?
   end
 end
