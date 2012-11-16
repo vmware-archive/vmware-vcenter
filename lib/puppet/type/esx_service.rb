@@ -18,10 +18,18 @@ Puppet::Type.newtype(:esx_service) do
 
   newproperty(:running) do
     newvalues(:true, :false)
-    defaultto(false)
-
-    munge do |value|
-      value
+    defaultto(:false)
+    # 
+    # The provider must accept and return Symbols :true and
+    # :false, not TrueClass nor FalseClass. Methods is_to_s and
+    # should_to_s clarify messages like 'changed true to true'
+    # that would result from provider bugs.
+    # 
+    def is_to_s(v)
+      v.inspect
+    end
+    def should_to_s(v)
+      v.inspect
     end
   end
 
