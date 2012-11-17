@@ -4,7 +4,7 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   @doc = "Manages vCenter hosts service."
 
   def restart
-    if host.config.service.service.find{|x| x.key == resource[:service]}.running
+    if svc.running
       host.configManager.serviceSystem.RestartService(:id => resource[:service])
     else
       Puppet.debug "ESX service #{resource[:name]} restart ignored - not running"
@@ -12,28 +12,41 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   end
 
   def running
-    service = host.config.service.service.find{|x| x.key == resource[:service]}
-    service.running ? :true : :false
+    value = svc.running ? :true : :false
+    Puppet.debug "ESX service #{resource[:name]} -- get running = #{value.class} '#{value.inspect}'"
+    value
   end
 
   def running=(value)
-    if value == :true
+    Puppet.debug "ESX service #{resource[:name]} -- set running = #{value.class} '#{value.inspect}'"
+    case value
+    when :true
       host.configManager.serviceSystem.StartService(:id => resource[:service])
-    else
+    when :false
       host.configManager.serviceSystem.StopService(:id => resource[:service])
+    else
+      fail "invalid input #{value.class} '#{value.inspect}'"
     end
   end
 
   def policy
-    service = host.config.service.service.find{|x| x.key == resource[:service]}
-    service.policy if service
+    value = svc.policy
+    Puppet.debug "ESX service #{resource[:name]} -- get policy = #{value.class} '#{value.inspect}'"
+    value
   end
 
   def policy=(value)
+    Puppet.debug "ESX service #{resource[:name]} -- set policy = #{value.class} '#{value.inspect}'"
     host.configManager.serviceSystem.UpdateServicePolicy(:id => resource[:service], :policy => value)
   end
 
   private
+
+  def svc
+    @svc ||= 
+        host.config.service.service.find{|x| x.key == resource[:service]} || 
+        fail("service #{resource[:service]} not found")
+  end
 
   def host
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
