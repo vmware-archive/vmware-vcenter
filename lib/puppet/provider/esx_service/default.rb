@@ -43,10 +43,9 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   private
 
   def svc
-    return @svc if @svc
-    @svc = host.config.service.service.find{|x| x.key == resource[:service]}
-    return @svc if @svc
-    fail "service #{resource[:service]} not found"
+    @svc ||= 
+        host.config.service.service.find{|x| x.key == resource[:service]} || 
+        fail("service #{resource[:service]} not found")
   end
 
   def host
