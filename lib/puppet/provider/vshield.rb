@@ -1,7 +1,9 @@
-require 'pathname'
-require 'puppet_x/puppetlabs/transport'
-require 'puppet_x/puppetlabs/transport/vshield'
-require 'puppet_x/vmware/util'
+require 'pathname' # WORK_AROUND #14073 and #7788
+module_lib = Pathname.new(__FILE__).parent.parent.parent
+require File.join module_lib, 'puppet_x/puppetlabs/transport'
+require File.join module_lib, 'puppet_x/puppetlabs/transport/vshield'
+require File.join module_lib, 'puppet_x/puppetlabs/transport/vsphere'
+require File.join module_lib, 'puppet_x/vmware/util'
 
 unless Puppet.run_mode.master?
   # Using Savon's library:
