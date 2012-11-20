@@ -28,13 +28,13 @@ Puppet::Type.type(:vshield_global_config).provide(:vshield_global_config, :paren
         }
       }
 
-      post('global/config', data)
+      post('api/2.0/global/config', data)
     end
   end
 
   private
 
   def config
-    @config ||= get('global/config')['vsmGlobalConfig']
+    @config ||= get('api/2.0/global/config')['vsmGlobalConfig']
   end
 end
