@@ -1,5 +1,7 @@
 require 'hashdiff'
-require 'puppet_x/vmware/util'
+require 'pathname' # WORK_AROUND #14073 and #7788
+module_lib = Pathname.new(__FILE__).parent.parent.parent
+require File.join module_lib, 'puppet_x/vmware/util'
 
 class Puppet::Property::VMware < Puppet::Property
 
