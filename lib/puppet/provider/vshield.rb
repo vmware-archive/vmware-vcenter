@@ -11,6 +11,7 @@ unless Puppet.run_mode.master?
   require 'gyoku'
 end
 
+# TODO: Depending on number of shared methods, we might make Puppet::Provider::Vcenter parent:
 class Puppet::Provider::Vshield <  Puppet::Provider
 
   private
