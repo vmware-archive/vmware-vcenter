@@ -1,10 +1,10 @@
 require 'puppet/property/vmware'
 
 Puppet::Type.newtype(:vshield_global_config) do
-  @doc = "Manage vShield global config."
+  @doc = 'Manage vShield global config.'
 
   newparam(:host, :namevar => true) do
-    desc "vShield hostname or ip address."
+    desc 'vShield hostname or ip address.'
   end
 
   newproperty(:vc_info, :parent => Puppet::Property::VMware_Hash) do
