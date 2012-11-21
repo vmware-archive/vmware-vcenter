@@ -9,7 +9,7 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
   private
 
   def vim
-    @transport ||= PuppetX::Puppetlabs::Transport.retrieve(resource[:transport], resource.catalog, 'vsphere')
+    @transport ||= PuppetX::Puppetlabs::Transport.retrieve(:resource_ref => resource[:transport], :catalog => resource.catalog, :provider => 'vsphere')
     @transport.vim
   end
 
