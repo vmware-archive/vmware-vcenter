@@ -5,7 +5,7 @@ class vcenter::server (
   $username          = 'VCENTER',        #: vCenter service username
   $password          = 'vC3nt!2008demo', #: vCenter service password
   $jvm_memory_option = 'S',              #: Inventory size (S, M, L)
-  $client            = true              #: Install vSphere client
+  $client            = true,             #: Install vSphere client
   $provider          = $vcenter::params::provider
 ) inherits vcenter::params {
 
