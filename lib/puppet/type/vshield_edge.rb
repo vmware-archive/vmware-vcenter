@@ -65,11 +65,6 @@ Puppet::Type.newtype(:vshield_edge) do
     def change_to_s(is, should)
       "#{is.inspect}\n#{should.inspect}"
     end
-
-    def insync?(is)
-      require 'ruby-debug';debugger
-      @should = 'hi'
-    end
   end
 
   autorequire(:transport) do

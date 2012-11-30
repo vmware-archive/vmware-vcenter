@@ -34,7 +34,6 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
   end
 
   def exists?
-    require 'ruby-debug'; debugger
     @instance = edge_summary.find{|x| x['name'] == resource[:edge_name]}
   end
 
