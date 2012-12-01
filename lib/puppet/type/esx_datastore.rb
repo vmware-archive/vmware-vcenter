@@ -66,6 +66,6 @@ Puppet::Type.newtype(:esx_datastore) do
 
   autorequire(:vc_host) do
     # autorequire esx host.
-    self[:name]
+    self[:host]
   end
 end
