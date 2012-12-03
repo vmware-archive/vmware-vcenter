@@ -77,12 +77,12 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   private
 
-  def datacenter
-    vim.serviceInstance.find_datacenter resource[:datacenter_name]
+  def datacenter(name=resource[:datacenter_name])
+    vim.serviceInstance.find_datacenter name or raise Puppet::Error, "datacenter '#{name}' not found."
   end
 
-  def compute
-    datacenter.find_compute_resource resource[:compute]
+  def compute(name=resource[:compute])
+    datacenter.find_compute_resource name or raise Puppet::Error, "compute resource '#{name}' not found."
   end
 
   def datastore
