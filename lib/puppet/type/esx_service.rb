@@ -43,6 +43,6 @@ Puppet::Type.newtype(:esx_service) do
 
   autorequire(:vc_host) do
     # autorequire esx host.
-    self[:name]
+    self[:host]
   end
 end
