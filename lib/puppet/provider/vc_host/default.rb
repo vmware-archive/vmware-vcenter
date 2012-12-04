@@ -16,7 +16,16 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
         :sslThumbprint => sslThumbprint,
       }
 
-      vmfolder(resource[:path]).AddStandaloneHost_Task(:spec => spec, :addConnected => true).wait_for_completion
+      o = vmfolder(resource[:path])
+      if o.respond_to? :AddStandaloneHost_Task
+        o.AddStandaloneHost_Task(
+          :spec => spec, :addConnected => true).wait_for_completion
+      elsif o.respond_to? :AddHost_Task
+        o.AddHost_Task(
+          :spec => spec, :asConnected => true).wait_for_completion
+      else
+        fail "unsupported operation: attempt to add host to object of class #{o.class}"
+      end
     rescue RbVmomi::VIM::SSLVerifyFault
       unless resource[:secure]
         sslThumbprint = $!.fault.thumbprint
