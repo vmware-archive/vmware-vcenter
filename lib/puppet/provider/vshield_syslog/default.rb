@@ -4,8 +4,8 @@ Puppet::Type.type(:vshield_syslog).provide(:vs_syslog, :parent => Puppet::Provid
   @doc = 'Manages vShield hosts syslog configuration.'
 
   def server_info
-    result = get('api/2.0/services/syslog/config') || []
-    result['syslogServerConfig']['serverInfo']
+    result = get('api/2.0/services/syslog/config')
+    nested_value(result, ['syslogServerConfig', 'serverInfo'], 'not defined.')
   end
 
   def server_info=(value)

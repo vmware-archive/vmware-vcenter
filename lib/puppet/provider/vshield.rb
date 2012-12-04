@@ -46,11 +46,23 @@ class Puppet::Provider::Vshield <  Puppet::Provider
     server = vc_info['ipAddress']
     raise Puppet::Error "vSphere API connection failure: vShield #{resource[:transport]} not connected to vCenter." unless server
     connection = resource.catalog.resources.find{|x| x.class == Puppet::Type::Transport && x[:server] == server}.to_hash
-    raise Puppet::Error "vSphere API connection failure: vCenter #{ip_address} connection not available in manifest." unless connection
+    raise Puppet::Error "vSphere API connection failure: vCenter #{server} connection not available in manifest." unless connection
     connection
   end
 
   def vc_info
     @vc_info ||= get('api/2.0/global/config')['vsmGlobalConfig']['vcInfo']
+  end
+
+  def nested_value(hash, keys, default=nil)
+    value = hash.dup
+    keys.each_with_index do |item, index|
+      unless (value.is_a? Hash) && (value.include? item)
+        default = yield hash, keys, index if block_given?
+        return default
+      end
+      value = value[item]
+    end
+    value
   end
 end
