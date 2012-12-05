@@ -96,7 +96,7 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def edge_summary
     # TODO: This may exceed 256 pagesize limit.
-    @edge_summary ||= get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']
+    @edge_summary ||= get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary'].flatten
   end
 
   def edge_detail
