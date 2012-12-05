@@ -35,7 +35,10 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def exists?
     result = edge_summary || []
-    @instance = result.find{|x| x['name'] == resource[:edge_name]}
+    begin
+      @instance = result.find{|x| x['name'] == resource[:edge_name]}
+    rescue Exception
+    end
   end
 
   def create
