@@ -34,7 +34,8 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
   end
 
   def exists?
-    @instance = edge_summary.find{|x| x['name'] == resource[:edge_name]}
+    result = edge_summary || []
+    @instance = result.find{|x| x['name'] == resource[:edge_name]}
   end
 
   def create
@@ -99,6 +100,7 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
   end
 
   def edge_detail
+    raise Puppet::Error, "edge not available" unless @instance
     @edge_detail ||= get("api/3.0/edges/#{@instance['id']}")['edge']
   end
 end
