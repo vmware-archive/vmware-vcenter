@@ -35,7 +35,10 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def exists?
     result = edge_summary || []
-    @instance = result.find{|x| x['name'] == resource[:edge_name]}
+    begin
+      @instance = result.find{|x| x['name'] == resource[:edge_name]}
+    rescue Exception
+    end
   end
 
   def create
@@ -56,17 +59,19 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
     }
 
     if resource[:vnics]
-      vnics = []
-      resource[:vnics].each_with_index do |v, i|
-        nic_defaults = {
-          :index => i
-        }
-        vnics << nic_defaults.merge(v)
+      vnic = []
+      resource[:vnics].each_with_index do |item,index|
+        value = {}
+        item.each do |k, v|
+          value[k.to_sym] = v
+        end
+        value[:index] = index
+        vnic << {item['name'] => value }
       end
-      data[:vnics] = vnics
+      data[:vnics] = { :vnic => vnic }
     end
 
-    order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances]
+    order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances, :vnics]
     data[:order!] = order - (order - data.keys)
 
     post("api/3.0/edges",:edge => data)
@@ -96,7 +101,7 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def edge_summary
     # TODO: This may exceed 256 pagesize limit.
-    @edge_summary ||= get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']
+    @edge_summary ||= [get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']].flatten
   end
 
   def edge_detail
