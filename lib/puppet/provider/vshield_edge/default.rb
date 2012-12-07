@@ -59,17 +59,19 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
     }
 
     if resource[:vnics]
-      vnics = []
-      resource[:vnics].each_with_index do |v, i|
-        nic_defaults = {
-          :index => i
-        }
-        vnics << nic_defaults.merge(v)
+      vnic = []
+      resource[:vnics].each_with_index do |item,index|
+        value = {}
+        item.each do |k, v|
+          value[k.to_sym] = v
+        end
+        value[:index] = index
+        vnic << {item['name'] => value }
       end
-      data[:vnics] = vnics
+      data[:vnics] = { :vnic => vnic }
     end
 
-    order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances]
+    order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances, :vnics]
     data[:order!] = order - (order - data.keys)
 
     post("api/3.0/edges",:edge => data)
