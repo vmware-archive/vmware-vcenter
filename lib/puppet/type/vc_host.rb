@@ -58,4 +58,9 @@ Puppet::Type.newtype(:vc_host) do
     # autorequire immediate parent Cluster.
     self[:path]
   end
+
+  autorequire(:anchor) do
+    # autorequire optional anchor to wait for vc_cluster config
+    self[:path]
+  end
 end
