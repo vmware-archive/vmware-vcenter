@@ -21,6 +21,11 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
       # TODO: rbvmomi automatically cast numbers to long, and we need to query
       # the property and do this manually for RbVmomi::BasicTypes::Int.new.
       # This is pending Ruby 1.8.7 fix.
+      if [ :default_rotate, :default_size ].include? prop
+        value = RbVmomi::BasicTypes::Int.new value
+      elsif prop == :log_dir_unique
+        value = (value == :true)
+      end
       @changed_value << { :key => "#{@prefix}#{camel_prop}", :value => value }
     end
   end
