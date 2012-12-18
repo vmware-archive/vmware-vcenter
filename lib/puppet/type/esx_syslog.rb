@@ -44,4 +44,12 @@ Puppet::Type.newtype(:esx_syslog) do
     # autorequire esx host.
     self[:name]
   end
+
+  autorequire(:esx_datastore) do
+    # autorequire datastore from log_dir
+    if self[:log_dir]
+      ds = self[:log_dir].match(/\[([^\]]+)\](.*)/)[1]
+      "#{self[:name]}:#{ds}"
+    end
+  end
 end
