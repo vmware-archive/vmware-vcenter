@@ -39,7 +39,7 @@ Puppet::Type.newtype(:vshield_edge) do
   newparam(:appliance, :parent => Puppet::Property::VMware_Hash) do
   end
 
-  newparam(:vnics, :parent => Puppet::Property::VMware_Hash) do
+  newproperty(:vnics, :array_matching => :all) do
   end
 
   newparam(:datacenter_name, :parent => Puppet::Property::VMware) do

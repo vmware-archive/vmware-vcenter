@@ -14,7 +14,7 @@ module PuppetX::Puppetlabs::Transport
     end
 
     def connect
-      @rest ||= RestClient::Resource.new("https://#{@host}/", :user => @user, :password => @password)
+      @rest ||= RestClient::Resource.new("https://#{@host}/", :user => @user, :password => @password, :timeout => 300)
     end
 
   end
