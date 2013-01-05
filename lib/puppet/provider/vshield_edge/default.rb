@@ -35,7 +35,10 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def exists?
     result = edge_summary || []
-    @instance = result.find{|x| x['name'] == resource[:edge_name]}
+     begin
+      @instance = result.find{|x| x['name'] == resource[:edge_name]}
+    rescue Exception
+    end
   end
 
   def create
@@ -55,20 +58,37 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
       },
     }
 
-    if resource[:vnics]
-      vnics = []
-      resource[:vnics].each_with_index do |v, i|
-        nic_defaults = {
-          :index => i
-        }
-        vnics << nic_defaults.merge(v)
-      end
-      data[:vnics] = vnics
+    def return_pg_id(port_group)
+      dc = vim.serviceInstance.find_datacenter()
+      result = dc.network.find {|pg| pg.name == port_group } || raise (Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found")
+      result._ref
     end
 
-    order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances]
-    data[:order!] = order - (order - data.keys)
+    if resource[:vnics]
+      vnic = []
+      resource[:vnics].each_with_index do |item,index|
+        value = {}
+        item.each do |k, v|
+          # for portgroups get the ref(object_id) and use that
+          if k == 'portgroup' 
+            pg_id = return_pg_id(v)
+            v = pg_id
+            k = 'portgroup_id'
+          elsif k == 'address_groups'
+            temp_hash = v['addressGroup']['secondaryAddresses'].collect{ |x| x['ipAddress'] } if v['addressGroup']['secondaryAddresses']
+            v['addressGroup']['secondaryAddresses'] = { :ipAddress => temp_hash }
+          end
+          value[k.to_sym] = v
+        end
+        value[:index] = index
+        #vnic << {item['name'] => value }
+        vnic << value
+      end
+      data[:vnics] = { :vnic => vnic }
+    end
 
+    order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances, :vnics]
+    data[:order!] = order - (order - data.keys)
     post("api/3.0/edges",:edge => data)
   end
 
@@ -96,7 +116,7 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def edge_summary
     # TODO: This may exceed 256 pagesize limit.
-    @edge_summary ||= get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']
+    @edge_summary ||= [get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']].flatten
   end
 
   def edge_detail
