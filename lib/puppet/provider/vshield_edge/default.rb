@@ -57,27 +57,18 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
     def return_pg_id(port_group)
       dc = vim.serviceInstance.find_datacenter()
-      dc.network.each do |pg|
-        if pg.name == port_group
-          return pg._ref
-        end
-      end
-      # if it gets here, raise an error
-      raise Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found"
+      result = dc.network.find {|pg| pg.name == port_group || raise Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found"
+      result._ref
     end
 
     if resource[:vnics]
       vnic = []
       resource[:vnics].each_with_index do |item,index|
-        Puppet.debug "item = #{item}"
         value = {}
         item.each do |k, v|
-          Puppet.debug "k = #{k}"
-          Puppet.debug "v = #{v.inspect}"
           # for portgroups get the ref(object_id) and use that
           if k == 'portgroup' 
             pg_id = return_pg_id(v)
-            Puppet.debug "pg_id = #{pg_id}"
             v = pg_id
             k = 'portgroup_id'
           elsif k == 'address_groups'
@@ -95,7 +86,6 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
     order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances, :vnics]
     data[:order!] = order - (order - data.keys)
-    Puppet.debug Gyoku.xml(data)
     post("api/3.0/edges",:edge => data)
   end
 
