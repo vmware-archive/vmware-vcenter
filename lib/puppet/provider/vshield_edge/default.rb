@@ -35,7 +35,10 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def exists?
     result = edge_summary || []
-    @instance = result.find{|x| x['name'] == resource[:edge_name]}
+     begin
+      @instance = result.find{|x| x['name'] == resource[:edge_name]}
+    rescue Exception
+    end
   end
 
   def create
@@ -57,7 +60,7 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
     def return_pg_id(port_group)
       dc = vim.serviceInstance.find_datacenter()
-      result = dc.network.find {|pg| pg.name == port_group || raise Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found"
+      result = dc.network.find {|pg| pg.name == port_group } || raise (Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found")
       result._ref
     end
 
