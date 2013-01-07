@@ -9,7 +9,31 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
   end
 
   def exists?
-    true
+    begin
+      all_ipsets = ipset_detail || []
+      all_ipsets.each do |list|
+        #Puppet.debug("list = #{list['list']['ipset'].inspect}")
+        #Puppet.debug("class = #{list['list']['ipset'].class}")
+        @ipset   = list['list']['ipset'].find{|x| x['name'] == resource[:name]} 
+        Puppet.debug("@ipset = #{@ipset.inspect}")
+        break
+      end
+    rescue Exception
+    end 
+    Puppet.debug("@ipset = #{@ipset.inspect}")
+    #raise Puppet::Error, "end exists"
+    @ipset
+  end
+
+  def create
+    Puppet.debug("@ipset = #{@ipset.inspect}")
+    Puppet.debug("create ipset #{resource[:name]}")
+    data = {}
+    data[:name]     = "#{resource[:name]}"
+    data[:value]    = "#{resource[:value]}" 
+    data[:revision] = '0'
+    Puppet.debug("data = #{data.inspect}")
+    post("api/2.0/services/ipset/#{@scope_moref}", { :ipset => data } )
   end
 
   def destroy
@@ -17,32 +41,8 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
   end
 
   def value
-    value = ''
-    @scope_moref = ''
-    # not implemented
-    if resource[:scope_type].to_s == 'datacenter'
-      @scope_moref = ret_datacenter_id(resource[:scope_name])
-      Puppet.debug("datacenter_id = #{datacenter_id.inspect}")
-    else
-      result = edge_summary || []
-      instance = result.find{|x| x['name'] == resource[:scope_name]}
-      #Puppet.debug("instance = #{instance['id'].inspect}")
-      @scope_moref = instance['id']
-    end
-    if @scope_moref != ''
-      all_ipsets = get_all_ipsets("/api/2.0/services/ipset/scope/#{@scope_moref}")
-      all_ipsets.each do |list|
-        #Puppet.debug("list = #{list['list']['ipset'].inspect}")
-        #Puppet.debug("class = #{list['list']['ipset'].class}")
-        @ipset   = list['list']['ipset'].find{|x| x['name'] == resource[:name]} 
-        Puppet.debug("@ipset = #{@ipset.inspect}")
-        ipset_id = @ipset['objectId']
-        value    = @ipset['value']
-        break
-      end
-    end
-    Puppet.debug("value = #{value}")
-    value
+    Puppet.debug("@ipset['value'] = #{@ipset['value']}")
+    @ipset['value']
   end
 
   def value=(value)
@@ -58,7 +58,6 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
     Puppet.debug("scope_moref =  #{@scope_moref}")
     Puppet.debug("Updating to #{value}")
     put("api/2.0/services/ipset/#{@ipset['objectId']}", data )
-    raise Puppet::Error, "end value= def"
   end
 
   def edge_summary
@@ -76,4 +75,17 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
     @edge_detail ||= get("api/3.0/edges/#{@instance['id']}")['edge']
   end  
 
+  def ipset_detail
+    @scope_moref = ''
+    if resource[:scope_type].to_s == 'datacenter'
+      @scope_moref = ret_datacenter_id(resource[:scope_name])
+      Puppet.debug("datacenter_id = #{datacenter_id.inspect}")
+    else
+      result = edge_summary || []
+      instance = result.find{|x| x['name'] == resource[:scope_name]}
+      #Puppet.debug("instance = #{instance['id'].inspect}")
+      @scope_moref = instance['id']
+    end
+    get_all_ipsets("/api/2.0/services/ipset/scope/#{@scope_moref}")
+  end
 end
