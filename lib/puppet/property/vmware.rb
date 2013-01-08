@@ -47,3 +47,17 @@ class Puppet::Property::VMware_Hash < Puppet::Property::VMware
     diff.empty? or diff.select{|x| x.first != '+'}.empty?
   end
 end
+
+class Puppet::Property::VMware_Array < Puppet::Property::VMware
+  def is_to_s(v)
+    v.inspect
+  end
+
+  def should_to_s(v)
+    v.inspect
+  end
+
+  def insync?(is)
+    is.sort == @should.sort
+  end
+end

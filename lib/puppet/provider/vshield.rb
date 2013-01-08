@@ -89,16 +89,4 @@ class Puppet::Provider::Vshield <  Puppet::Provider
     dc._ref
   end
 
-  def get_detail(type)
-    @scope_moref = ''
-    if resource[:scope_type].to_s == 'datacenter'
-      @scope_moref = datacenter_moref(resource[:scope_name])
-    else
-      result = edge_summary || []
-      instance = result.find{|x| x['name'] == resource[:scope_name]}
-      @scope_moref = instance['id']
-    end
-    [get("/api/2.0/services/#{type}/scope/#{@scope_moref}")].flatten
-  end
-
 end
