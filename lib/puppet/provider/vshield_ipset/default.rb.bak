@@ -1,0 +1,58 @@
+require 'puppet/provider/vshield'
+
+Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider::Vshield) do
+  @doc = 'Manages vShield ipset.'
+
+  def ret_datacenter_id(name=resource[:datacenter_name])
+    dc = vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
+    dc._ref
+    
+  end
+
+  def exists?
+    true
+  end
+
+  def destroy
+    # not implemented
+  end
+
+  def value
+    # not implemented
+    if resource[:scope_type] == 'datacenter'
+      datacenter_id = ret_datacenter_id(resource[:scope_name])
+      get("/api/2.0/services/ipset/scope/#{datacenter_id}")
+    elsif resource[:scope_type] == 'edge'
+      result = edge_summary || []
+      #begin
+        @instance = result.find{|x| x['name'] == resource[:scope_name]}
+      #rescue Exception
+      #end
+      get("/api/2.0/services/ipset/scope/#{@instance['id']}")
+    end
+  end
+
+  def value=(value)
+    Puppet.debug("Updating to #{value}")
+    raise Puppet::Error 'erroring out to identify location'
+  end
+
+  def scopename
+  end
+  def scopename=
+  end
+
+  def scopetype
+  end
+  def scopetype=
+  end
+
+  def edge_summary
+    # TODO: This may exceed 256 pagesize limit.
+    @edge_summary ||= [get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']].flatten
+  end
+
+  autorequire(:transport) do
+    self[:host]
+  end
+end
