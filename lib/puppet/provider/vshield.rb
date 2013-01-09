@@ -44,10 +44,10 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   def connection
     server = vc_info['ipAddress']
-    raise Puppet::Error "vSphere API connection failure: vShield #{resource[:transport]} not connected to vCenter." unless server
-    connection = resource.catalog.resources.find{|x| x.class == Puppet::Type::Transport && x[:server] == server}.to_hash
-    raise Puppet::Error "vSphere API connection failure: vCenter #{server} connection not available in manifest." unless connection
-    connection
+    raise Puppet::Error, "vSphere API connection failure: vShield #{resource[:transport]} not connected to vCenter." unless server
+    connection = resource.catalog.resources.find{|x| x.class == Puppet::Type::Transport && x[:server] == server}
+    raise Puppet::Error, "vSphere API connection failure: vCenter #{server} transport connection not available in manifest." unless connection
+    connection.to_hash
   end
 
   def vc_info
