@@ -23,7 +23,11 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   [:get, :delete].each do |m|
     define_method(m) do |url|
-      result = Nori.parse(rest[url].send(m))
+      begin
+        result = Nori.parse(rest[url].send(m))
+      rescue RestClient::Exception => e
+        raise Puppet::Error, "\n#{e.exception}:\n#{e.response}"
+      end
       Puppet.debug "VShield REST API #{m} #{url} result:\n#{result.inspect}"
       result
     end
@@ -31,7 +35,11 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   [:put, :post].each do |m|
     define_method(m) do |url, data|
-      result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+      begin
+        result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+      rescue RestClient::Exception => e
+        raise Puppet::Error, "\n#{e.exception}:\n#{e.response}"
+      end
       Puppet.debug "VShield REST API #{m} #{url} with #{data.inspect} result:\n#{result.inspect}"
     end
   end
