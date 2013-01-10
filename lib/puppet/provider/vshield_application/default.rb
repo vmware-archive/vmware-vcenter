@@ -42,8 +42,20 @@ Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Pro
     @application['element']['value']
   end
 
-  [:value=, :application_protocol=].each do |m|
-    define_method(m) do |arg|
+  def value=(ports)
+    @pending_changes = true
+  end
+
+  def application_protocol
+    @application['element']['applicationProtocol']
+  end
+
+  def application_protocol=(proto)
+    @pending_changes = true
+  end
+
+  def flush
+    if @pending_changes
       # requires us to increment revision number, thing to try in future is omitting revision key
       @application['revision']                       = @application['revision'].to_i + 1
       @application['element']['applicationProtocol'] = resource[:application_protocol]
@@ -55,11 +67,8 @@ Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Pro
 
       Puppet.debug("Updating to #{value}")
       put("api/2.0/services/application/#{@application['objectId']}", data )
-    end
-  end
 
-  def application_protocol
-    @application['element']['applicationProtocol']
+    end
   end
 
 end
