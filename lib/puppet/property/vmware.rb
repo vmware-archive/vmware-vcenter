@@ -49,6 +49,26 @@ class Puppet::Property::VMware_Hash < Puppet::Property::VMware
 end
 
 class Puppet::Property::VMware_Array < Puppet::Property::VMware
+
+  # Something retarded internally converts false boolean to true, so using symbols.
+  def self.sort
+    @sort ||= :true
+  end
+
+  def self.sort=(value)
+    raise Puppet::Error, 'VMWare_Array sort property must be :true or :false.' unless [:true, :false].include? value
+    @sort = value
+  end
+
+  def self.inclusive
+    @inclusive ||= :true
+  end
+
+  def self.inclusive=(value)
+    raise Puppet::Error, 'VMWare_Array sort property must be :true or :false.' unless [:true, :false].include? value
+    @inclusive = (value == true)
+  end
+
   def is_to_s(v)
     v.inspect
   end
@@ -58,6 +78,14 @@ class Puppet::Property::VMware_Array < Puppet::Property::VMware
   end
 
   def insync?(is)
-    is.sort == @should.sort
+    if self.class.inclusive == :true
+      if self.class.sort == :true
+        is.sort == @should.sort
+      else
+        is == @should
+      end
+    else
+      (@should - is).empty?
+    end
   end
 end
