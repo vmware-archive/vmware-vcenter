@@ -73,4 +73,20 @@ class Puppet::Provider::Vshield <  Puppet::Provider
     end
     value
   end
+
+  def edge_summary
+    # TODO: This may exceed 256 pagesize limit.
+    @edge_summary ||= [get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']].flatten
+  end
+
+  def edge_detail
+    raise Puppet::Error, "edge not available" unless @instance
+    @edge_detail ||= get("api/3.0/edges/#{@instance['id']}")['edge']
+  end
+
+  def datacenter_moref(name=resource[:datacenter_name])
+    dc = vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
+    dc._ref
+  end
+
 end
