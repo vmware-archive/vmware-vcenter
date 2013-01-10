@@ -76,12 +76,13 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   def edge_summary
     # TODO: This may exceed 256 pagesize limit.
-    @edge_summary ||= [get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']].flatten
+    # Ensure results an array. If there's a single edge the result is a hash, while multiple results in an array.
+    @edge_summary ||= [ nested_value( get('api/3.0/edges'), ['pagedEdgeList', 'edgePage', 'edgeSummary'] ) ].flatten
   end
 
   def edge_detail
     raise Puppet::Error, "edge not available" unless @instance
-    @edge_detail ||= get("api/3.0/edges/#{@instance['id']}")['edge']
+    @edge_detail ||= nested_value(get("api/3.0/edges/#{@instance['id']}"), ['edge'])
   end
 
   def datacenter_moref(name=resource[:datacenter_name])
