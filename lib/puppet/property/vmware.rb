@@ -47,3 +47,45 @@ class Puppet::Property::VMware_Hash < Puppet::Property::VMware
     diff.empty? or diff.select{|x| x.first != '+'}.empty?
   end
 end
+
+class Puppet::Property::VMware_Array < Puppet::Property::VMware
+
+  # Something retarded internally converts false boolean to true, so using symbols.
+  def self.sort
+    @sort ||= :true
+  end
+
+  def self.sort=(value)
+    raise Puppet::Error, 'VMWare_Array sort property must be :true or :false.' unless [:true, :false].include? value
+    @sort = value
+  end
+
+  def self.inclusive
+    @inclusive ||= :true
+  end
+
+  def self.inclusive=(value)
+    raise Puppet::Error, 'VMWare_Array sort property must be :true or :false.' unless [:true, :false].include? value
+    @inclusive = (value == true)
+  end
+
+  def is_to_s(v)
+    v.inspect
+  end
+
+  def should_to_s(v)
+    v.inspect
+  end
+
+  def insync?(is)
+    if self.class.inclusive == :true
+      if self.class.sort == :true
+        is.sort == @should.sort
+      else
+        is == @should
+      end
+    else
+      (@should - is).empty?
+    end
+  end
+end

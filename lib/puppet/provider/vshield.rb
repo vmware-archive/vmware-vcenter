@@ -23,7 +23,11 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   [:get, :delete].each do |m|
     define_method(m) do |url|
-      result = Nori.parse(rest[url].send(m))
+      begin
+        result = Nori.parse(rest[url].send(m))
+      rescue RestClient::Exception => e
+        raise Puppet::Error, "\n#{e.exception}:\n#{e.response}"
+      end
       Puppet.debug "VShield REST API #{m} #{url} result:\n#{result.inspect}"
       result
     end
@@ -31,7 +35,11 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   [:put, :post].each do |m|
     define_method(m) do |url, data|
-      result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+      begin
+        result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+      rescue RestClient::Exception => e
+        raise Puppet::Error, "\n#{e.exception}:\n#{e.response}"
+      end
       Puppet.debug "VShield REST API #{m} #{url} with #{data.inspect} result:\n#{result.inspect}"
     end
   end
@@ -44,10 +52,10 @@ class Puppet::Provider::Vshield <  Puppet::Provider
 
   def connection
     server = vc_info['ipAddress']
-    raise Puppet::Error "vSphere API connection failure: vShield #{resource[:transport]} not connected to vCenter." unless server
-    connection = resource.catalog.resources.find{|x| x.class == Puppet::Type::Transport && x[:server] == server}.to_hash
-    raise Puppet::Error "vSphere API connection failure: vCenter #{server} connection not available in manifest." unless connection
-    connection
+    raise Puppet::Error, "vSphere API connection failure: vShield #{resource[:transport]} not connected to vCenter." unless server
+    connection = resource.catalog.resources.find{|x| x.class == Puppet::Type::Transport && x[:server] == server}
+    raise Puppet::Error, "vSphere API connection failure: vCenter #{server} transport connection not available in manifest." unless connection
+    connection.to_hash
   end
 
   def vc_info
@@ -65,4 +73,21 @@ class Puppet::Provider::Vshield <  Puppet::Provider
     end
     value
   end
+
+  def edge_summary
+    # TODO: This may exceed 256 pagesize limit.
+    # Ensure results an array. If there's a single edge the result is a hash, while multiple results in an array.
+    @edge_summary ||= [ nested_value( get('api/3.0/edges'), ['pagedEdgeList', 'edgePage', 'edgeSummary'] ) ].flatten
+  end
+
+  def edge_detail
+    raise Puppet::Error, "edge not available" unless @instance
+    @edge_detail ||= nested_value(get("api/3.0/edges/#{@instance['id']}"), ['edge'])
+  end
+
+  def datacenter_moref(name=resource[:datacenter_name])
+    dc = vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
+    dc._ref
+  end
+
 end
