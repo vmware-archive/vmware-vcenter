@@ -78,6 +78,10 @@ class Puppet::Property::VMware_Array < Puppet::Property::VMware
   end
 
   def insync?(is)
+    # Handle the case when the current value is nil.
+    # If the provider expects array property nil == [], it should return [] in the property getter.
+    return @should.nil? if is.nil?
+
     if self.class.inclusive == :true
       if self.class.sort == :true
         is.sort == @should.sort
