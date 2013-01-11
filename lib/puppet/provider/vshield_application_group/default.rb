@@ -3,35 +3,20 @@ require 'puppet/provider/vshield'
 Puppet::Type.type(:vshield_application_group).provide(:default, :parent => Puppet::Provider::Vshield) do
   @doc = 'Manages vShield Application Group.'
 
-  def scope_moref
-    @scope_moref ||= case resource[:scope_type]
-                     when :datacenter
-                       datacenter_moref(resource[:scope_name])
-                     when :edge
-                       edges = edge_summary || []
-                       instance = edges.find{|x| x['name'] == resource[:scope_name]}
-                       raise Puppet::Error, "vShield Edge #{resource[:scope_name]} does not exist." unless instance
-                       instance['id']
-                     else
-                       raise Puppet::Error, "Unknown scope type #{resource[:scope_type]}"
-                     end
-  end
-
   def exists?
-    #@results = get("/api/2.0/services/applicationgroup/scope/#{scope_moref}")
-    results = nested_value(get("/api/2.0/services/applicationgroup/scope/#{scope_moref}"), ['list', 'applicationGroup'])
+    results = nested_value(get("/api/2.0/services/applicationgroup/scope/#{vshield_scope_moref}"), ['list', 'applicationGroup'])
     # If there's a single application the result is a hash, while multiple results in an array.
     @application_group = [results].flatten.find {|application_group| application_group['name'] == resource[:name]} if results
   end
 
   def create
-    results = nested_value(get("/api/2.0/services/applicationgroup/scope/#{scope_moref}"), ['list', 'applicationGroup'])
+    results = nested_value(get("/api/2.0/services/applicationgroup/scope/#{vshield_scope_moref}"), ['list', 'applicationGroup'])
     Puppet.debug("results = #{results.inspect}")
     raise Puppet::Error, "beginning of create"
     ####
     app_id_members = []
     resource[:application_member].each do |app_member|
-      results = nested_value(get("/api/2.0/services/application/scope/#{scope_moref}"), ['list', 'application'])
+      results = nested_value(get("/api/2.0/services/application/scope/#{vshield_scope_moref}"), ['list', 'application'])
       app = [results].flatten.find {|application| application['name'] == app_member}
       # if application does not exist, bomb out
       if app
@@ -47,7 +32,7 @@ Puppet::Type.type(:vshield_application_group).provide(:default, :parent => Puppe
       :name     => resource[:name],
       :member   => app_id_members
     }
-    post("api/2.0/services/applicationgroup/#{@scope_moref}", {:applicationGroup => data} )
+    post("api/2.0/services/applicationgroup/#{vshield_scope_moref}", {:applicationGroup => data} )
   end
 
   def destroy
@@ -83,7 +68,7 @@ Puppet::Type.type(:vshield_application_group).provide(:default, :parent => Puppe
     if @pending_changes
       application_group_id = @application_group['objectId']
       resource[:application_member].each do |app_member|
-        results = nested_value(get("/api/2.0/services/application/scope/#{scope_moref}"), ['list', 'application'])
+        results = nested_value(get("/api/2.0/services/application/scope/#{vshield_scope_moref}"), ['list', 'application'])
         app     = [results].flatten.find {|application| application['name'] == app_member}
         # if application does not exist, bomb out
         if app
