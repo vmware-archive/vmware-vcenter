@@ -14,7 +14,10 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
     camel_prop = PuppetX::VMware::Util.camelize(prop, :lower).to_sym
 
     define_method(prop) do
-      config[camel_prop]
+      v = config[camel_prop]
+      v = :false if FalseClass === v
+      v = :true  if TrueClass  === v
+      v
     end
 
     define_method("#{prop}=") do |value|
