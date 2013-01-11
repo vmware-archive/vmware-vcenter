@@ -36,11 +36,18 @@ class Puppet::Provider::Vshield <  Puppet::Provider
   [:put, :post].each do |m|
     define_method(m) do |url, data|
       begin
-        result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+        if data.empty?
+          Puppet.debug("url = #{url}")
+          result = rest[url].send(m, '')
+        else
+          Puppet.debug("Gyoku.xml(data) = #{Gyoku.xml(data).inspect}")
+          result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+        end
       rescue RestClient::Exception => e
         raise Puppet::Error, "\n#{e.exception}:\n#{e.response}"
       end
       Puppet.debug "VShield REST API #{m} #{url} with #{data.inspect} result:\n#{result.inspect}"
+      #Puppet.debug "Vshield response code = #{result.code.inspect}"
     end
   end
 
