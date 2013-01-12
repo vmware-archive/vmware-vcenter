@@ -36,7 +36,11 @@ class Puppet::Provider::Vshield <  Puppet::Provider
   [:put, :post].each do |m|
     define_method(m) do |url, data|
       begin
-        result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+        if data.empty?
+          result = rest[url].send(m, '')
+        else
+          result = rest[url].send(m, Gyoku.xml(data), :content_type => 'application/xml; charset=UTF-8')
+        end
       rescue RestClient::Exception => e
         raise Puppet::Error, "\n#{e.exception}:\n#{e.response}"
       end
@@ -88,6 +92,20 @@ class Puppet::Provider::Vshield <  Puppet::Provider
   def datacenter_moref(name=resource[:datacenter_name])
     dc = vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
     dc._ref
+  end
+
+  def vshield_scope_moref(type=resource[:scope_type],name=resource[:scope_name])
+    case type
+      when :datacenter
+        datacenter_moref(name)
+      when :edge
+        edges = edge_summary || []
+        instance = edges.find{|x| x['name'] == name}
+        raise Puppet::Error, "vShield Edge #{name} does not exist." unless instance
+        instance['id']
+      else
+        raise Puppet::Error, "Unknown scope type #{type}"
+      end
   end
 
 end
