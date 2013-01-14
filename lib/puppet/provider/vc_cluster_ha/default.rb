@@ -34,10 +34,28 @@ Puppet::Type.type(:vc_cluster_ha).provide(:vc_cluster_ha, :parent => Puppet::Pro
   alias get_failover_hosts failover_hosts
   def failover_hosts
     v = get_failover_hosts
-    # v = v.map{|host| host._ref} if v.is_a? Array
-    # v = v.map{|host| "#{host.name}[#{host._ref}]"} if v.is_a? Array
-    v = v.map{|host| host._ref} if v.is_a? Array
+    v = v.map{|host| host.name} if v.is_a? Array
     v
+  end
+
+  alias set_failover_hosts failover_hosts=
+  def failover_hosts= host_list
+    map = 
+      Hash[* cluster.host.map{|host| [ host.name.to_sym, host._ref ]}.flatten]
+    mo_ref_list = []
+    misses_list = []
+    host_list.each do |host_name|
+      mo_ref = map[host_name.to_sym]
+      if mo_ref
+        mo_ref_list << mo_ref
+      else
+        misses_list << host_name
+      end
+    end
+    unless misses_list.empty?
+      raise Puppet::Error, "requested failoverHosts not in cluster: #{misses_list.inspect}"
+    end
+    set_failover_hosts mo_ref_list
   end
 
   def flush_prep
