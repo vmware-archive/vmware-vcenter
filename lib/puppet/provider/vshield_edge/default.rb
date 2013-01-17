@@ -121,16 +121,5 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
       compute.datastore.first
     end
   end
-
-  def edge_summary
-    # TODO: This may exceed 256 pagesize limit.
-    @edge_summary ||= [get('api/3.0/edges')['pagedEdgeList']['edgePage']['edgeSummary']].flatten
-  end
-
-  def edge_detail
-    raise Puppet::Error, "edge not available" unless @instance
-    @edge_detail ||= get("api/3.0/edges/#{@instance['id']}")['edge']
-  end
-
 end
 

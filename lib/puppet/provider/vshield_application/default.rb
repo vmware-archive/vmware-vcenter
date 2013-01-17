@@ -4,9 +4,9 @@ Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Pro
   @doc = 'Manages vShield application.'
 
   def exists?
-    results = nested_value(get("/api/2.0/services/application/scope/#{vshield_scope_moref}"), ['list', 'application'])
+    results = ensure_array( nested_value(get("/api/2.0/services/application/scope/#{vshield_scope_moref}"), ['list', 'application']) )
     # If there's a single application the result is a hash, while multiple results in an array.
-    @application = [results].flatten.find {|application| application['name'] == resource[:name]}
+    @application = results.find {|application| application['name'] == resource[:name]}
   end
 
   def create
@@ -17,7 +17,7 @@ Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Pro
                      :applicationProtocol => resource[:application_protocol],
                    }
     }
-    post("api/2.0/services/application/#{@vshield_scope_moref}", {:application => data} )
+    post("api/2.0/services/application/#{vshield_scope_moref}", {:application => data} )
   end
 
   def destroy
