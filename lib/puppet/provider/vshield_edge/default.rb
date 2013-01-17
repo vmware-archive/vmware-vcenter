@@ -78,11 +78,11 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
           value[k.to_sym] = v
         end
         value[:index] = index
-        #vnic << {item['name'] => value }
         vnic << value
       end
       data[:vnics] = { :vnic => vnic }
     end
+    @vnics = data
 
     order =  [:datacenterMoid, :name, :description, :tenant, :fqdn, :vseLogLevel, :enableAesni, :enableFips, :enableTcpLoose, :appliances, :vnics]
     data[:order!] = order - (order - data.keys)
@@ -91,6 +91,17 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
   def destroy
     delete("api/3.0/edges/#{@instance['id']}")
+  end
+
+  def vnics
+    # not implemented yet
+    get("api/3.0/edges/#{@instance['id']}/vnics")
+  end
+
+  def vnics=(arg)
+    Puppet.debug("would updated vnics , arg = #{arg.inspect}")
+    #Puppet.debug("@vnics = #{@vnics.inspect}")
+    # not implemented yet
   end
 
   private
@@ -120,5 +131,6 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
     raise Puppet::Error, "edge not available" unless @instance
     @edge_detail ||= get("api/3.0/edges/#{@instance['id']}")['edge']
   end
+
 end
 
