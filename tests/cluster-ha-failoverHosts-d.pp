@@ -44,7 +44,7 @@ vcenter::cluster { '/dc1/clu2':
       admissionControlEnabled => true,
       admissionControlPolicy => {
         vsphereType =>  'ClusterFailoverHostAdmissionControlPolicy',
-        failoverHosts => [ 'host-32' ],
+        failoverHosts => [ 'esx4.rbbrown.dev' ],
       },
       defaultVmSettings => {
         isolationResponse => 'shutdown',
