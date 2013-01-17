@@ -4,10 +4,10 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
   @doc = 'Manages vShield ipset.'
 
   def exists?
-    results = nested_value(get("/api/2.0/services/ipset/scope/#{vshield_scope_moref}"), ['list', 'ipset'])
+    results = ensure_array( nested_value(get("/api/2.0/services/ipset/scope/#{vshield_scope_moref}"), ['list', 'ipset']) )
 
     # If there's a single ipset the result is a hash, while multiple results in an array.
-    @ipset = [results].flatten.find {|ipset| ipset['name'] == resource[:name]}
+    @ipset = results.find {|ipset| ipset['name'] == resource[:name]}
   end
 
   def create
@@ -16,7 +16,7 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
       :name     => resource[:name],
       :value    => resource[:value].sort.join(',')
     }
-    post("api/2.0/services/ipset/#{@vshield_scope_moref}", {:ipset => data} )
+    post("api/2.0/services/ipset/#{vshield_scope_moref}", {:ipset => data} )
   end
 
   def destroy
