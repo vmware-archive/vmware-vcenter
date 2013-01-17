@@ -3,22 +3,8 @@ require 'puppet/provider/vshield'
 Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider::Vshield) do
   @doc = 'Manages vShield ipset.'
 
-  def scope_moref
-    @scope_moref ||= case resource[:scope_type]
-                     when :datacenter
-                       datacenter_moref(resource[:scope_name])
-                     when :edge
-                       edges = edge_summary || []
-                       instance = edges.find{|x| x['name'] == resource[:scope_name]}
-                       raise Puppet::Error, "vShield Edge #{resource[:scope_name]} does not exist." unless instance
-                       instance['id']
-                     else
-                       raise Puppet::Error, "Unknown scope type #{resource[:scope_type]}"
-                     end
-  end
-
   def exists?
-    results = nested_value(get("/api/2.0/services/ipset/scope/#{scope_moref}"), ['list', 'ipset'])
+    results = nested_value(get("/api/2.0/services/ipset/scope/#{vshield_scope_moref}"), ['list', 'ipset'])
 
     # If there's a single ipset the result is a hash, while multiple results in an array.
     @ipset = [results].flatten.find {|ipset| ipset['name'] == resource[:name]}
@@ -30,7 +16,7 @@ Puppet::Type.type(:vshield_ipset).provide(:default, :parent => Puppet::Provider:
       :name     => resource[:name],
       :value    => resource[:value].sort.join(',')
     }
-    post("api/2.0/services/ipset/#{@scope_moref}", {:ipset => data} )
+    post("api/2.0/services/ipset/#{@vshield_scope_moref}", {:ipset => data} )
   end
 
   def destroy

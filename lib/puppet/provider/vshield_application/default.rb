@@ -3,22 +3,8 @@ require 'puppet/provider/vshield'
 Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Provider::Vshield) do
   @doc = 'Manages vShield application.'
 
-  def scope_moref
-    @scope_moref ||= case resource[:scope_type]
-                     when :datacenter
-                       datacenter_moref(resource[:scope_name])
-                     when :edge
-                       edges = edge_summary || []
-                       instance = edges.find{|x| x['name'] == resource[:scope_name]}
-                       raise Puppet::Error, "vShield Edge #{resource[:scope_name]} does not exist." unless instance
-                       instance['id']
-                     else
-                       raise Puppet::Error, "Unknown scope type #{resource[:scope_type]}"
-                     end
-  end
-
   def exists?
-    results = nested_value(get("/api/2.0/services/application/scope/#{scope_moref}"), ['list', 'application'])
+    results = nested_value(get("/api/2.0/services/application/scope/#{vshield_scope_moref}"), ['list', 'application'])
     # If there's a single application the result is a hash, while multiple results in an array.
     @application = [results].flatten.find {|application| application['name'] == resource[:name]}
   end
@@ -31,7 +17,7 @@ Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Pro
                      :applicationProtocol => resource[:application_protocol],
                    }
     }
-    post("api/2.0/services/application/#{@scope_moref}", {:application => data} )
+    post("api/2.0/services/application/#{@vshield_scope_moref}", {:application => data} )
   end
 
   def destroy
