@@ -74,10 +74,23 @@ class Puppet::Provider::Vshield <  Puppet::Provider
     value
   end
 
+  def ensure_array(value)
+    # Ensure results an array. If there's a single value the result is a hash, while multiple results in an array.
+    case value
+    when nil
+      []
+    when Array
+      value
+    when Hash
+      [value]
+    else
+      raise Puppet::Error, "Unknown type for munging #{value.class}: '#{value}'"
+    end
+  end
+
   def edge_summary
     # TODO: This may exceed 256 pagesize limit.
-    # Ensure results an array. If there's a single edge the result is a hash, while multiple results in an array.
-    @edge_summary ||= [ nested_value( get('api/3.0/edges'), ['pagedEdgeList', 'edgePage', 'edgeSummary'] ) ].flatten
+    @edge_summary ||= ensure_array( nested_value( get('api/3.0/edges'), ['pagedEdgeList', 'edgePage', 'edgeSummary'] ) )
   end
 
   def edge_detail
@@ -103,5 +116,4 @@ class Puppet::Provider::Vshield <  Puppet::Provider
         raise Puppet::Error, "Unknown scope type #{type}"
       end
   end
-
 end
