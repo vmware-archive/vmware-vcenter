@@ -17,6 +17,7 @@ Puppet::Type.type(:vshield_application_group).provide(:default, :parent => Puppe
       :name     => resource[:name],
       #:member   => app_id_members
     }
+    post("api/2.0/services/applicationgroup/#{vshield_scope_moref}", {:applicationGroup => data} )
 
     @pending_changes = true
     results = nested_value(get("/api/2.0/services/applicationgroup/scope/#{vshield_scope_moref}"), ['list', 'applicationGroup'])
@@ -24,7 +25,6 @@ Puppet::Type.type(:vshield_application_group).provide(:default, :parent => Puppe
     # If there's a single application the result is a hash, while multiple results in an array.
     @application_group = [results].flatten.find {|application_group| application_group['name'] == resource[:name]} if results
 
-    post("api/2.0/services/applicationgroup/#{vshield_scope_moref}", {:applicationGroup => data} )
   end
 
   def destroy
