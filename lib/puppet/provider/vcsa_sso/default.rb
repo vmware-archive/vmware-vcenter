@@ -1,4 +1,4 @@
-require 'lib/puppet/provider/vcsa'
+require File.join Pathname.new(__FILE__).parent.parent, 'vcsa'
 
 Puppet::Type.type(:vcsa_sso).provide(:vcsa_sso, :parent => Puppet::Provider::Vcsa ) do
   @doc = 'Manages vCSA sso'

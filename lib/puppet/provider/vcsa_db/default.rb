@@ -1,4 +1,4 @@
-require 'lib/puppet/provider/vcsa'
+require File.join Pathname.new(__FILE__).parent.parent, 'vcsa'
 
 Puppet::Type.type(:vcsa_db).provide(:vcsa_db, :parent => Puppet::Provider::Vcsa ) do
   @doc = 'Manages vCSA db'
