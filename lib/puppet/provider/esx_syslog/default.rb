@@ -1,4 +1,5 @@
-require 'puppet/provider/vcenter'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts syslog configuration."

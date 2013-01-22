@@ -1,4 +1,5 @@
-require 'puppet/provider/vshield'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vshield')
 
 Puppet::Type.type(:vshield_application).provide(:default, :parent => Puppet::Provider::Vshield) do
   @doc = 'Manages vShield application.'

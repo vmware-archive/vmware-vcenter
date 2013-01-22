@@ -5,6 +5,7 @@ class vcenter::package (
     'hashdiff',
     'rest-client',
     'gyoku',
+    'net-ssh',
   ]:
     ensure   => present,
     provider => $::vcenter::params::provider,

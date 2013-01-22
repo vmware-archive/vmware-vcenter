@@ -1,10 +1,10 @@
-require 'lib/puppet/provider/vcenter'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter VMs."
 
   def create
-    require 'ruby-debug'; debugger
     # TODO: Clone a VM from template.
     if resource[:clone]
       # The following code is not tested

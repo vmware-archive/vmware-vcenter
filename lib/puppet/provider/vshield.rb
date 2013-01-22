@@ -5,7 +5,7 @@ require File.join module_lib, 'puppet_x/puppetlabs/transport/vshield'
 require File.join module_lib, 'puppet_x/puppetlabs/transport/vsphere'
 require File.join module_lib, 'puppet_x/vmware/util'
 
-unless Puppet.run_mode.master?
+if Puppet.features.vshield? and ! Puppet.run_mode.master?
   # Using Savon's library:
   require 'nori'
   require 'gyoku'
@@ -13,6 +13,7 @@ end
 
 # TODO: Depending on number of shared methods, we might make Puppet::Provider::Vcenter parent:
 class Puppet::Provider::Vshield <  Puppet::Provider
+  confine :feature => :vshield
 
   private
 

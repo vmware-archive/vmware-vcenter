@@ -1,4 +1,6 @@
-require 'puppet/property/vmware'
+require 'pathname'
+module_lib = Pathname.new(__FILE__).parent.parent.parent
+require File.join module_lib, 'puppet/property/vmware'
 
 Puppet::Type.newtype(:vshield_application) do
   @doc = 'Manage vShield applications, these are used by fw rules'
