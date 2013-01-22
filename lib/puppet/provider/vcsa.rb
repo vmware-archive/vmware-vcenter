@@ -4,6 +4,7 @@ require File.join module_lib, 'puppet_x/puppetlabs/transport'
 require File.join module_lib, 'puppet_x/puppetlabs/transport/ssh'
 
 class Puppet::Provider::Vcsa <  Puppet::Provider
+  confine :feature => :ssh
 
   def self.transport(resource)
     @transport ||= PuppetX::Puppetlabs::Transport.retrieve(:resource_ref => resource[:transport], :catalog => resource.catalog, :provider => 'ssh')

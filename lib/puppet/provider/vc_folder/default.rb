@@ -1,4 +1,5 @@
-require 'lib/puppet/provider/vcenter'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_folder).provide(:vc_folder, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter Folders."

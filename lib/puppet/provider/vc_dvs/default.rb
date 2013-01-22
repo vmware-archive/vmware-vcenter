@@ -1,4 +1,5 @@
-require 'lib/puppet/provider/vcenter'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_dvs).provide(:vc_dvs, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vCenter Distributed Virtual Switches."

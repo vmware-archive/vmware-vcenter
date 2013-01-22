@@ -1,4 +1,5 @@
-require 'puppet/provider/vshield'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vshield')
 
 Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provider::Vshield) do
   @doc = 'Manages vShield edge.'
@@ -57,7 +58,7 @@ Puppet::Type.type(:vshield_edge).provide(:vshield_edge, :parent => Puppet::Provi
 
     def return_pg_id(port_group)
       dc = vim.serviceInstance.find_datacenter()
-      result = dc.network.find {|pg| pg.name == port_group } || raise (Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found")
+      result = dc.network.find {|pg| pg.name == port_group } || raise(Puppet::Error, "Fatal Error: Portgroup: '#{port_group}' was not found")
       result._ref
     end
 
