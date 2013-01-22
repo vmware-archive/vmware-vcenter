@@ -5,6 +5,7 @@ require File.join module_lib, 'puppet_x/puppetlabs/transport/vsphere'
 require File.join module_lib, 'puppet_x/vmware/util'
 
 class Puppet::Provider::Vcenter <  Puppet::Provider
+  confine :feature => :vsphere
 
   private
 

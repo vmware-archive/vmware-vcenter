@@ -1,4 +1,5 @@
-require 'lib/puppet/provider/vcenter'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:esx_shells).provide(:esx_shells, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts' ESXi Shell and SSH configuration."

@@ -1,4 +1,5 @@
-require 'lib/puppet/provider/vcenter'
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_cluster_drs).provide(:vc_cluster_drs, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter cluster's settings for DRS (Distributed Resource Scheduler). See http://pubs.vmware.com/vsphere-50/topic/com.vmware.wssdk.apiref.doc_50/vim.cluster.ConfigSpecEx.html for detailed information on properties and methods."

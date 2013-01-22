@@ -1,4 +1,6 @@
-require 'puppet/property/vmware'
+require 'pathname'
+module_lib = Pathname.new(__FILE__).parent.parent.parent
+require File.join module_lib, 'puppet/property/vmware'
 
 Puppet::Type.newtype(:vshield_edge) do
   @doc = 'Manage vShield edge.'

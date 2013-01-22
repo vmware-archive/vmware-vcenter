@@ -1,4 +1,4 @@
-require 'rest_client' unless Puppet.run_mode.master?
+require 'rest_client' if Puppet.features.restclient? and ! Puppet.run_mode.master?
 
 module PuppetX::Puppetlabs::Transport
   class Vshield

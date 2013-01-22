@@ -1,4 +1,4 @@
-require 'rbvmomi' unless Puppet.run_mode.master?
+require 'rbvmomi' if Puppet.features.vsphere? and ! Puppet.run_mode.master?
 
 module PuppetX::Puppetlabs::Transport
   class Vsphere

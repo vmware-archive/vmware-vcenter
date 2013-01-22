@@ -1,8 +1,9 @@
-require 'lib/puppet/provider/vcenter'
-
 require 'set'
 
 require 'pathname' # WORK_AROUND #14073 and #7788
+provider_path = Pathname.new(__FILE__).parent.parent
+require File.join(provider_path, 'vcenter')
+
 module_lib = Pathname.new(__FILE__).parent.parent.parent.parent
 # Puppet.debug "module_lib is #{module_lib} in provider"
 require File.join module_lib, 'puppet_x/vmware/util'
