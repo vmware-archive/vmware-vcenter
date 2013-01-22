@@ -1,0 +1,6 @@
+#!/bin/bash
+set -u
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+puppet apply --node_terminus=exec --external_nodes="${DIR}/enc.sh" "$@"

@@ -1,0 +1,17 @@
+--- 
+parameters: 
+  # vCenter connectivity
+  vcsa_ip: 192.168.1.3
+  vcsa_user: root
+  vcsa_pass: vmware
+  # vShield connectivity
+  vshield_ip: 192.168.1.4
+  vshield_user: admin
+  vshield_pass: default
+  # ESX connectivity
+  esx_ip: 192.168.1.5
+  esx_user: root
+  esx_pass: vmware
+  esx_ntp_server: [ 0.north-america.pool.ntp.org, 1.north-america.pool.ntp.org ]
+  nfs_host: 192.168.1.2
+  nfs_mout: /export/nfs

@@ -1,10 +1,10 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
-esx_syslog { '192.168.232.240':
+esx_syslog { $esx_ip:
   default_rotate => 8,
   default_size   => 2048,
   log_dir_unique => true,
