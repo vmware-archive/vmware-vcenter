@@ -1,10 +1,10 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
-esx_timezone { '192.168.232.240':
+esx_timezone { $esx_ip:
   key       => 'EST',
   transport => Transport['vcenter'],
 }

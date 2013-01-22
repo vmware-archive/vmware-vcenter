@@ -1,10 +1,10 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
-esx_ntpconfig { '192.168.232.240':
-  server    => ['ntp.puppetlabs.com','ntp.puppetlabs.lan'],
+esx_ntpconfig { $esx_ip:
+  server    => $esx_ntp_server,
   transport => Transport['vcenter'],
 }

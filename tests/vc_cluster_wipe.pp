@@ -1,7 +1,7 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => 'vc0.rbbrown.dev'
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 vc_datacenter { 'testClusters':
   path      => '/testClusters',

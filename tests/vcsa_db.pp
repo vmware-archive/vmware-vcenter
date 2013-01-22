@@ -1,7 +1,7 @@
 transport { 'demo':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.101.157',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
 vcsa_db { 'demo':

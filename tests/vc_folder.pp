@@ -1,7 +1,7 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
 vc_folder { ['/folder1','/folder1/a','/folder1/a/b']:

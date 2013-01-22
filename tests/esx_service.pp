@@ -1,12 +1,12 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
 notify { 'trigger': }
 
-esx_service { '192.168.232.240:ntpd':
+esx_service { "${esx_ip}:ntpd":
   running   => false,
   policy    => 'on',
   transport => Transport['vcenter'],

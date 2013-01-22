@@ -1,13 +1,13 @@
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcsa_user,
+  password => $vcsa_pass,
+  server   => $vcsa_ip,
 }
 
-esx_datastore { '192.168.232.240:nfs_store':
+esx_datastore { "${esx_ip}:nfs_store":
   ensure      => present,
   type        => 'nfs',
-  remote_host => '192.168.232.1',
-  remote_path => '/Users/nan/src/nodejs',
+  remote_host => $nfs_host,
+  remote_path => $nfs_mount,
   transport   => Transport['vcenter'],
 }
