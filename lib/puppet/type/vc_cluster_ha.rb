@@ -1,10 +1,11 @@
 require 'pathname' # WORK_AROUND #14073 and #7788
 module_lib = Pathname.new(__FILE__).parent.parent.parent
-# Puppet.debug "module_lib is #{module_lib} in type"
-require File.join module_lib, 'puppet_x/vmware/util'
+
+vmware_module = Puppet::Module.find('vmware', Puppet[:environment].to_s)
+require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 require File.join module_lib, 'puppet_x/vmware/mapper'
 
-require 'puppet/property/vmware'
+require File.join vmware_module.path, 'lib/puppet/property/vmware'
 
 Puppet::Type.newtype(:vc_cluster_ha) do
   @doc = "Manages vCenter cluster's settings for HA (High Availability)."
@@ -20,11 +21,11 @@ Puppet::Type.newtype(:vc_cluster_ha) do
   clusterConfigSpecExMap = PuppetX::VMware::Mapper::ClusterConfigSpecExMap.new
   clusterConfigSpecExMap.leaf_list.each do |leaf|
     if leaf.misc.include?(Array)
-      option = { 
-        :array_matching => :all, 
+      option = {
+        :array_matching => :all,
         :parent => Puppet::Property::VMware_Array,
       }
-    else 
+    else
       option = {}
     end
 
