@@ -1,10 +1,13 @@
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
+  options  => $vcenter['options'],
 }
 
-esx_datastore { '192.168.232.240:nfs_store':
+esx_datastore { "${esx1['hostname']}:nfs_store":
   ensure      => present,
   type        => 'nfs',
   remote_host => '192.168.232.1',

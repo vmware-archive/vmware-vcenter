@@ -1,19 +1,22 @@
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
+  options  => $vcenter['options'],
 }
 
 vc_datacenter { 'dc1':
-  path      => '/dc1',
   ensure    => present,
+  path      => '/dc1',
   transport => Transport['vcenter'],
 }
 
-vc_host { '192.168.232.240':
+vc_host { $esx1['hostname']:
   ensure    => present,
   path      => '/dc1',
-  username  => 'root',
-  password  => 'password',
+  username  => $esx1['username'],
+  password  => $esx1['password'],
   transport => Transport['vcenter'],
 }

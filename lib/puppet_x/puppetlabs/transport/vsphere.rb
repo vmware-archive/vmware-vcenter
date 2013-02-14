@@ -5,16 +5,17 @@ module PuppetX::Puppetlabs::Transport
     attr_accessor :vim
     attr_reader :name, :user, :password, :host
 
-    def initialize(option)
-      @name     = option[:name]
-      @user     = option[:username]
-      @password = option[:password]
-      @host     = option[:server]
+    def initialize(opts)
+      options  = opts[:options] || {}
+      @options = options.inject({}){|h, (k, v)| h[k.to_sym] = v; h}
+      @options[:host]     = opts[:server]
+      @options[:user]     = opts[:username]
+      @options[:password] = opts[:password]
       Puppet.debug("#{self.class} initializing connection to: #{@host}")
     end
 
     def connect
-      @vim ||= RbVmomi::VIM.connect(:host => @host, :user => @user, :password => @password, :insecure => true)
+      @vim ||= RbVmomi::VIM.connect(@options)
     end
 
     def close

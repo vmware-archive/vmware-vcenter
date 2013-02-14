@@ -1,22 +1,33 @@
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => 'vc0.rbbrown.dev'
-}
-vc_datacenter { 'testClusters':
-  path      => '/testClusters',
-  ensure    => present,
-  transport => Transport['vcenter'],
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
+  options  => $vcenter['options'],
 }
 
-vc_cluster { '/testClusters/tc000': transport => Transport['vcenter'], ensure    => absent, }
+Vc_cluster { transport => Transport['vcenter'] }
+Vc_datacenter { transport => Transport['vcenter'] }
 
-vc_cluster { '/testClusters/drs001': transport => Transport['vcenter'], ensure    => absent, }
-vc_cluster { '/testClusters/drs002': transport => Transport['vcenter'], ensure    => absent, }
-vc_cluster { '/testClusters/drs003': transport => Transport['vcenter'], ensure    => absent, }
-vc_cluster { '/testClusters/drs004': transport => Transport['vcenter'], ensure    => absent, }
+$dc_name = $dc1['name']
+$dc_path = $dc1['path']
 
-vc_cluster { '/testClusters/evc001': transport => Transport['vcenter'], ensure    => absent, }
-vc_cluster { '/testClusters/evc002': transport => Transport['vcenter'], ensure    => absent, }
-vc_cluster { '/testClusters/evc003': transport => Transport['vcenter'], ensure    => absent, }
-vc_cluster { '/testClusters/evc004': transport => Transport['vcenter'], ensure    => absent, }
+vc_cluster {
+  [ "${dc_path}/tc000",
+    "${dc_path}/drs001",
+    "${dc_path}/drs002",
+    "${dc_path}/drs003",
+    "${dc_path}/drs004",
+    "${dc_path}/evc001",
+    "${dc_path}/evc002",
+    "${dc_path}/evc003",
+    "${dc_path}/evc004",
+  ]:
+    ensure => absent,
+} ->
+
+vc_datacenter { $dc_name:
+  ensure => absent,
+  path   => $dc_path,
+}
