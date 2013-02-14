@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 # Manage vcenter host resource
 define vcenter::host (
   $path,

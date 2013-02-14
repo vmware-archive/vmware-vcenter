@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 require 'set'
 
 require 'pathname' # WORK_AROUND #14073 and #7788

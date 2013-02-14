@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 # Manage vcenter compute cluster resource
 define vcenter::cluster (
   # title is a metaparameter

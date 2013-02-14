@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 module PuppetX
   module VMware
     module Mapper

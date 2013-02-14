@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 transport { 'vcenter':
   username => 'root',
   password => 'vmware',
