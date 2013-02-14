@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:vc_dvs) do
   @doc = "Manage vCenter Distributed Virtual Switches."
 

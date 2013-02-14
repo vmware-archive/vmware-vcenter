@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 

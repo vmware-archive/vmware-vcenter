@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:esx_syslog) do
   # http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2003322
   @doc = "Manage vCenter esx hosts syslog config."

@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:vc_cluster_evc) do
   @doc = "Manages vCenter cluster's settings for EVC (Enhanced Vmotion Compatibility)."
 

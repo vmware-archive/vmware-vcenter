@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 class vcenter::package (
 ) inherits vcenter::params {
 

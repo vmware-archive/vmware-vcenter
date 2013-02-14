@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:vc_dvportgroup) do
   @doc = "Manage vCenter Distributed Virtual Portgroups."
 
