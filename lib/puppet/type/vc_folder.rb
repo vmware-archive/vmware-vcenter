@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:vc_folder) do
   @doc = "Manage vCenter folders."
 

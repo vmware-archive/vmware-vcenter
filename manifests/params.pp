@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 # vCenter common parameters
 class vcenter::params {
 

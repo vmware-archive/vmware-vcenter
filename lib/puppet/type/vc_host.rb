@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:vc_host) do
   @doc = "Manage vCenter hosts."
 

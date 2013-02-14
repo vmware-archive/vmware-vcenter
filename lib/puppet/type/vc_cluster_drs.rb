@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:vc_cluster_drs) do
   @doc = "Manages vCenter cluster's settings for DRS (Distributed Resource Scheduler)."
 

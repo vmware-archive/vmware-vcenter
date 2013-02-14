@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:esx_shells) do
   @doc = "Manage vCenter esx hosts config for shells (ESXi Shell and SSH)"
 

@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 $foo = { 'a' => { 'c' => 'message' } }
 
 notify { 'demo_1':

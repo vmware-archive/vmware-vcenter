@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:esx_ntpconfig) do
   @doc = "Manage vCenter esx hosts ntpconfig."
 

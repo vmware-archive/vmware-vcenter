@@ -1,3 +1,4 @@
+# Copyright (C) 2013 VMware, Inc.
 # Note on cluster anchor:
 #  anchor { '$cluster_path':
 #    require => Vc_cluster['$cluster_path'],
