@@ -3,7 +3,7 @@ require 'set'
 
 require 'pathname' # WORK_AROUND #14073 and #7788
 
-vmware_module = Puppet::Module.find('vmware', Puppet[:environment].to_s)
+vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
 require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 module_lib = Pathname.new(__FILE__).parent.parent.parent.parent
 require File.join module_lib, 'puppet/provider/vcenter'
