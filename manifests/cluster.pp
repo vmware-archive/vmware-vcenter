@@ -1,22 +1,20 @@
 # Copyright (C) 2013 VMware, Inc.
 # Manage vcenter compute cluster resource
 define vcenter::cluster (
-  # title is a metaparameter
   $ensure,
-  $modify = true,
-  $currentEVCModeKey = 'disabled',
+  $modify              = true,
+  $currentEVCModeKey   = 'disabled',
   $clusterConfigSpecEx = {},
   # transport is a metaparameter
 ) {
 
-  $path = $title
-
+  $path = $name
   $spec = $clusterConfigSpecEx
 
   vc_cluster { $path:
     ensure    => $ensure,
     transport => $transport,
-    before => Anchor[$path],
+    before    => Anchor[$path],
   }
 
   vc_cluster_ha { $path:
@@ -38,18 +36,17 @@ define vcenter::cluster (
     das_config_vm_monitoring          => nested_value($spec, ['dasConfig', 'vmMonitoring']),
     #
     transport => $transport,
-    require => Vc_cluster[$path],
-    before => Anchor[$path],
+    require   => Vc_cluster[$path],
+    before    => Anchor[$path],
   }
 
   vc_cluster_evc { $path:
     evc_mode_key => $currentEVCModeKey,
     #
     transport => $transport,
-    require => Vc_cluster_ha[$path],
-    before => Anchor[$path],
+    require   => Vc_cluster_ha[$path],
+    before    => Anchor[$path],
   }
 
-  anchor { $path:
-  }
+  anchor { $path: }
 }
