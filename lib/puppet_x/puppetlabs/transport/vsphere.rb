@@ -4,8 +4,10 @@ require 'rbvmomi' if Puppet.features.vsphere? and ! Puppet.run_mode.master?
 module PuppetX::Puppetlabs::Transport
   class Vsphere
     attr_accessor :vim
+    attr_reader :name
 
     def initialize(opts)
+      @name    = opts[:name]
       options  = opts[:options] || {}
       @options = options.inject({}){|h, (k, v)| h[k.to_sym] = v; h}
       @options[:host]     = opts[:server]
