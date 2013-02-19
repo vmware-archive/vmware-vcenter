@@ -1,18 +1,23 @@
 # Copyright (C) 2013 VMware, Inc.
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
+  options  => $vcenter['options'],
+}
+
+Vc_datacenter {
+  transport => Transport['vcenter'],
 }
 
 vc_datacenter { 'dc1':
-  path      => '/dc1',
   ensure    => present,
-  transport => Transport['vcenter'],
+  path      => '/dc1',
 }
 
 vc_datacenter { 'dc2':
+  ensure    => absent,
   path      => '/dc2',
-  ensure    => present,
-  transport => Transport['vcenter'],
 }
