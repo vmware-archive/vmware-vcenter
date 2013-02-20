@@ -1,11 +1,14 @@
 # Copyright (C) 2013 VMware, Inc.
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
+  options  => $vcenter['options'],
 }
 
-esx_ntpconfig { '192.168.232.240':
+esx_ntpconfig { $esx1['hostname']:
   server    => ['ntp.puppetlabs.com','ntp.puppetlabs.lan'],
   transport => Transport['vcenter'],
 }
