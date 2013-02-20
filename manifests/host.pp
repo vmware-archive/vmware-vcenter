@@ -5,7 +5,7 @@ define vcenter::host (
   $username,
   $password,
   $dateTimeConfig = {},
-  $shells = {},
+  $shells         = {},
   $servicesConfig = {},
   # transport is a metaparameter
 ) {
@@ -60,14 +60,14 @@ define vcenter::host (
   }
 
   esx_service { "${name}:ntpd":
-    policy  => $config_dt['ntpConfig']['policy'],
-    running => $config_dt['ntpConfig']['running'],
+    policy    => $config_dt['ntpConfig']['policy'],
+    running   => $config_dt['ntpConfig']['running'],
     subscribe => Esx_ntpconfig[$name],
   }
 
   # shells
   esx_shells { $name:
-    # to disable cluster/host status warnings: 
+    # to disable cluster/host status warnings:
     #   http://kb.vmware.com/kb/2034841 ESXi 5.1 and related articles
     #   esxcli system settings advanced set -o /UserVars/SuppressShellWarning -i (0|1)
     #   vSphere API: advanced settings UserVars.SuppressShellWarning = (0|1) [type long]
@@ -83,18 +83,18 @@ define vcenter::host (
   }
 
   esx_service { "${name}:TSM":
-    policy  => $config_shells['esxi_shell']['policy'],
-    running => $config_shells['esxi_shell']['running'],
+    policy    => $config_shells['esxi_shell']['policy'],
+    running   => $config_shells['esxi_shell']['running'],
     subscribe => Esx_shells[$name],
   }
   esx_service { "${name}:TSM-SSH":
-    policy  => $config_shells['ssh']['policy'],
-    running => $config_shells['ssh']['running'],
+    policy    => $config_shells['ssh']['policy'],
+    running   => $config_shells['ssh']['running'],
     subscribe => Esx_shells[$name],
   }
 
   # simple services
-  # - fully managed by HostServiceSystem 
+  # - fully managed by HostServiceSystem
   # - behaviors are boot-time enablement and running/stopped
   # - vSphere API provides no additional configuration
   esx_service { "${name}:DCUI":
