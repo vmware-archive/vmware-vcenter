@@ -1,11 +1,14 @@
 # Copyright (C) 2013 VMware, Inc.
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => '192.168.232.147',
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
+  options  => $vcenter['options'],
 }
 
-esx_debug { '192.168.232.240':
+esx_debug { $esx1['hostname']:
   debug     => true,
   transport => Transport['vcenter'],
 }
