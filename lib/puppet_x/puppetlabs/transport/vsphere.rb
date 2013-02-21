@@ -13,7 +13,7 @@ module PuppetX::Puppetlabs::Transport
       @options[:host]     = opts[:server]
       @options[:user]     = opts[:username]
       @options[:password] = opts[:password]
-      Puppet.debug("#{self.class} initializing connection to: #{@host}")
+      Puppet.debug("#{self.class} initializing connection to: #{@options[:host]}")
     end
 
     def connect
@@ -21,6 +21,7 @@ module PuppetX::Puppetlabs::Transport
     end
 
     def close
+      Puppet.debug("#{self.class} closing connection to: #{@options[:host]}")
       @vim.close if @vim
     end
   end
