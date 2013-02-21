@@ -1,11 +1,20 @@
 # Copyright (C) 2013 VMware, Inc.
+import 'data.pp'
+
 transport { 'vcenter':
-  username => 'root',
-  password => 'vmware',
-  server   => 'vc0.rbbrown.dev'
+  username => "${vcenter['username']}",
+  password => "${vcenter['password']}",
+  server   => "${vcenter['server']}",
+  options  => $vcenter['options'],
 }
 
-vcenter::cluster { '/dc1/clu1':
+vc_datacenter { "${dc1['path']}":
+  path      => "${dc1['path']}",
+  ensure    => present,
+  transport => Transport['vcenter'],
+}
+
+vcenter::cluster { "${cluster1['path']}":
   ensure    => present,
   transport => Transport['vcenter'],
   currentEVCModeKey => 'disabled',
@@ -35,7 +44,7 @@ vcenter::cluster { '/dc1/clu1':
   },
 }
 
-vcenter::cluster { '/dc1/clu2':
+vcenter::cluster { "${cluster2['path']}":
   ensure     => present,
   transport  => Transport['vcenter'],
   currentEVCModeKey => 'disabled',
@@ -45,7 +54,7 @@ vcenter::cluster { '/dc1/clu2':
       admissionControlEnabled => true,
       admissionControlPolicy => {
         vsphereType =>  'ClusterFailoverHostAdmissionControlPolicy',
-        failoverHosts => [ 'esx3.rbbrown.dev', 'esxA.rbbrown.dev' ], 
+        failoverHosts => [ "${esx3['hostname']}", "${esxA['hostname']}" ], 
       },
       defaultVmSettings => {
         isolationResponse => 'shutdown',
@@ -64,7 +73,7 @@ vcenter::cluster { '/dc1/clu2':
   },
 }
 
-vcenter::cluster { '/dc1/clu3':
+vcenter::cluster { "${cluster3['path']}":
   ensure    => present,
   transport => Transport['vcenter'],
   currentEVCModeKey => 'disabled',

@@ -12,12 +12,12 @@ Vc_datacenter {
   transport => Transport['vcenter'],
 }
 
-vc_datacenter { 'dc1':
+vc_datacenter { $dc1['name']:
   ensure    => present,
-  path      => '/dc1',
+  path      => $dc1['path']
 }
 
-vc_datacenter { 'dc2':
+vc_datacenter { $dc2['name']:
   ensure    => absent,
-  path      => '/dc2',
+  path      => $dc2['path']
 }
