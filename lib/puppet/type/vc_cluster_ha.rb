@@ -19,7 +19,7 @@ Puppet::Type.newtype(:vc_cluster_ha) do
     end
   end
 
-  clusterConfigSpecExMap = PuppetX::VMware::Mapper::ClusterConfigSpecExMap.new
+  clusterConfigSpecExMap = PuppetX::VMware::Mapper.new_map('ClusterConfigSpecExMap')
   clusterConfigSpecExMap.leaf_list.each do |leaf|
     if leaf.misc.include?(Array)
       option = {
