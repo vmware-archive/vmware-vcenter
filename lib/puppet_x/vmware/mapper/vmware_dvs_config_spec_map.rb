@@ -1,0 +1,664 @@
+# Copyright (C) 2013 VMware, Inc.
+module PuppetX::VMware::Mapper
+
+  class VMwareDVSConfigSpecMap < Map
+    def initialize
+      @initTree = {
+        Node => NodeData[
+          :node_type => 'VMwareDVSConfigSpec',
+        ],
+        :configVersion => LeafData[
+          :desc => "Version string of switch to be changed. Required.",
+        ],
+        :contact => {
+          Node => NodeData[
+            :node_type => 'DVSContactInfo',
+          ],
+          :name => LeafData[
+            :prop_name => :contact_name,
+            :desc => "responsible person's name",
+          ],
+          :contact => LeafData[
+            :prop_name => :contact_info,
+            :desc => "responsible person's contact info",
+          ],
+        },
+
+        :defaultPortConfig => {
+          Node => NodeData[
+            :node_type => 'VMWareDVPortSetting',
+          ],
+
+          # from base class DVSPortSetting
+          :blocked => {
+            Node => NodeData[
+              :node_type => 'BoolPolicy',
+            ],
+            :inherited => LeafData[
+              :prop_name => :default_blocked_inherited,
+              :desc => "Is setting inherited? true or false",
+              :valid_enum => [:true, :false],
+            ],
+            :value => LeafData[
+              :prop_name => :default_blocked_value,
+              :desc => "Is port blocked? true or false",
+              :valid_enum => [:true, :false],
+            ],
+          },
+
+          # from base class DVSPortSetting
+          :inShapingPolicy => {
+            Node => NodeData[
+              :node_type => 'DVSTrafficShapingPolicy',
+            ],
+            :averageBandwidth => {
+              Node => NodeData[
+                :node_type => 'LongPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_inShapingPolicy_averageBandwidth_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_inShapingPolicy_averageBandwidth_value,
+                :desc => "averageBandwidth in bits per second",
+                :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                :munge => PuppetX::VMware::Mapper::munge_to_i,
+              ],
+            },
+            :burstSize => {
+              Node => NodeData[
+                :node_type => 'LongPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_inShapingPolicy_burstSize_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_inShapingPolicy_burstSize_value,
+                :desc => "maximum burstSize allowed in bytes",
+                :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                :munge => PuppetX::VMware::Mapper::munge_to_i,
+              ],
+            },
+            :enabled => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_inShapingPolicy_enabled_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_inShapingPolicy_enabled_value,
+                :desc => "Is traffic shaper enabled on this port? "\
+                    "true or false",
+                :valid_enum => [:true, :false],
+              ],
+            },
+            :peakBandwidth => {
+              Node => NodeData[
+                :node_type => 'LongPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_inShapingPolicy_peakBandwidth_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_inShapingPolicy_peakBandwidth_value,
+                :desc => "peak bandwidth during bursts in bits per second",
+                :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                :munge => PuppetX::VMware::Mapper::munge_to_i,
+              ],
+            },
+          },
+          # from base class DVSPortSetting
+
+          :networkResourcePoolKey => {
+            Node => NodeData[
+              :node_type => 'StringPolicy',
+            ],
+            :inherited => LeafData[
+              :prop_name => :default_networkResourcePoolKey_inherited,
+              :desc => "Is setting inherited? true or false",
+              :valid_enum => [:true, :false],
+            ],
+            :value => LeafData[
+              :prop_name => :default_networkResourcePoolKey_value,
+              :desc => "networkResourcePoolKey to be associated "\
+                "with the port. String. Default is '-1', indicating "\
+                "no associated resource pool."
+            ],
+          },
+
+          # from base class DVSPortSetting
+
+          :outShapingPolicy => {
+            Node => NodeData[
+              :node_type => 'DVSTrafficShapingPolicy',
+            ],
+            :averageBandwidth => {
+              Node => NodeData[
+                :node_type => 'LongPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_outShapingPolicy_averageBandwidth_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_outShapingPolicy_averageBandwidth_value,
+                :desc => "averageBandwidth in bits per second",
+                :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                :munge => PuppetX::VMware::Mapper::munge_to_i,
+              ],
+            },
+            :burstSize => {
+              Node => NodeData[
+                :node_type => 'LongPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_outShapingPolicy_burstSize_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_outShapingPolicy_burstSize_value,
+                :desc => "maximum burstSize allowed in bytes",
+                :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                :munge => PuppetX::VMware::Mapper::munge_to_i,
+              ],
+            },
+            :enabled => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_outShapingPolicy_enabled_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_outShapingPolicy_enabled_value,
+                :desc => "Is traffic shaper enabled on this port? "\
+                    "true or false",
+                :valid_enum => [:true, :false],
+              ],
+            },
+            :peakBandwidth => {
+              Node => NodeData[
+                :node_type => 'LongPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_outShapingPolicy_peakBandwidth_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_outShapingPolicy_peakBandwidth_value,
+                :desc => "peak bandwidth during bursts in bits per second",
+                :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                :munge => PuppetX::VMware::Mapper::munge_to_i,
+              ],
+            },
+          },
+
+          # from base class DVSPortSetting
+          # vendorSpecificConfig XXX unused?
+
+          # from base class DVSPortSetting
+          # vmDirectPathGen2Allowed XXX unused?
+
+          # from extended class VMwareDVSPortSetting
+          :ipfixEnabled => {
+            Node => NodeData[
+              :node_type => 'BoolPolicy',
+            ],
+            :inherited => LeafData[
+              :prop_name => :default_ipfixEnabled_inherited,
+              :desc => "Is setting inherited? true or false",
+              :valid_enum => [:true, :false],
+            ],
+            :value => LeafData[
+              :prop_name => :default_ipfixEnabled_value,
+              :desc => "Is ipfix monitoring enabled on this port? "\
+                  "true or false",
+              :valid_enum => [:true, :false],
+            ],
+          },
+
+=begin lacpPolicy is not applicable in port default settings context
+          # from extended class VMwareDVSPortSetting
+          :lacpPolicy => {
+            Node => NodeData[
+              :node_type => 'VmwareUplinkLacpPolicy',
+            ],
+            :enable => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_lacpPolicy_enable_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_lacpPolicy_enable_value,
+                :desc => "Is lacp policy enabled on this port? true or false",
+                :valid_enum => [:true, :false],
+              ],
+            },
+            :mode => {
+              Node => NodeData[
+                :node_type => 'StringPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_lacpPolicy_mode_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_lacpPolicy_mode_value,
+                :desc => "lacpPolicy mode: active or passive"
+                :valid_enum => [ #XXX check allowed values with MOB??? ROB???
+                  :active,
+                  :passive,
+                ],
+              ],
+            },
+          },
+=end
+
+          # from extended class VMwareDVSPortSetting
+          # qosTag XXX deprecated
+
+          # from extended class VMwareDVSPortSetting
+          :securityPolicy => {
+            Node => NodeData[
+              :node_type => 'DVSSecurityPolicy',
+            ],
+            :inherited => LeafData[
+                :prop_name => :default_securityPolicy_inherited,
+                :desc => "Is security policy inherited? true or false",
+                :valid_enum => [:true, :false],
+            ],
+            :allowPromiscuous => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_allowPromiscuous_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_allowPromiscuous_value,
+                :desc => "Is promiscuous reception allowed on this port? "\
+                    "true or false",
+                :valid_enum => [:true, :false],
+              ],
+            },
+            :forgedTransmits => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_forgedTransmits_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_forgedTransmits_value,
+                :desc => "Are forged transmits allowed on this port? "\
+                    "true or false",
+                :valid_enum => [:true, :false],
+              ],
+            },
+            :macChanges => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_macChanges_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_macChanges_value,
+                :desc => "Are MAC address changes allowed on this port? "\
+                    "true or false",
+                :valid_enum => [:true, :false],
+              ],
+            },
+          },
+
+          # from extended class VMwareDVSPortSetting
+          :txUplink => {
+            Node => NodeData[
+              :node_type => 'BoolPolicy',
+            ],
+            :inherited => LeafData[
+              :desc => "Is setting inherited? true or false",
+              :valid_enum => [:true, :false],
+            ],
+            :value => LeafData[
+              :desc => "If true, a copy of packets sent to the switch "\
+                  "will always be forwarded to an uplink in addition to the "\
+                  "regular packet forwarded done by the switch. true or false",
+              :valid_enum => [:true, :false],
+            ],
+          },
+
+          # from extended class VMwareDVSPortSetting
+          :uplinkTeamingPolicy => {
+            Node => NodeData[
+              :node_type => 'VmwareUplinkPortTeamingPolicy',
+            ],
+            :inherited => LeafData[
+                :prop_name => :default_uplinkTeamingPolicy_inherited,
+                :desc => "Is uplink teaming policy inherited? true or false",
+                :valid_enum => [:true, :false],
+            ],
+
+            :failureCriteria => {
+              Node => NodeData[
+                :node_type => 'DVSFailureCritera',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_failureCriteria_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :checkBeacon => {
+                Node => NodeData[
+                  :node_type => 'BoolPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_checkBeacon_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_checkBeacon_value,
+                  :desc => "Is beacon probing "\
+                      "a failure criterion on this port? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+              },
+              :checkDuplex => {
+                Node => NodeData[
+                  :node_type => 'BoolPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_checkDuplex_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_checkDuplex_value,
+                  :desc => "Is full duplex check "\
+                      "a failure criterion on this port? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+              },
+              :checkErrorPercent => {
+                Node => NodeData[
+                  :node_type => 'BoolPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_checkErrorPercent_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_checkErrorPercent_value,
+                  :desc => "Is link error percentage "\
+                      "a failure criterion on this port? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+              },
+              :checkSpeed => {
+                Node => NodeData[
+                  :node_type => 'StringPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_checkSpeed_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_checkSpeed_value,
+                  :desc => "Is link speed "\
+                      "a failure criterion on this port? "\
+                      "'' (empty string) means speed is not used; "\
+                      "'minimum' means given speed is a minimum value; "\
+                      "'exact' means given speed is the exact required value.",
+                  :valid_enum => [
+                    :exact,
+                    :minimum,
+                    :"",
+                  ],
+                ],
+              },
+              :fullDuplex => {
+                Node => NodeData[
+                  :node_type => 'BoolPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_fullDuplex_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_fullDuplex_value,
+                  :desc => "See 'checkDuplex'",
+                  :valid_enum => [:true, :false],
+                ],
+              },
+              :percentage => {
+                Node => NodeData[
+                  :node_type => 'IntPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_percentage_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_percentage_value,
+                  :desc => "If 'checkErrorPercent' is true, this value "\
+                      "is the maximum tolerated error percentage.",
+                  :validate => PuppetX::VMware::Mapper::validate_i_in(0..100),
+                  :munge => PuppetX::VMware::Mapper::munge_to_i,
+                ],
+              },
+              :speed => {
+                Node => NodeData[
+                  :node_type => 'IntPolicy',
+                ],
+                :inherited => LeafData[
+                  :prop_name => :default_failureCriteria_speed_inherited,
+                  :desc => "Is setting inherited? true or false",
+                  :valid_enum => [:true, :false],
+                ],
+                :value => LeafData[
+                  :prop_name => :default_failureCriteria_speed_value,
+                  :desc => "Exact or minimum speed in megabits per second "\
+                      "used as failure criterion. See 'checkSpeed'"
+                  :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+                  :munge => PuppetX::VMware::Mapper::munge_to_i,
+                ],
+              },
+            },
+
+            :notifySwitches => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_notifySwitches_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_notifySwitches_value,
+                :desc => "Flag to specify whether or not to notify the "\
+                    "physical switch if a link fails. If this property is "\
+                    "true, ESX Server will respond to the failure by "\
+                    "sending a RARP packet from a different physical "\
+                    "adapter, causing the switch to update its cache.",
+                :valid_enum => [:true, :false],
+              ],
+            },
+
+            :policy => {
+              Node => NodeData[
+                :node_type => 'StringPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_nicTeamingPolicy_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_nicTeamingPolicy_value,
+                :desc => "Network adapter teaming policy. The policy "\
+                    "defines the way traffic from the clients of the team "\
+                    "is routed through the different uplinks in the team. "\
+                    "The policies supported on the VDS platform are listed "\
+                    "in DistributedVirtualSwitchNicTeamingPolicyMode.",
+                :desc_link => {
+                  :link => "DistributedVirtualSwitchNicTeamingPolicyMode",
+                  :url => "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.NicTeamingPolicyMode.html",
+                },
+                :valid_enum => [
+                  # DistributedVirtualSwitchNicTeamingPolicyMode
+                  :failover_explicit,
+                  :loadbalance_ip,
+                  :loadbalance_loadbased,
+                  :loadbalance_srcid,
+                  :loadbalance_srcmac,
+                ],
+              ],
+            },
+
+            :reversePolicy => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_reversePolicy_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_reversePolicy_value,
+                :desc => "The flag to indicate whether or not the teaming "\
+                    "policy is applied to inbound frames as well. For "\
+                    "example, if the policy is explicit failover, a "\
+                    "broadcast request goes through uplink1 and comes back "\
+                    "through uplink2. Then if the reverse policy is set, "\
+                    "the frame is dropped when it is received from uplink2. "\
+                    "This reverse policy is useful to prevent the virtual "\
+                    "machine from getting reflections. ",
+                :valid_enum => [:true, :false],
+              ],
+            },
+
+            :rollingOrder => {
+              Node => NodeData[
+                :node_type => 'BoolPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_rollingOrder_inherited,
+                :desc => "Is setting inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :value => LeafData[
+                :prop_name => :default_rollingOrder_value,
+                :desc => "The flag to indicate whether or not to use a "\
+                  "rolling policy when restoring links. For example, assume "\
+                  "the explicit link order is (vmnic9, vmnic0), therefore "\
+                  "vmnic9 goes down, vmnic0 comes up. However, when vmnic9 "\
+                  "comes backup, if rollingOrder is set to be true, vmnic0 "\
+                  "continues to be used, otherwise, vmnic9 is restored as "\
+                  "specified in the explicit order.",
+                :valid_enum => [:true, :false],
+              ],
+            },
+
+            :uplinkPortOrder => {
+              Node => NodeData[
+                :node_type => 'VMwareUplinkPortOrderPolicy',
+              ],
+              :inherited => LeafData[
+                :prop_name => :default_uplinkPortOrder_inherited,
+                :desc => "Is uplink port order inherited? true or false",
+                :valid_enum => [:true, :false],
+              ],
+              :activeUplinkPort => LeafData[
+                :desc => "List of active uplink ports (for load balancing)",
+                :misc => [Array],
+              ],
+              :standbyUplinkPort => LeafData[
+                :desc => "List of standby uplink ports (for failover)",
+                :misc => [Array],
+              ],
+
+            },
+          },
+
+          # from extended class VMwareDVSPortSetting
+          :vlan => {
+            Node => NodeData[
+              :node_type => :ABSTRACT
+            ],
+            :vsphereType => LeafData[
+              :prop_name => :default_vlan_type,
+              :valid_enum => [
+                :VmwareDistributedVirtualSwitchVlanIdSpec,
+                :VmwareDistributedVirtualSwitchTrunkVlanSpec,
+                :VmwareDistributedVirtualSwitchPvlanSpec,
+              ],
+            ],
+            :inherited => LeafData[
+              :prop_name => :default_vlan_inherited,
+              :desc => "Is uplink port order inherited? true or false",
+              :valid_enum => [:true, :false],
+            ],
+            :vlanId => LeafData[
+              #
+              # vlan.vlanId can't be automatically validated or munged
+              #
+              # 'vlan' may be VmwareDistributedVirtualSwitchVlanIdSpec or
+              # VmwareDistributedVirtualSwitchTrunkVlanSpec -- so vlanId 
+              # is either an integer or an array of NumericRange objects
+              #
+              #VmwareDistributedVirtualSwitchVlanIdSpec.vlanid
+              # validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+              # munge => PuppetX::VMware::Mapper::munge_to_i,
+              #VmwareDistributedVirtualSwitchTrunkVlanSpec.vlanid
+              # misc[Array]
+              #
+              :prop_name => :default_vlan_vlanId,
+              :requires => [:default_vlan_type],
+            ],
+            :pvlanId => LeafData[
+              :prop_name => :default_vlan_pvlanId,
+              :munge => PuppetX::VMware::Mapper::munge_to_i,
+              :validate => PuppetX::VMware::Mapper::validate_i_in(1..4094),
+              :requires => [:default_vlan_type],
+            ],
+          },
+        }
+      }
+
+      super
+    end
+  end
+
+end
