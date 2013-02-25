@@ -10,6 +10,8 @@ module PuppetX
   module VMware
     module Mapper
 
+      PROP_NAME_IS_FULL_PATH = :PROP_NAME_IS_FULL_PATH
+
       def self.new_map mapname
         mapfile = PuppetX::VMware::Util.snakeize mapname
         require 'pathname'
@@ -91,8 +93,20 @@ module PuppetX
             # .dup not necessary because of following map to_sym
           @props[:path_is_now] = @props[:path_is_now].map{|v| v.to_sym}
           @props[:path_should] = @props[:path_should].map{|v| v.to_sym}
-          @props[:prop_name] ||=
-            PuppetX::VMware::Util.snakeize(@props[:path_should][-1]).to_sym
+          @props[:prop_name] =
+            case @props[:prop_name]
+            when nil
+              # autogenerate using last element in path
+              PuppetX::VMware::Util.snakeize(@props[:path_should][-1]).to_sym
+            when PROP_NAME_IS_FULL_PATH
+              # autogenerate using full path
+              @props[:path_should].
+                  map{|name| PuppetX::VMware::Util.snakeize name}.
+                  join "_"
+            else
+              # specified explicitly in map
+              @props[:prop_name]
+            end
         end
 
         self.property_access Prop_names
@@ -326,6 +340,74 @@ in Proc, while others allow tailoring the block to specific cases.
         end
       end
 
+=begin
+
+This is a version of insync? for InheritablePolicy 'value'
+properties. It looks at the current (is_now) and desired (should)
+values of 'inheritable' (finding it at the same level of nesting)
+to determine whether the property of interest should be considered
+to be 'in sync'. If that can't be determined, the calling routine
+should call the normal insync for the property's class.
+
+Here's what usage looks like in the type:
+
+  newproperty(:foo, ...) do
+    :
+    def insync?(is)
+      v = PuppetX::VMware::Mapper.
+          insyncInheritablePolicyValue is, @resource, is_now_map, :foo
+      v = super(is) if v.nil?
+      v
+    end
+    :
+  end
+
+XXX TODO fix this to return a block, to directly call super(is)
+XXX TODO fix this to return a block, to directly use @resource
+XXX TODO fix this to hold prop_name in a closure, so the caller 
+         doesn't have to fool around with eval and interpolation
+         when automatically generating newproperty
+
+=end
+
+      # flag for use in maps
+      InheritablePolicyValue = :InheritablePolicyValue
+
+      def self.insyncInheritablePolicyValue is, resource, is_now_map, prop_name
+        # find the leaf for the value to be insync?'d
+        leaf_value = is_now_map.leaf_list.select do |leaf|
+          leaf[:prop_name] == prop_name
+        end
+
+        # for the corresponding 'inherited' value, find the leaf and the prop_name
+        path_is_now_inherited = leaf_value[:path_is_now][0..-2].dup.push(:inherited)
+        leaf_inherited = is_now_map.leaf_list.select do |leaf|
+          leaf[:path_is_now] == path_is_now_inherited
+        end
+        prop_name_inherited = leaf_inherited[:prop_name]
+
+        # get 'is_now' value for 'inherited' from map; munge
+        is_now_inherited = munge_to_tfsums.call(
+            nested_value(is_now_map, path_is_now_inherited))
+        # get 'should' value for 'inherited' from resource; munge
+        should_inherited = munge_to_tfsyms.call(resource[prop_name_inherited])
+
+        case [is_now_inherited, should_inherited]
+        # 'should' be inherited, so input value is ignored
+        when [:true, :true]   ; then return true
+        # 'should' be inherited, so input value is ignored
+        when [:false, :true]  ; then return true
+        # was inherited, but should be no longer - must supply all values
+        when [:true, :false]  ; then return false
+        # value is and should be uninherited, so normal insync?
+        when [:false, :false] ; then return nil
+        else
+          fail "For inherited policy value #{}, "\
+            "current 'inherited' is '#{is_now_inherited.inspect}', "\
+            "request 'inherited' is '#{should_inherited.inspect}'"
+        end
+      end
+  
     end
   end
 end
