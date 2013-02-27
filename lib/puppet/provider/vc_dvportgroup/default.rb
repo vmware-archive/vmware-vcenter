@@ -7,7 +7,7 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
 
   def create
     datacenter = @resource[:path].split('/')[1]
-    dc = vim.serviceInstance.find_datacenter (datacenter)
+    dc = vim.serviceInstance.find_datacenter(datacenter)
     dswitch = dc.networkFolder.children.select {|n| n.class == RbVmomi::VIM::VmwareDistributedVirtualSwitch }
 
     spec = RbVmomi::VIM::DVPortgroupConfigSpec.new
@@ -27,14 +27,14 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
   end
 
   def destroy
-    dc = vim.serviceInstance.find_datacenter (@resource[:path].split('/')[1])
+    dc = vim.serviceInstance.find_datacenter(@resource[:path].split('/')[1])
     dvportgroups = dc.networkFolder.children.select {|n| n.class == RbVmomi::VIM::DistributedVirtualPortgroup }
     dvportgroups.find{ |d| d.name == basename }.Destroy_Task.wait_for_completion
   end
 
   def exists?
     #dc = vim.serviceInstance.find_datacenter(parent)
-    dc = vim.serviceInstance.find_datacenter (@resource[:path].split('/')[1])
+    dc = vim.serviceInstance.find_datacenter(@resource[:path].split('/')[1])
     dvportgroups = dc.networkFolder.children.select {|n| n.class == RbVmomi::VIM::DistributedVirtualPortgroup }
     dvportgroups.find{ |d| d.name == basename }
   end
