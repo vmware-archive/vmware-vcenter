@@ -12,7 +12,7 @@ require File.join module_lib, 'puppet_x/vmware/mapper'
 Puppet::Type.type(:vc_cluster_ha).provide(:vc_cluster_ha, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter cluster's settings for HA (High Availability)."
 
-  clusterConfigSpecExMap ||= PuppetX::VMware::Mapper::ClusterConfigSpecExMap.new
+  clusterConfigSpecExMap ||= PuppetX::VMware::Mapper.new_map('ClusterConfigSpecExMap')
 
   clusterConfigSpecExMap.leaf_list.each do |leaf|
     define_method(leaf.prop_name) do
