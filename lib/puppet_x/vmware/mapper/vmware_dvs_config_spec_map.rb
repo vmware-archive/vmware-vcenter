@@ -706,22 +706,208 @@ module PuppetX::VMware::Mapper
             ],
           },
         },
-        :defaultProxySwitchMaxNumPorts => {},
-        :description => {},
-        :extensionKey => {},
-        :host => {},
+
+        :defaultProxySwitchMaxNumPorts => LeafData[
+          :desc => "The default host proxy switch maximum port number",
+          :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+          :munge => PuppetX::VMware::Mapper::munge_to_i,
+        ],
+        :description => LeafData[
+          :desc => "description of the switch",
+        ],
+        :extensionKey => LeafData[
+          :desc => "The key of the extension registered by a remote server "\
+                   "that controls the switch",
+        ],
+
+=begin
+
+        :host => {
+        },
+
+# Mapper can't yet handle array of objects, let alone 
+# an array of nested objects including arrays of objects
+
+DistributedVirtualSwitchHostMemberConfigSpec[] host
+> mo_ref host
+> xsd:int maxProxySwitchPorts OPTIONAL
+> xsd:string operation ENUM[add,edit,remove]
+> DistributedVirtualSwitch[HostMember]PnicBacking backing OPTIONAL
+> > DistributedVirtualSwitchHostMemberPnicSpec[] pnicSpec 
+> > > xsd:int connectionCookie
+> > > xsd:string pnicDevice
+> > > xsd:string uplinkPortgroupKey
+> > > xsd:string uplinkPortKey
+
+host => {
+  host => "esx1.my.local",
+  maxProxyPorts => 240,
+  operation => "add",
+  backing => {
+    pnicSpec0 => {
+      pnicDevice = "en0",
+      uplinkPortgroupKey => "dvUplink",
+    },
+    pnicSpec1 => {
+      pnicDevice = "en1",
+      uplinkPortgroupKey => "dvUplink",
+    },
+  },
+}
+
+=end
+
+        # The 'host' property fails to handle an array as it should
+        # for the reason discussed above. Instead, the 'host' property:
+        # -- handles only a single host, not an arrray
+        # -- handles only a limited number of pnics, not an array
+        # -- requires pnicSpec 'array' specified as pnicSpec0, pnicSpec1, ...
+        :host => {
+          Node => NodeData[
+            :node_type => 'DistributedVirtualSwitchHostMemberConfigSpec',
+          ],
+          :backing => {
+            Node => NodeData[
+              :node_type => "DistributedVirtualSwitchHostMemberBacking",
+            ],
+            :pnicSpec => {
+              :pnicSpec0 => {
+                :connectionCookie => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => "Cookie. See "\
+                    "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.dvs.HostMember.PnicSpec.html",
+                ],
+                :pnicDevice => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => 
+                    "Name of the physical NIC to be added to the proxy switch",
+                ],
+                :uplinkPortgroupKey => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => 
+                    "Key of the portgroup to be connected to the physical NIC",
+                ],
+                :uplinkPortKey => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => 
+                    "Key of the port to be connected to the physical NIC",
+                ],
+              },
+              :pnicSpec1 => {
+                :connectionCookie => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => "Cookie. See "\
+                    "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.dvs.HostMember.PnicSpec.html",
+                ],
+                :pnicDevice => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => 
+                    "Name of the physical NIC to be added to the proxy switch",
+                ],
+                :uplinkPortgroupKey => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => 
+                    "Key of the portgroup to be connected to the physical NIC",
+                ],
+                :uplinkPortKey => LeafData[
+                  :prop_name => PROP_NAME_IS_FULL_PATH,
+                  :desc => 
+                    "Key of the port to be connected to the physical NIC",
+                ],
+              },
+            },
+          },
+          :host => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "Identifies host member of the DVS",
+          ],
+          :maxProxySwitchPorts => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "Maximum number of ports in the HostProxySwitch",
+            :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+            :munge => PuppetX::VMware::Mapper::munge_to_i,
+          ],
+          :operation => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "Host member operation. One of add, edit, or remove",
+            :valid_enum => [
+              :add,
+              :edit,
+              :remove,
+            ],
+          ],
+        },
+
         #maxPorts - deprecated
-        :numStandalonePorts => {},
-        :policy => {},
-        :switchIpAddress => {},
-        :uplinkPortgroup => {},
-        :uplinkPortPolicy => {},
-        :vendorSpecificConfig => {},
+        :name => LeafData[
+          :desc => "name of the switch",
+        ],
+        :numStandalonePorts => LeafData[
+          :desc => "The The number of standalone ports in the switch. "\
+                   "Standalone ports are ports that do not belong to any portgroup.",
+          :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+          :munge => PuppetX::VMware::Mapper::munge_to_i,
+        ],
+        :policy => {
+          Node => NodeData[
+            :node_type => 'DVSPolicy',
+          ],
+          :autoPreInstallAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "Switch usage policy. see "\
+              "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
+            :valid_enum => [:true, :false],
+          ],
+          :autoUpgradeAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "Switch usage policy. see "\
+              "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
+            :valid_enum => [:true, :false],
+          ],
+          :partialUpgradeAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "Switch usage policy. see "\
+              "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
+            :valid_enum => [:true, :false],
+          ],
+        },
+        :switchIpAddress => LeafData[
+          :desc => "IP address for the switch, specified using IPv4 dot "\
+              "notation. The utility of this address is defined by other switch features."
+        ],
+        :uplinkPortgroup => LeafData[
+          :desc => "The uplink portgroups",
+          :misc => [Array],
+        ],
+        :uplinkPortPolicy => {
+          Node => NodeData[
+            :node_type => 'DVSNameArrayUplinkPortPolicy',
+          ],
+          :uplinkPortname => LeafData[
+            :desc => "Array of uniform names of uplink ports on each host. "\
+                     "The size of the array indicates the number of uplink ports "\
+                     "that will be created for each host in the switch.",
+            :misc => [Array],
+          ],
+        },
+        :vendorSpecificConfig => {
+          Node => NodeData[
+            :node_type => 'DistributedVirtualSwitchKeyedOpaqueBlob',
+          ],
+          :key => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "A key that identifies the opaque binary blob.",
+          ],
+          :opaqueData => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => "The opaque data. It is recommended that base64 "\
+                     "encoding be used for binary data.",
+          ],
+        },
 
       }
 
       super
     end
   end
-
 end
