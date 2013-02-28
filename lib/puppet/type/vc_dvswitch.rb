@@ -11,15 +11,24 @@ require File.join vmware_module.path, 'lib/puppet/property/vmware'
 Puppet::Type.newtype(:vc_dvswitch) do
   @doc = "Manages vCenter Distributed Virtual Switch"
 
+  ensurable do
+    newvalue(:present) do
+      provider.create
+    end
+    newvalue(:absent) do
+      provider.destroy
+    end
+  end
+
   newparam(:path, :namevar => true) do
-    desc "The path to the datacenter."
+    desc "The path to the dvswitch."
 
     validate do |value|
       raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(value)
     end
   end
 
-  map = PuppetX::VMware::Mapper.new_map('VMwareDistributedVirtualSwitchSpecMap')
+  map = PuppetX::VMware::Mapper.new_map('VMwareDVSConfigSpecMap')
   map.leaf_list.each do |leaf|
     if leaf.misc.include?(Array)
       option = {
@@ -49,9 +58,9 @@ Puppet::Type.newtype(:vc_dvswitch) do
     end
   end
 
-  # autorequire datastore
-  autorequire(:vc_datastore) do
-    Pathname.new(self[:path]).to_s
+  # autorequire datacenter
+  autorequire(:vc_datacenter) do
+    Pathname.new(self[:path]).parent.to_s
   end
 
 end
