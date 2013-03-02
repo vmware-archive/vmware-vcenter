@@ -175,7 +175,7 @@ define vcenter::dvswitch (
 # sample #   switchIpAddress => ,
 # sample #   uplinkPortgroup => ,
 # sample #   uplinkPortPolicy => {
-# sample #     uplinkPortname => ,
+# sample #     uplinkPortName => ,
 # sample #   },
 # sample # }
 
@@ -190,14 +190,14 @@ define vcenter::dvswitch (
     default_proxy_switch_max_num_ports => nested_value($spec,['defaultProxySwitchMaxNumPorts']),
     description                        => nested_value($spec,['description']),
     extension_key                      => nested_value($spec,['extensionKey']),
-    name                               => nested_value($spec,['name']),
+    dvswitch_name                      => nested_value($spec,['name']),
     num_standalone_ports               => nested_value($spec,['numStandalonePorts']),
     policy_auto_pre_install_allowed    => nested_value($spec,['policy', 'autoPreInstallAllowed']),
     policy_auto_upgrade_allowed        => nested_value($spec,['policy', 'autoUpgradeAllowed']),
     policy_partial_upgrade_allowed     => nested_value($spec,['policy', 'partialUpgradeAllowed']),
     switch_ip_address                  => nested_value($spec,['switchIpAddress']),
     uplink_portgroup                   => nested_value($spec,['uplinkPortgroup']),
-    uplink_portname                    => nested_value($spec,['uplinkPortPolicy', 'uplinkPortname']),
+    uplink_port_name                   => nested_value($spec,['uplinkPortPolicy', 'uplinkPortName']),
 
     default_port_config_blocked_inherited => nested_value($spec,['defaultPortConfig', 'blocked', 'inherited']),
     default_port_config_blocked_value     => nested_value($spec,['defaultPortConfig', 'blocked', 'value']),

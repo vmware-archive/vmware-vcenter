@@ -11,6 +11,7 @@ module PuppetX
     module Mapper
 
       PROP_NAME_IS_FULL_PATH = :PROP_NAME_IS_FULL_PATH
+      InheritablePolicyValue = :InheritablePolicyValue
 
       def self.new_map mapname
         mapfile = PuppetX::VMware::Util.snakeize mapname
@@ -74,6 +75,7 @@ module PuppetX
             :path_should,
             :prop_name,
             :requires,
+            :requires_siblings,
             :validate,
             :valid_enum,
           ]
@@ -87,6 +89,7 @@ module PuppetX
             @props[:path_should]
           @props[:misc] ||= []
           @props[:requires] ||= []
+          @props[:requires_siblings] ||= []
 
           # set defaults and munge
           @props[:path_is_now] ||= @props[:path_should]
@@ -166,6 +169,38 @@ module PuppetX
 
           # walk down the initTree and find the leaves
           walk_down @initTree, [], @leaf_list, @node_list
+
+          # now that it's complete, go through leaf_list 
+          # to resolve interdependencies
+          #
+          # add requires_siblings for InheritablePolicyValue
+          @leaf_list.
+            select{|leaf| leaf.misc.include? InheritablePolicyValue}.
+            reject{|leaf| leaf.requires_siblings.include? :inherited}.
+            each  {|leaf| leaf.requires_siblings.push :inherited}
+
+          # XXX TODO require 'aunt' :inherited...
+
+          # resolve requires_siblings (path-based) to requires (prop_names)
+          @leaf_list.
+            reject{|leaf| leaf.requires_siblings.empty?}.
+            each  {|leaf|
+              leaf.requires_siblings.each do |sib|
+                sib_path = leaf.path_is_now[0..-2].dup << sib
+                sib_leaf = @leaf_list.find{|l| l.path_is_now == sib_path}
+                if sib_leaf
+                  leaf.requires.push sib_leaf.prop_name.to_sym unless
+                    leaf.requires.include? sib_leaf.prop_name.to_sym
+                else
+                  fail "Not found: sibling #{sib} for '#{leaf.full_name}'"
+                end
+              end
+            }
+
+          require 'ruby-debug'; debugger
+
+          x = x
+
         end
 
         attr_reader :leaf_list, :node_list
@@ -355,7 +390,7 @@ Here's what usage looks like in the type:
     :
     def insync?(is)
       v = PuppetX::VMware::Mapper.
-          insyncInheritablePolicyValue is, @resource, is_now_map, :foo
+          insyncInheritablePolicyValue is, @resource, :foo
       v = super(is) if v.nil?
       v
     end
@@ -370,25 +405,30 @@ XXX TODO fix this to hold prop_name in a closure, so the caller
 
 =end
 
-      # flag for use in maps
-      InheritablePolicyValue = :InheritablePolicyValue
+      def self.insyncInheritablePolicyValue is, resource, prop_name
 
-      def self.insyncInheritablePolicyValue is, resource, is_now_map, prop_name
+        map = resource.provider.map
+
         # find the leaf for the value to be insync?'d
-        leaf_value = is_now_map.leaf_list.select do |leaf|
-          leaf[:prop_name] == prop_name
-        end
+        leaf_value = map.leaf_list.select do |leaf|
+          leaf.prop_name == prop_name
+        end.first
+
+        # for the corresponding 'inherited' value, generate the path
+        path_is_now_inherited = leaf_value.path_is_now[0..-2].dup.push(:inherited)
+        Puppet.debug "path_is_now_value     is #{leaf_value.path_is_now.inspect}"
+        Puppet.debug "path_is_now_inherited is #{path_is_now_inherited.inspect}"
 
         # for the corresponding 'inherited' value, find the leaf and the prop_name
-        path_is_now_inherited = leaf_value[:path_is_now][0..-2].dup.push(:inherited)
-        leaf_inherited = is_now_map.leaf_list.select do |leaf|
-          leaf[:path_is_now] == path_is_now_inherited
-        end
-        prop_name_inherited = leaf_inherited[:prop_name]
+        leaf_inherited = map.leaf_list.select do |leaf|
+          leaf.path_is_now == path_is_now_inherited
+        end.first
+        prop_name_inherited = leaf_inherited.prop_name
 
-        # get 'is_now' value for 'inherited' from map; munge
-        is_now_inherited = munge_to_tfsums.call(
-            nested_value(is_now_map, path_is_now_inherited))
+        # get 'is_now' value for 'inherited' from config_is_now; munge
+        is_now_inherited = PuppetX::VMware::Util.nested_value(
+              resource.provider.config_is_now, path_is_now_inherited)
+        is_now_inherited = munge_to_tfsyms.call(is_now_inherited)
         # get 'should' value for 'inherited' from resource; munge
         should_inherited = munge_to_tfsyms.call(resource[prop_name_inherited])
 
@@ -402,9 +442,10 @@ XXX TODO fix this to hold prop_name in a closure, so the caller
         # value is and should be uninherited, so normal insync?
         when [:false, :false] ; then return nil
         else
-          fail "For inherited policy value #{}, "\
-            "current 'inherited' is '#{is_now_inherited.inspect}', "\
-            "request 'inherited' is '#{should_inherited.inspect}'"
+          # require 'ruby-debug'; debugger
+          fail "For InheritedPolicy #{leaf_value.full_name}, "\
+            "current '.inherited' is '#{is_now_inherited.inspect}', "\
+            "requested '.inherited' is '#{should_inherited.inspect}'"
         end
       end
   

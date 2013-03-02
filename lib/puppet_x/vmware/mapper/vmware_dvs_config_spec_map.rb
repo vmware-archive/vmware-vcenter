@@ -26,7 +26,7 @@ module PuppetX::VMware::Mapper
 
         :defaultPortConfig => {
           Node => NodeData[
-            :node_type => 'VMWareDVPortSetting',
+            :node_type => 'VMwareDVSPortSetting',
           ],
 
           # from base class DVSPortSetting
@@ -682,7 +682,7 @@ module PuppetX::VMware::Mapper
             :vlanId => LeafData[
               :misc => [InheritablePolicyValue],
               :prop_name => PROP_NAME_IS_FULL_PATH,
-              :requires => [:default_vlan_type],
+              :requires_siblings => [:vsphereType],
               #
               # vlan.vlanId can't be automatically validated or munged
               #
@@ -702,7 +702,7 @@ module PuppetX::VMware::Mapper
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :munge => PuppetX::VMware::Mapper::munge_to_i,
               :validate => PuppetX::VMware::Mapper::validate_i_in(1..4094),
-              :requires => [:default_vlan_type],
+              :requires_siblings => [:vsphereType],
             ],
           },
         },
@@ -757,6 +757,7 @@ host => {
 
 =end
 
+=begin
         # The 'host' property fails to handle an array as it should
         # for the reason discussed above. Instead, the 'host' property:
         # -- handles only a single host, not an arrray
@@ -837,9 +838,11 @@ host => {
             ],
           ],
         },
+=end
 
         #maxPorts - deprecated
         :name => LeafData[
+          :prop_name => 'dvswitch_name',
           :desc => "name of the switch",
         ],
         :numStandalonePorts => LeafData[
@@ -883,7 +886,7 @@ host => {
           Node => NodeData[
             :node_type => 'DVSNameArrayUplinkPortPolicy',
           ],
-          :uplinkPortname => LeafData[
+          :uplinkPortName => LeafData[
             :desc => "Array of uniform names of uplink ports on each host. "\
                      "The size of the array indicates the number of uplink ports "\
                      "that will be created for each host in the switch.",
