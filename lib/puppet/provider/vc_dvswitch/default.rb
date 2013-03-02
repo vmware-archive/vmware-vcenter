@@ -32,11 +32,6 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
   # XXX lifted from previous version - check
   def exists?
     dvswitch
-=begin
-    dc = vim.serviceInstance.find_datacenter(parent)
-    dvswitches = dc.networkFolder.children.select {|n| n.class == RbVmomi::VIM::VmwareDistributedVirtualSwitch}
-    dvswitches.find{|d| d.name == basename}
-=end
   end
 
   map ||= PuppetX::VMware::Mapper.new_map('VMwareDVSConfigSpecMap')
@@ -53,9 +48,11 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
       PuppetX::VMware::Util::nested_value_set(config_should, leaf.path_should, value)
       properties_received.add leaf.prop_name
       properties_required.merge leaf.requires
+      @flush_required = true
     end
   end
 
+=begin
   # munge the list of member hosts returned by the API
   # - convert ManagedObjects to ManagedObjectReferences (mo_ref)
   # - sort array to allow consistent comparisons
@@ -90,6 +87,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     end
     set_host_host mo_ref_list
   end
+=end
 
   def flush_prep
     # dvswitch requires matching configVersion
@@ -107,25 +105,31 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     # create RbVmomi objects with properties in place of hashes with keys
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
     Puppet.debug "'should' is #{config_should.inspect}'}"
-    config_object = 
-      map.objectify config_should
-    Puppet.debug "'object' is #{config_object.inspect}'}"
-    config_object
+    spec = map.objectify config_should
+    Puppet.debug "'object' is #{spec.inspect}'}"
+    spec
   end
 
   def flush
-    return unless exists?
+    return unless @flush_required
     spec = flush_prep
     task = dvswitch.ReconfigureDvs_Task(
       :spec => spec
     ).wait_for_completion
   end
 
-  private
-
+  # not private: used by insyncInheritablePolicy
   define_method(:map) do 
     @map ||= map
   end
+
+  # not private: used by insyncInheritablePolicy
+  def config_is_now
+    @config_is_now ||= 
+        map.annotate_is_now dvswitch.config
+  end
+
+  private
 
   def properties_received
     @properties_received ||= Set.new
@@ -133,11 +137,6 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   def properties_required
     @properties_required ||= Set.new
-  end
-
-  def config_is_now
-    @config_is_now ||= 
-        map.annotate_is_now dvswitch.config
   end
 
   def config_should
