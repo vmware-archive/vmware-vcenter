@@ -11,17 +11,15 @@ require File.join module_lib, 'puppet_x/vmware/mapper'
 Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter Distributed Virtual Switch"
 
-  # XXX lifted from previous version - check
   def create
     dc = vim.serviceInstance.find_datacenter(parent)
     spec = RbVmomi::VIM::DVSCreateSpec.new
     spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
     spec.configSpec.name = basename
     spec.configSpec.uplinkPortgroup = [basename]
-    dc.networkFolder.CreateDVS_Task(:spec => spec)
+    dc.networkFolder.CreateDVS_Task(:spec => spec).wait_for_completion
   end
 
-  # XXX lifted from previous version - check
   def destroy
     @dvswitch = nil
     dc = vim.serviceInstance.find_datacenter(parent)
@@ -29,7 +27,6 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     dvswitches.find{|d| d.name == basename}.Destroy_Task.wait_for_completion
   end
 
-  # XXX lifted from previous version - check
   def exists?
     dvswitch
   end
@@ -93,40 +90,46 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     # dvswitch requires matching configVersion
     config_should[:configVersion] = config_is_now[:configVersion]
 
-    # To change some properties, the API requires others that may not 
-    # have changed. If not, they must be fetched from the type.
+    # To change some properties, the API requires others that may not have 
+    # changed. If not, they must be fetched from the type. When additional 
+    # properties are fetched, new items may be added to required_properties,
+    # so iteration is required.
     Puppet.debug "requiring: #{@properties_received.inspect} were received"
-    properties_required.subtract properties_received
-    unless properties_required.empty?
-      Puppet.debug "requiring: #{@properties_required.inspect} are required"
-      properties_required.each{|p| self.send "#{p}=".to_sym, @resource[p]}
+    properties_received_old = Set.new
+    while properties_received != properties_received_old
+      properties_received_old = properties_received.dup
+      properties_required.subtract properties_received
+      unless properties_required.empty?
+        Puppet.debug "requiring: #{@properties_required.inspect} are required"
+        # properties_required may change
+        # properties_received should change
+        properties_required.each{|p| self.send "#{p}=".to_sym, @resource[p]}
+      end
     end
+    # require 'ruby-debug'; debugger
 
     # create RbVmomi objects with properties in place of hashes with keys
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
     Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
+    # require 'ruby-debug' ; debugger
     spec
   end
 
   def flush
     return unless @flush_required
     spec = flush_prep
-    task = dvswitch.ReconfigureDvs_Task(
-      :spec => spec
-    ).wait_for_completion
+    begin
+      dvswitch.ReconfigureDvs_Task(:spec => spec).wait_for_completion
+    rescue Exception => e
+      fail "#{e.inspect}"
+    end
   end
 
   # not private: used by insyncInheritablePolicy
   define_method(:map) do 
     @map ||= map
-  end
-
-  # not private: used by insyncInheritablePolicy
-  def config_is_now
-    @config_is_now ||= 
-        map.annotate_is_now dvswitch.config
   end
 
   private
@@ -137,6 +140,11 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   def properties_required
     @properties_required ||= Set.new
+  end
+
+  def config_is_now
+    @config_is_now ||= 
+        map.annotate_is_now dvswitch.config
   end
 
   def config_should

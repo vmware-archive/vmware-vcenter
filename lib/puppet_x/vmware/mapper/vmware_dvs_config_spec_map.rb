@@ -1,5 +1,12 @@
 # Copyright (C) 2013 VMware, Inc.
 module PuppetX::VMware::Mapper
+ 
+# :requires => [ # :default_port_config_in_shaping_policy_inherited,
+  # :default_port_config_out_shaping_policy_inherited,
+  # :default_port_config_security_policy_inherited,
+  # :default_port_config_uplink_teaming_policy_inherited,
+  # :default_port_config_uplink_teaming_policy_failure_criteria_inherited,
+# ],
 
   class VMwareDVSConfigSpecMap < Map
     def initialize
@@ -65,6 +72,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_in_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -82,6 +92,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_in_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -99,6 +112,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_in_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -116,6 +132,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_in_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -165,6 +184,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_out_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -182,6 +204,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_out_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -199,6 +224,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_out_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -216,6 +244,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_out_shaping_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -257,7 +288,7 @@ module PuppetX::VMware::Mapper
           # from extended class VMwareDVSPortSetting
           :lacpPolicy => {
             Node => NodeData[
-              :node_type => 'VmwareUplinkLacpPolicy',
+              :node_type => 'VMwareUplinkLacpPolicy',
             ],
             :inherited => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,
@@ -272,6 +303,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_lacp_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -288,6 +322,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_lacp_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -322,6 +359,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_security_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -339,6 +379,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_security_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -356,6 +399,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_security_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -400,12 +446,15 @@ module PuppetX::VMware::Mapper
 
             :failureCriteria => {
               Node => NodeData[
-                :node_type => 'DVSFailureCritera',
+                :node_type => 'DVSFailureCriteria',
               ],
               :inherited => LeafData[
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_uplink_teaming_policy_inherited,
+                ],
               ],
               :checkBeacon => {
                 Node => NodeData[
@@ -415,6 +464,9 @@ module PuppetX::VMware::Mapper
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
+                  :requires => [
+                    :default_port_config_uplink_teaming_policy_failure_criteria_inherited,
+                  ],
                 ],
                 :value => LeafData[
                   :misc => [InheritablePolicyValue],
@@ -544,6 +596,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_uplink_teaming_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -565,6 +620,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_uplink_teaming_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -599,6 +657,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_uplink_teaming_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -623,6 +684,9 @@ module PuppetX::VMware::Mapper
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_uplink_teaming_policy_inherited,
+                ],
               ],
               :value => LeafData[
                 :misc => [InheritablePolicyValue],
@@ -644,8 +708,11 @@ module PuppetX::VMware::Mapper
               ],
               :inherited => LeafData[
                 :prop_name => PROP_NAME_IS_FULL_PATH,
-                :desc => "Is uplink port order inherited? true or false",
+                :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
+                :requires => [
+                  :default_port_config_uplink_teaming_policy_inherited,
+                ],
               ],
               :activeUplinkPort => LeafData[
                 :misc => [Array, InheritablePolicyValue],
@@ -842,7 +909,7 @@ host => {
 
         #maxPorts - deprecated
         :name => LeafData[
-          :prop_name => 'dvswitch_name',
+          :prop_name => :dvswitch_name,
           :desc => "name of the switch",
         ],
         :numStandalonePorts => LeafData[

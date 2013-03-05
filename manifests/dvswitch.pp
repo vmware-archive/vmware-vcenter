@@ -215,9 +215,9 @@ define vcenter::dvswitch (
     default_port_config_ipfix_enabled_inherited => nested_value($spec,['defaultPortConfig', 'ipfixEnabled', 'inherited']),
     default_port_config_ipfix_enabled_value     => nested_value($spec,['defaultPortConfig', 'ipfixEnabled', 'value']),
 
+    default_port_config_lacp_policy_inherited        => nested_value($spec,['defaultPortConfig', 'lacpPolicy', 'inherited']),
     default_port_config_lacp_policy_enable_inherited => nested_value($spec,['defaultPortConfig', 'lacpPolicy', 'enable', 'inherited']),
     default_port_config_lacp_policy_enable_value     => nested_value($spec,['defaultPortConfig', 'lacpPolicy', 'enable', 'value']),
-    default_port_config_lacp_policy_inherited        => nested_value($spec,['defaultPortConfig', 'lacpPolicy', 'inherited']),
     default_port_config_lacp_policy_mode_inherited   => nested_value($spec,['defaultPortConfig', 'lacpPolicy', 'mode', 'inherited']),
     default_port_config_lacp_policy_mode_value       => nested_value($spec,['defaultPortConfig', 'lacpPolicy', 'mode', 'value']),
 
