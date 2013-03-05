@@ -103,9 +103,10 @@ module PuppetX
               PuppetX::VMware::Util.snakeize(@props[:path_should][-1]).to_sym
             when PROP_NAME_IS_FULL_PATH
               # autogenerate using full path
-              @props[:path_should].
+              x = @props[:path_should].
                   map{|name| PuppetX::VMware::Util.snakeize name}.
                   join "_"
+              x = x.to_sym
             else
               # specified explicitly in map
               @props[:prop_name]
@@ -180,6 +181,7 @@ module PuppetX
             each  {|leaf| leaf.requires_siblings.push :inherited}
 
           # XXX TODO require 'aunt' :inherited...
+          # require 'ruby-debug'; debugger
 
           # resolve requires_siblings (path-based) to requires (prop_names)
           @leaf_list.
@@ -196,10 +198,6 @@ module PuppetX
                 end
               end
             }
-
-          require 'ruby-debug'; debugger
-
-          x = x
 
         end
 
@@ -407,36 +405,34 @@ XXX TODO fix this to hold prop_name in a closure, so the caller
 
       def self.insyncInheritablePolicyValue is, resource, prop_name
 
-        map = resource.provider.map
+        provider = resource.provider
+        map = provider.map
 
         # find the leaf for the value to be insync?'d
-        leaf_value = map.leaf_list.select do |leaf|
+        leaf_value = map.leaf_list.find do |leaf|
           leaf.prop_name == prop_name
-        end.first
+        end
 
         # for the corresponding 'inherited' value, generate the path
         path_is_now_inherited = leaf_value.path_is_now[0..-2].dup.push(:inherited)
-        Puppet.debug "path_is_now_value     is #{leaf_value.path_is_now.inspect}"
-        Puppet.debug "path_is_now_inherited is #{path_is_now_inherited.inspect}"
 
-        # for the corresponding 'inherited' value, find the leaf and the prop_name
-        leaf_inherited = map.leaf_list.select do |leaf|
-          leaf.path_is_now == path_is_now_inherited
-        end.first
-        prop_name_inherited = leaf_inherited.prop_name
+        # for the corresponding 'inherited' value, find leaf, get prop_name
+        prop_name_inherited = map.leaf_list.find do |leaf|
+                                leaf.path_is_now == path_is_now_inherited
+                              end.prop_name
 
-        # get 'is_now' value for 'inherited' from config_is_now; munge
-        is_now_inherited = PuppetX::VMware::Util.nested_value(
-              resource.provider.config_is_now, path_is_now_inherited)
-        is_now_inherited = munge_to_tfsyms.call(is_now_inherited)
-        # get 'should' value for 'inherited' from resource; munge
-        should_inherited = munge_to_tfsyms.call(resource[prop_name_inherited])
+        # get 'is_now' value for 'inherited' from provider
+        is_now_inherited = provider.send "#{prop_name_inherited}".to_sym
+        # get 'should' value for 'inherited' from resource
+        should_inherited = resource[prop_name_inherited]
+        # munge
+        is_now_inherited = munge_to_tfsyms.call is_now_inherited
+        should_inherited = munge_to_tfsyms.call should_inherited
 
         case [is_now_inherited, should_inherited]
-        # 'should' be inherited, so input value is ignored
-        when [:true, :true]   ; then return true
-        # 'should' be inherited, so input value is ignored
-        when [:false, :true]  ; then return true
+        # 'should' be inherited, so current value is ignored
+        when [:true,  :true]  ; then return false
+        when [:false, :true]  ; then return false
         # was inherited, but should be no longer - must supply all values
         when [:true, :false]  ; then return false
         # value is and should be uninherited, so normal insync?

@@ -52,21 +52,21 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
         inherited => false,
         value => false,
       },
-#     lacpPolicy => {
-#       inherited => false,
-#       enable => {
-#         inherited => false,
-#         value => false,
-#       },
-#       mode => {
-#         inherited => false,
-#         value => 'active',
-#       },
-#     },
-#     networkResourcePoolKey => {
-#       inherited => false,
-#       value => 'vmotion',
-#     },
+      lacpPolicy => {
+        inherited => false,
+        enable => {
+          inherited => false,
+          value => false,
+        },
+        mode => {
+          inherited => false,
+          value => 'active',
+        },
+      },
+      networkResourcePoolKey => {
+        inherited => false,
+        value => 'vmotion',
+      },
       outShapingPolicy => {
         inherited => false,
         averageBandwidth => {
@@ -106,10 +106,10 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
         value => false,
       },
 
-#     uplinkTeamingPolicy => {
-#       inherited => false,
-#       failureCriteria => {
-#         inherited => false,
+      uplinkTeamingPolicy => {
+        inherited => false,
+        failureCriteria => {
+          inherited => false,
 #         checkBeacon => {
 #           inherited => false,
 #           value => ,
@@ -138,7 +138,7 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #           inherited => false,
 #           value => ,
 #         },
-#       },
+        },
 #       notifySwitches => {
 #         inherited => false,
 #         value => ,
@@ -160,25 +160,25 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #         activeUplinkPort => ,
 #         standbyUplinkPort => ,
 #       },
-#     },
+      },
 
       vlan => {
         inherited => false,
         vsphereType => 'VmwareDistributedVirtualSwitchVlanIdSpec',
         vlanId => 43,
-        # vsphereType => 'VmwareDistributedVirtualSwitchPVlanSpec',
-        # pvlanId => 411,
-        # vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
-        # vlanId => [
-        #  { start => 2000, end => 3300 },
-        #  { start => 5000, end => 6300 },
-        # ],
+#       X vsphereType => 'VmwareDistributedVirtualSwitchPVlanSpec',
+#       X pvlanId => 411,
+#       X vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
+#       X vlanId => [
+#       X  { start => 2000, end => 3300 },
+#       X  { start => 5000, end => 6300 },
+#       X ],
       },
     },
-    defaultProxySwitchMaxNumPorts => 4010,
+    defaultProxySwitchMaxNumPorts => 240,
     description => 'test dvswitch',
-    extensionKey => 'extensionKey arbitrary string',
-    name => 'attempttochange',
+    # extensionKey => 'extensionKey arbitrary string',
+    # dvswitch_name => 'attempttochange',
     numStandalonePorts => 42,
     policy => {
       autoPreInstallAllowed => true,
@@ -187,8 +187,9 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
     },
     switchIpAddress => "8.8.8.8",
 #   uplinkPortgroup => ,
-    uplinkPortPolicy => {
-      uplinkPortName => ['upl0', 'upl1'],
-    },
+#   --- can't update uplinkPortPolicy before proxy switches exist?
+#   uplinkPortPolicy => {
+#     uplinkPortName => ['upl0', 'upl1'],
+#   },
   }
 }

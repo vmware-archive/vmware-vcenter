@@ -52,7 +52,7 @@ Puppet::Type.newtype(:vc_dvswitch) do
       eval <<-EOS if leaf.misc.include?(PuppetX::VMware::Mapper::InheritablePolicyValue)
         def insync?(is)
           v = PuppetX::VMware::Mapper.insyncInheritablePolicyValue(
-              is, @resource, \"#{leaf.prop_name}\")
+              is, @resource, \"#{leaf.prop_name}\".to_sym)
           v = super(is) if v.nil?
           v
         end
