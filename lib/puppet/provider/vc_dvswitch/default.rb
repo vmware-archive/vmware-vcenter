@@ -43,8 +43,8 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
     define_method("#{leaf.prop_name}=".to_sym) do |value|
       PuppetX::VMware::Util::nested_value_set(config_should, leaf.path_should, value)
-      properties_received.add leaf.prop_name
-      properties_required.merge leaf.requires
+      properties_rcvd.add leaf.prop_name
+      properties_reqd.merge leaf.requires
       @flush_required = true
     end
   end
@@ -94,19 +94,25 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     # changed. If not, they must be fetched from the type. When additional 
     # properties are fetched, new items may be added to required_properties,
     # so iteration is required.
-    Puppet.debug "requiring: #{@properties_received.inspect} were received"
-    properties_received_old = Set.new
-    while properties_received != properties_received_old
-      properties_received_old = properties_received.dup
-      properties_required.subtract properties_received
-      unless properties_required.empty?
-        Puppet.debug "requiring: #{@properties_required.inspect} are required"
-        # properties_required may change
-        # properties_received should change
-        properties_required.each{|p| self.send "#{p}=".to_sym, @resource[p]}
+    Puppet.debug "requiring: #{@properties_rcvd.inspect} were received"
+    properties_rcvd_old = Set.new
+    while properties_rcvd != properties_rcvd_old
+      properties_rcvd_old = properties_rcvd.dup
+      properties_reqd.subtract properties_rcvd
+      unless properties_reqd.empty?
+        Puppet.debug "requiring: #{@properties_reqd.inspect} are required"
+        # properties_reqd may change
+        # properties_rcvd will change unless resource has no value for property
+        properties_reqd.dup.each{|p| 
+          self.send "#{p}=".to_sym, @resource[p] unless @resource[p].nil?
+        }
       end
     end
     # require 'ruby-debug'; debugger
+    properties_reqd.subtract properties_rcvd
+    unless @properties_reqd.empty?
+      fail "required properties missing - #{@properties_reqd.inspect}"
+    end
 
     # create RbVmomi objects with properties in place of hashes with keys
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
@@ -134,12 +140,12 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   private
 
-  def properties_received
-    @properties_received ||= Set.new
+  def properties_rcvd
+    @properties_rcvd ||= Set.new
   end
 
-  def properties_required
-    @properties_required ||= Set.new
+  def properties_reqd
+    @properties_reqd ||= Set.new
   end
 
   def config_is_now

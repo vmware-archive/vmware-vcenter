@@ -11,6 +11,8 @@ module PuppetX
     module Mapper
 
       PROP_NAME_IS_FULL_PATH = :PROP_NAME_IS_FULL_PATH
+      InheritablePolicyInherited = :InheritablePolicyInherited
+      InheritablePolicyExempt = :InheritablePolicyExempt
       InheritablePolicyValue = :InheritablePolicyValue
 
       def self.new_map mapname
@@ -173,22 +175,17 @@ module PuppetX
 
           # now that it's complete, go through leaf_list 
           # to resolve interdependencies
-          #
-          # add requires_siblings for InheritablePolicyValue
-          @leaf_list.
-            select{|leaf| leaf.misc.include? InheritablePolicyValue}.
-            reject{|leaf| leaf.requires_siblings.include? :inherited}.
-            each  {|leaf| leaf.requires_siblings.push :inherited}
 
-          # XXX TODO require 'aunt' :inherited...
-          # require 'ruby-debug'; debugger
+          requires_for_inheritable_policy
+          requires_for_requires_siblings
 
+=begin
           # resolve requires_siblings (path-based) to requires (prop_names)
           @leaf_list.
             reject{|leaf| leaf.requires_siblings.empty?}.
             each  {|leaf|
               leaf.requires_siblings.each do |sib|
-                sib_path = leaf.path_is_now[0..-2].dup << sib
+                sib_path = leaf.path_is_now[0..-2] + [sib]
                 sib_leaf = @leaf_list.find{|l| l.path_is_now == sib_path}
                 if sib_leaf
                   leaf.requires.push sib_leaf.prop_name.to_sym unless
@@ -198,6 +195,7 @@ module PuppetX
                 end
               end
             }
+=end
 
         end
 
@@ -322,6 +320,64 @@ module PuppetX
             end
           end
         end
+
+        def requires_for_inheritable_policy
+          #
+          # path notes for 'inherited' leaf:
+          # path[0..-1]                my path
+          # path[0..-2]                path to my container, my parent
+          # path[0..-3]                path to my container's container,
+          #                            my grandparent
+          # path[0..-2] + [:sib]       path to my sibling property 'sib',
+          #                            which should require me
+          # path[0..-3] + [:inherited] path to 'inherited' property that
+          #                            is a child of my grandparent (an 
+          #                            aunt, say), which I should require
+          # 
+          @leaf_list.
+            # find each leaf of type InheritedPolicyInherited 
+            select{|leaf| leaf.misc.include? InheritablePolicyInherited}.
+            each  {|leaf_mine|
+
+              # require my 'aunt' inherited property, if there is one
+              path_mine = leaf_mine.path_should
+              if path_mine.size >= 2 # don't try to back up above root
+                path_aunt = path_mine[0..-3] + [:inherit]
+                aunt = @leaf_list.find{|l| l.path_should == path_aunt}
+                leaf_mine.require.push aunt.prop_name unless 
+                  aunt.nil? or leaf_mine.require.include? aunt.prop_name
+              end
+
+              # add myself as a requirement for each non-exempt sibling
+              name_mine = leaf_mine.prop_name
+              path_prefix_sib = path_mine[0..-2]
+              @leaf_list.
+                select{|leaf| leaf.path_should[0..-2] == path_prefix_sib}.
+                reject{|leaf| leaf.prop_name == name_mine}.
+                reject{|sib|  sib.misc.include? InheritablePolicyExempt}.
+                reject{|sib|  sib.requires.include? name_mine}.
+                each  {|sib|  sib.requires.push name_mine}
+            }
+        end
+
+        def requires_for_requires_siblings
+          # resolve requires_siblings (path-based) to requires (prop_names)
+          @leaf_list.
+            reject{|leaf| leaf.requires_siblings.empty?}.
+            each  {|leaf|
+              leaf.requires_siblings.each do |sib|
+                sib_path = leaf.path_is_now[0..-2] + [sib]
+                sib_leaf = @leaf_list.find{|l| l.path_is_now == sib_path}
+                if sib_leaf
+                  leaf.requires.push sib_leaf.prop_name.to_sym unless
+                    leaf.requires.include? sib_leaf.prop_name.to_sym
+                else
+                  fail "Not found: sibling #{sib} for '#{leaf.full_name}'"
+                end
+              end
+            }
+        end
+
       end
 
 =begin
