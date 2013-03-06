@@ -42,6 +42,7 @@ module PuppetX::VMware::Mapper
               :node_type => 'BoolPolicy',
             ],
             :inherited => LeafData[
+              :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
@@ -50,7 +51,6 @@ module PuppetX::VMware::Mapper
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is port blocked? true or false",
               :valid_enum => [:true, :false],
-              :misc => [InheritablePolicyValue],
             ],
           },
 
@@ -60,6 +60,7 @@ module PuppetX::VMware::Mapper
               :node_type => 'DVSTrafficShapingPolicy',
             ],
             :inherited => LeafData[
+              :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
@@ -69,6 +70,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'LongPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -77,7 +79,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "averageBandwidth in bits per second",
                 :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
@@ -89,6 +90,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'LongPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -97,7 +99,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "maximum burstSize allowed in bytes",
                 :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
@@ -109,6 +110,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -117,7 +119,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is traffic shaper enabled on this port? "\
                     "true or false",
@@ -129,6 +130,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'LongPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -137,7 +139,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "peak bandwidth during bursts in bits per second",
                 :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
@@ -152,12 +153,12 @@ module PuppetX::VMware::Mapper
               :node_type => 'StringPolicy',
             ],
             :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
             ],
             :value => LeafData[
-              :misc => [InheritablePolicyValue],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "networkResourcePoolKey to be associated "\
                 "with the port. String. Default is '-1', indicating "\
@@ -172,6 +173,7 @@ module PuppetX::VMware::Mapper
               :node_type => 'DVSTrafficShapingPolicy',
             ],
             :inherited => LeafData[
+              :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
@@ -181,6 +183,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'LongPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -189,7 +192,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "averageBandwidth in bits per second",
                 :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
@@ -201,6 +203,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'LongPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -209,7 +212,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "maximum burstSize allowed in bytes",
                 :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
@@ -221,6 +223,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -229,7 +232,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is traffic shaper enabled on this port? "\
                     "true or false",
@@ -241,6 +243,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'LongPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -249,7 +252,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "peak bandwidth during bursts in bits per second",
                 :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
@@ -270,12 +272,12 @@ module PuppetX::VMware::Mapper
               :node_type => 'BoolPolicy',
             ],
             :inherited => LeafData[
+              :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
             ],
             :value => LeafData[
-              :misc => [InheritablePolicyValue],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is ipfix monitoring enabled on this port? "\
                   "true or false",
@@ -291,6 +293,7 @@ module PuppetX::VMware::Mapper
               :node_type => 'VMwareUplinkLacpPolicy',
             ],
             :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
@@ -300,6 +303,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -308,7 +312,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is lacp policy enabled on this port? true or false",
                 :valid_enum => [:true, :false],
@@ -319,6 +322,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'StringPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -327,7 +331,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "lacpPolicy mode: active or passive",
                 :valid_enum => [ #XXX check allowed values with MOB??? ROB???
@@ -347,6 +350,7 @@ module PuppetX::VMware::Mapper
               :node_type => 'DVSSecurityPolicy',
             ],
             :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is security policy inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -356,6 +360,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -364,7 +369,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is promiscuous reception allowed on this port? "\
                     "true or false",
@@ -376,6 +380,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -384,7 +389,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Are forged transmits allowed on this port? "\
                     "true or false",
@@ -396,6 +400,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -404,7 +409,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Are MAC address changes allowed on this port? "\
                     "true or false",
@@ -419,12 +423,12 @@ module PuppetX::VMware::Mapper
               :node_type => 'BoolPolicy',
             ],
             :inherited => LeafData[
+              :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is setting inherited? true or false",
               :valid_enum => [:true, :false],
             ],
             :value => LeafData[
-              :misc => [InheritablePolicyValue],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "If true, a copy of packets sent to the switch "\
                   "will always be forwarded to an uplink in addition to the "\
@@ -439,9 +443,10 @@ module PuppetX::VMware::Mapper
               :node_type => 'VmwareUplinkPortTeamingPolicy',
             ],
             :inherited => LeafData[
-                :prop_name => PROP_NAME_IS_FULL_PATH,
-                :desc => "Is uplink teaming policy inherited? true or false",
-                :valid_enum => [:true, :false],
+              :misc => [InheritablePolicyInherited],
+              :prop_name => PROP_NAME_IS_FULL_PATH,
+              :desc => "Is uplink teaming policy inherited? true or false",
+              :valid_enum => [:true, :false],
             ],
 
             :failureCriteria => {
@@ -449,6 +454,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'DVSFailureCriteria',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -461,6 +467,7 @@ module PuppetX::VMware::Mapper
                   :node_type => 'BoolPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
@@ -469,7 +476,6 @@ module PuppetX::VMware::Mapper
                   ],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is beacon probing "\
                       "a failure criterion on this port? true or false",
@@ -481,12 +487,12 @@ module PuppetX::VMware::Mapper
                   :node_type => 'BoolPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is full duplex check "\
                       "a failure criterion on this port? true or false",
@@ -498,12 +504,12 @@ module PuppetX::VMware::Mapper
                   :node_type => 'BoolPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is link error percentage "\
                       "a failure criterion on this port? true or false",
@@ -515,12 +521,12 @@ module PuppetX::VMware::Mapper
                   :node_type => 'StringPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is link speed "\
                       "a failure criterion on this port? "\
@@ -539,12 +545,12 @@ module PuppetX::VMware::Mapper
                   :node_type => 'BoolPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "See 'checkDuplex'",
                   :valid_enum => [:true, :false],
@@ -555,12 +561,12 @@ module PuppetX::VMware::Mapper
                   :node_type => 'IntPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "If 'checkErrorPercent' is true, this value "\
                       "is the maximum tolerated error percentage.",
@@ -573,12 +579,12 @@ module PuppetX::VMware::Mapper
                   :node_type => 'IntPolicy',
                 ],
                 :inherited => LeafData[
+                  :misc => [InheritablePolicyInherited],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Is setting inherited? true or false",
                   :valid_enum => [:true, :false],
                 ],
                 :value => LeafData[
-                  :misc => [InheritablePolicyValue],
                   :prop_name => PROP_NAME_IS_FULL_PATH,
                   :desc => "Exact or minimum speed in megabits per second "\
                       "used as failure criterion. See 'checkSpeed'",
@@ -593,6 +599,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -601,7 +608,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Flag to specify whether or not to notify the "\
                     "physical switch if a link fails. If this property is "\
@@ -617,6 +623,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'StringPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -625,7 +632,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Network adapter teaming policy. The policy "\
                     "defines the way traffic from the clients of the team "\
@@ -654,6 +660,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -662,7 +669,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "The flag to indicate whether or not the teaming "\
                     "policy is applied to inbound frames as well. For "\
@@ -681,6 +687,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'BoolPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -689,7 +696,6 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :value => LeafData[
-                :misc => [InheritablePolicyValue],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "The flag to indicate whether or not to use a "\
                   "rolling policy when restoring links. For example, assume "\
@@ -707,6 +713,7 @@ module PuppetX::VMware::Mapper
                 :node_type => 'VMwareUplinkPortOrderPolicy',
               ],
               :inherited => LeafData[
+                :misc => [InheritablePolicyInherited],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "Is setting inherited? true or false",
                 :valid_enum => [:true, :false],
@@ -715,12 +722,12 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :activeUplinkPort => LeafData[
-                :misc => [Array, InheritablePolicyValue],
+                :misc => [Array],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "List of active uplink ports (for load balancing)",
               ],
               :standbyUplinkPort => LeafData[
-                :misc => [Array, InheritablePolicyValue],
+                :misc => [Array],
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "List of standby uplink ports (for failover)",
               ],
@@ -740,14 +747,15 @@ module PuppetX::VMware::Mapper
                 :VmwareDistributedVirtualSwitchTrunkVlanSpec,
                 :VmwareDistributedVirtualSwitchPvlanSpec,
               ],
+              :misc => [InheritablePolicyExempt],
             ],
             :inherited => LeafData[
+              :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is vlan setting inherited? true or false",
               :valid_enum => [:true, :false],
             ],
             :vlanId => LeafData[
-              :misc => [InheritablePolicyValue],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :requires_siblings => [:vsphereType],
               #
@@ -765,7 +773,6 @@ module PuppetX::VMware::Mapper
               #
             ],
             :pvlanId => LeafData[
-              :misc => [InheritablePolicyValue],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :munge => PuppetX::VMware::Mapper::munge_to_i,
               :validate => PuppetX::VMware::Mapper::validate_i_in(1..4094),
@@ -927,18 +934,21 @@ host => {
             :desc => "Switch usage policy. see "\
               "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
             :valid_enum => [:true, :false],
+            :requires_siblings => [:autoUpgradeAllowed, :partialUpgradeAllowed],
           ],
           :autoUpgradeAllowed => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
             :desc => "Switch usage policy. see "\
               "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
             :valid_enum => [:true, :false],
+            :requires_siblings => [:autoPreInstallAllowed, :partialUpgradeAllowed],
           ],
           :partialUpgradeAllowed => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
             :desc => "Switch usage policy. see "\
               "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
             :valid_enum => [:true, :false],
+            :requires_siblings => [:autoPreInstallAllowed, :autoUpgradeAllowed],
           ],
         },
         :switchIpAddress => LeafData[
