@@ -1,5 +1,8 @@
+require 'rubygems'
+require 'hashdiff'
 require 'puppet'
 require 'puppet_x/vmware/util'
+require 'puppet/property/vmware'
 
 Puppet.initialize_settings
 

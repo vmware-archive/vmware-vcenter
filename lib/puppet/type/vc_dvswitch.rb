@@ -30,14 +30,21 @@ Puppet::Type.newtype(:vc_dvswitch) do
 
   map = PuppetX::VMware::Mapper.new_map('VMwareDVSConfigSpecMap')
   map.leaf_list.each do |leaf|
-    if leaf.misc.include?(Array)
-      option = {
+    option = {}
+    if type_hash = leaf.olio[t = Puppet::Property::VMware_Array]
+      option.update(
         :array_matching => :all,
-        :parent => Puppet::Property::VMware_Array,
-      }
-    else
-      option = {}
+        :parent => t
+      )
+    elsif type_hash = leaf.olio[t = Puppet::Property::VMware_Array_Hash]
+      option.update(
+        # :array_matching => :all,
+        :parent => t
+      )
     end
+    # require 'ruby-debug' ; debugger unless option.empty?
+    option.update(type_hash[:property_option]) if 
+        type_hash && type_hash[:property_option]
 
     newproperty(leaf.prop_name, option) do
       desc(leaf.desc) if leaf.desc

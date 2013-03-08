@@ -6,11 +6,16 @@ require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 
 module_lib = Pathname.new(__FILE__).parent.parent.parent
 
+require 'set'
+
 module PuppetX
   module VMware
     module Mapper
 
+      # constant for a meaningful unique name that you don't have to invent
       PROP_NAME_IS_FULL_PATH = :PROP_NAME_IS_FULL_PATH
+
+      # constants for use in Leaf Nodes for InheritablePolicy
       InheritablePolicyInherited = :InheritablePolicyInherited
       InheritablePolicyExempt = :InheritablePolicyExempt
       InheritablePolicyValue = :InheritablePolicyValue
@@ -73,6 +78,7 @@ module PuppetX
             :desc,
             :misc,
             :munge,
+            :olio,
             :path_is_now,
             :path_should,
             :prop_name,
@@ -90,6 +96,7 @@ module PuppetX
           fail "#{self.class} doesn't include 'path_should'" unless
             @props[:path_should]
           @props[:misc] ||= []
+          @props[:olio] ||= {}
           @props[:requires] ||= []
           @props[:requires_siblings] ||= []
 
@@ -120,6 +127,7 @@ module PuppetX
 
       class Node < MapComponent
         Prop_names = [
+            :misc,
             :node_type,
             :node_type_key,
             :path_should,
@@ -134,6 +142,7 @@ module PuppetX
           # check for required values
           fail "#{self.class} doesn't include 'node_type'" unless
             @props[:node_type]
+          @props[:misc] ||= Set.new()
 
           # set defaults and munge
           @props[:path_is_now] ||= @props[:path_should]

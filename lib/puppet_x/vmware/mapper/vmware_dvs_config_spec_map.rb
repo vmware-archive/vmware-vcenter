@@ -1,12 +1,5 @@
 # Copyright (C) 2013 VMware, Inc.
 module PuppetX::VMware::Mapper
- 
-# :requires => [ # :default_port_config_in_shaping_policy_inherited,
-  # :default_port_config_out_shaping_policy_inherited,
-  # :default_port_config_security_policy_inherited,
-  # :default_port_config_uplink_teaming_policy_inherited,
-  # :default_port_config_uplink_teaming_policy_failure_criteria_inherited,
-# ],
 
   class VMwareDVSConfigSpecMap < Map
     def initialize
@@ -722,12 +715,12 @@ module PuppetX::VMware::Mapper
                 ],
               ],
               :activeUplinkPort => LeafData[
-                :misc => [Array],
+                :olio => {Puppet::Property::VMware_Array => {}},
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "List of active uplink ports (for load balancing)",
               ],
               :standbyUplinkPort => LeafData[
-                :misc => [Array],
+                :olio => {Puppet::Property::VMware_Array => {}},
                 :prop_name => PROP_NAME_IS_FULL_PATH,
                 :desc => "List of standby uplink ports (for failover)",
               ],
@@ -755,7 +748,8 @@ module PuppetX::VMware::Mapper
               :desc => "Is vlan setting inherited? true or false",
               :valid_enum => [:true, :false],
             ],
-            :vlanId => LeafData[
+            # XXX hack - vlanIdSingle - vsphere API name is vlanId
+            :vlanIdSingle => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :requires_siblings => [:vsphereType],
               #
@@ -769,8 +763,21 @@ module PuppetX::VMware::Mapper
               # validate => PuppetX::VMware::Mapper::validate_i_ge(0),
               # munge => PuppetX::VMware::Mapper::munge_to_i,
               #VmwareDistributedVirtualSwitchTrunkVlanSpec.vlanid
-              # misc[Array]
+              # hash => {Puppet::Property::VMware_Array_Hash => {}},
               #
+            ],
+            :vlanId => LeafData[
+              :prop_name => PROP_NAME_IS_FULL_PATH,
+              :requires_siblings => [:vsphereType],
+              :olio => { 
+                Puppet::Property::VMware_Array_Hash => { 
+                  :property_option => {
+                    :array_matching => :all,
+                    :key => :start,
+                  },
+                  :type => 'NumericRange', 
+                },
+              },
             ],
             :pvlanId => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,
@@ -957,7 +964,7 @@ host => {
         ],
         :uplinkPortgroup => LeafData[
           :desc => "The uplink portgroups",
-          :misc => [Array],
+          :olio => {Puppet::Property::VMware_Array => {}},
         ],
         :uplinkPortPolicy => {
           Node => NodeData[
@@ -967,23 +974,21 @@ host => {
             :desc => "Array of uniform names of uplink ports on each host. "\
                      "The size of the array indicates the number of uplink ports "\
                      "that will be created for each host in the switch.",
-            :misc => [Array],
+            :misc => [Puppet::Property::VMware_Array],
           ],
         },
-        :vendorSpecificConfig => {
-          Node => NodeData[
-            :node_type => 'DistributedVirtualSwitchKeyedOpaqueBlob',
-          ],
-          :key => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "A key that identifies the opaque binary blob.",
-          ],
-          :opaqueData => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "The opaque data. It is recommended that base64 "\
-                     "encoding be used for binary data.",
-          ],
-        },
+        :vendorSpecificConfig => LeafData[
+          :olio => { 
+            Puppet::Property::VMware_Array_Hash => { 
+              :property_option => {
+                :array_matching => :all,
+                :key => :key,
+              },
+              :type => 'DistributedVirtualSwitchKeyedOpaqueBlob', 
+            },
+          },
+        ],
+
 
       }
 

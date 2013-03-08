@@ -164,15 +164,15 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 
       vlan => {
         inherited => false,
-        vsphereType => 'VmwareDistributedVirtualSwitchVlanIdSpec',
-        vlanId => 43,
+#       vsphereType => 'VmwareDistributedVirtualSwitchVlanIdSpec',
+#       vlanIdSingle => 43,
 #       X vsphereType => 'VmwareDistributedVirtualSwitchPVlanSpec',
 #       X pvlanId => 411,
-#       X vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
-#       X vlanId => [
-#       X  { start => 2000, end => 3300 },
-#       X  { start => 5000, end => 6300 },
-#       X ],
+        vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
+        vlanId => [
+          { start => 1000, end => 1300 },
+          { start => 3000, end => 3300 },
+        ],
       },
     },
     defaultProxySwitchMaxNumPorts => 240,
@@ -186,10 +186,18 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
       partialUpgradeAllowed => false,
     },
     switchIpAddress => "8.8.8.8",
+
 #   uplinkPortgroup => ,
+
 #   --- can't update uplinkPortPolicy before proxy switches exist?
 #   uplinkPortPolicy => {
 #     uplinkPortName => ['upl0', 'upl1'],
 #   },
+
+#   vendorSpecificConfig => [
+#     { key => 'key1', opaqueData => 'value1' },
+#     { key => 'key2', opaqueData => 'value2' },
+#   ],
+
   }
 }

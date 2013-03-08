@@ -108,18 +108,19 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
         }
       end
     end
-    # require 'ruby-debug'; debugger
     properties_reqd.subtract properties_rcvd
     unless @properties_reqd.empty?
       fail "required properties missing - #{@properties_reqd.inspect}"
     end
+
+    require 'ruby-debug'; debugger
 
     # create RbVmomi objects with properties in place of hashes with keys
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
     Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
-    # require 'ruby-debug' ; debugger
+    require 'ruby-debug' ; debugger
     spec
   end
 
@@ -158,7 +159,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
   end
 
   def dvswitch
-    @dvswitch ||= unless @dvswitch
+    @dvswitch ||= begin
                     dc = vim.serviceInstance.find_datacenter(parent)
                     dvswitches = dc.networkFolder.children.select {|n|
                       n.class == RbVmomi::VIM::VmwareDistributedVirtualSwitch
