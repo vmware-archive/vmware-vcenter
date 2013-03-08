@@ -184,27 +184,8 @@ module PuppetX
 
           # now that it's complete, go through leaf_list 
           # to resolve interdependencies
-
           requires_for_inheritable_policy
           requires_for_requires_siblings
-
-=begin
-          # resolve requires_siblings (path-based) to requires (prop_names)
-          @leaf_list.
-            reject{|leaf| leaf.requires_siblings.empty?}.
-            each  {|leaf|
-              leaf.requires_siblings.each do |sib|
-                sib_path = leaf.path_is_now[0..-2] + [sib]
-                sib_leaf = @leaf_list.find{|l| l.path_is_now == sib_path}
-                if sib_leaf
-                  leaf.requires.push sib_leaf.prop_name.to_sym unless
-                    leaf.requires.include? sib_leaf.prop_name.to_sym
-                else
-                  fail "Not found: sibling #{sib} for '#{leaf.full_name}'"
-                end
-              end
-            }
-=end
 
         end
 
