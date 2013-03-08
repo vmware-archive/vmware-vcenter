@@ -198,6 +198,7 @@ define vcenter::dvswitch (
     switch_ip_address                  => nested_value($spec,['switchIpAddress']),
     uplink_portgroup                   => nested_value($spec,['uplinkPortgroup']),
     uplink_port_name                   => nested_value($spec,['uplinkPortPolicy', 'uplinkPortName']),
+    vendor_specific_config             => nested_value($spec, ['vendorSpecificConfig']),
 
     default_port_config_blocked_inherited => nested_value($spec,['defaultPortConfig', 'blocked', 'inherited']),
     default_port_config_blocked_value     => nested_value($spec,['defaultPortConfig', 'blocked', 'value']),
