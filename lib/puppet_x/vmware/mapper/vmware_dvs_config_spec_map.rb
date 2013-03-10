@@ -763,19 +763,21 @@ module PuppetX::VMware::Mapper
               # validate => PuppetX::VMware::Mapper::validate_i_ge(0),
               # munge => PuppetX::VMware::Mapper::munge_to_i,
               #VmwareDistributedVirtualSwitchTrunkVlanSpec.vlanid
-              # hash => {Puppet::Property::VMware_Array_Hash => {}},
+              # olio => {Puppet::Property::VMware_Array_VIM_Object => {}},
               #
             ],
             :vlanId => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :requires_siblings => [:vsphereType],
               :olio => { 
-                Puppet::Property::VMware_Array_Hash => { 
+                Puppet::Property::VMware_Array_VIM_Object => { 
                   :property_option => {
+                    :type => 'NumericRange',
                     :array_matching => :all,
-                    :key => :start,
+                    :comparison_scope => :array,
+                    :sort_array => true,
+                    :key => [:start, :end],
                   },
-                  :type => 'NumericRange', 
                 },
               },
             ],
@@ -838,66 +840,31 @@ host => {
 
 =end
 
-=begin
         # The 'host' property fails to handle an array as it should
         # for the reason discussed above. Instead, the 'host' property:
         # -- handles only a single host, not an arrray
-        # -- handles only a limited number of pnics, not an array
-        # -- requires pnicSpec 'array' specified as pnicSpec0, pnicSpec1, ...
         :host => {
           Node => NodeData[
             :node_type => 'DistributedVirtualSwitchHostMemberConfigSpec',
+            :misc => Set.new([::Array]),
           ],
           :backing => {
             Node => NodeData[
               :node_type => "DistributedVirtualSwitchHostMemberBacking",
             ],
-            :pnicSpec => {
-              :pnicSpec0 => {
-                :connectionCookie => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => "Cookie. See "\
-                    "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.dvs.HostMember.PnicSpec.html",
-                ],
-                :pnicDevice => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => 
-                    "Name of the physical NIC to be added to the proxy switch",
-                ],
-                :uplinkPortgroupKey => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => 
-                    "Key of the portgroup to be connected to the physical NIC",
-                ],
-                :uplinkPortKey => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => 
-                    "Key of the port to be connected to the physical NIC",
-                ],
+            :pnicSpec => LeafData[
+              :prop_name => PROP_NAME_IS_FULL_PATH,
+              :olio => { 
+                Puppet::Property::VMware_Array_VIM_Object => { 
+                  :property_option => {
+                    :type => 'DistributedVirtualSwitchHostMemberPnicSpec', 
+                    :array_matching => :all,
+                    :comparison_scope => :array_element,
+                    :key => :pnicDevice,
+                  },
+                },
               },
-              :pnicSpec1 => {
-                :connectionCookie => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => "Cookie. See "\
-                    "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.dvs.HostMember.PnicSpec.html",
-                ],
-                :pnicDevice => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => 
-                    "Name of the physical NIC to be added to the proxy switch",
-                ],
-                :uplinkPortgroupKey => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => 
-                    "Key of the portgroup to be connected to the physical NIC",
-                ],
-                :uplinkPortKey => LeafData[
-                  :prop_name => PROP_NAME_IS_FULL_PATH,
-                  :desc => 
-                    "Key of the port to be connected to the physical NIC",
-                ],
-              },
-            },
+            ],
           },
           :host => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
@@ -919,7 +886,6 @@ host => {
             ],
           ],
         },
-=end
 
         #maxPorts - deprecated
         :name => LeafData[
@@ -979,12 +945,13 @@ host => {
         },
         :vendorSpecificConfig => LeafData[
           :olio => { 
-            Puppet::Property::VMware_Array_Hash => { 
+            Puppet::Property::VMware_Array_VIM_Object => { 
               :property_option => {
+                :type => 'DistributedVirtualSwitchKeyedOpaqueBlob', 
                 :array_matching => :all,
+                :comparison_scope => :array_element,
                 :key => :key,
               },
-              :type => 'DistributedVirtualSwitchKeyedOpaqueBlob', 
             },
           },
         ],

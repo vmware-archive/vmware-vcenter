@@ -170,13 +170,23 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #       X pvlanId => 411,
         vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
         vlanId => [
-          { start => 1000, end => 1300 },
-          { start => 3000, end => 3300 },
+          { start => 3005, end => 3305 },
+          { start => 1001, end => 1300 },
         ],
       },
     },
     defaultProxySwitchMaxNumPorts => 240,
     description => 'test dvswitch',
+    host => {
+      host => 'esx1',
+      operation => 'add',
+      backing => {
+        pnicSpec => [
+          {pnicDevice => 'en0',},
+          {pnicDevice => 'en1',},
+        ],
+      },
+    },
     # extensionKey => 'extensionKey arbitrary string',
     # dvswitch_name => 'attempttochange',
     numStandalonePorts => 42,
@@ -194,10 +204,10 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #     uplinkPortName => ['upl0', 'upl1'],
 #   },
 
-#   vendorSpecificConfig => [
-#     { key => 'key1', opaqueData => 'value1' },
-#     { key => 'key2', opaqueData => 'value2' },
-#   ],
+    vendorSpecificConfig => [
+      { key => 'key1', opaqueData => 'value11' },
+      { key => 'key2', opaqueData => 'value2' },
+    ],
 
   }
 }

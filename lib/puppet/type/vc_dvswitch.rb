@@ -41,6 +41,11 @@ Puppet::Type.newtype(:vc_dvswitch) do
         # :array_matching => :all,
         :parent => t
       )
+    elsif type_hash = leaf.olio[t = Puppet::Property::VMware_Array_VIM_Object]
+      option.update(
+        # :array_matching => :all,
+        :parent => t
+      )
     end
     # require 'ruby-debug' ; debugger unless option.empty?
     option.update(type_hash[:property_option]) if 
