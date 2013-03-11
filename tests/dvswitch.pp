@@ -20,96 +20,108 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
   transport => Transport['vcenter'],
 
   spec => {
+
     contact => {
       contact => '900-555-1212',
       name => 'John Doe',
     },
-    defaultPortConfig => {
-      blocked => {
-        inherited => false,
-        value => false,
-      },
-      inShapingPolicy => {
-        inherited => false,
-        averageBandwidth => {
-          inherited => false,
-          value => 3000,
-        },
-        burstSize => {
-          inherited => false,
-          value => 4500,
-        },
-        enabled => {
-          inherited => false,
-          value => true,
-        },
-        peakBandwidth => {
-          inherited => false,
-          value => 3500,
-        },
-      },
-      ipfixEnabled => {
-        inherited => false,
-        value => false,
-      },
-      lacpPolicy => {
-        inherited => false,
-        enable => {
-          inherited => false,
-          value => false,
-        },
-        mode => {
-          inherited => false,
-          value => 'active',
-        },
-      },
-      networkResourcePoolKey => {
-        inherited => false,
-        value => 'vmotion',
-      },
-      outShapingPolicy => {
-        inherited => false,
-        averageBandwidth => {
-          inherited => false,
-          value => 2999,
-        },
-        burstSize => {
-          inherited => false,
-          value => 4499,
-        },
-        enabled => {
-          inherited => false,
-          value => true,
-        },
-        peakBandwidth => {
-          inherited => false,
-          value => 3499,
-        },
-      },
-      securityPolicy => {
-        inherited => false,
-        allowPromiscuous => {
-          inherited => false,
-          value => true,
-        },
-        forgedTransmits => {
-          inherited => false,
-          value => true,
-        },
-        macChanges => {
-          inherited => false,
-          value => true,
-        },
-      },
-      txUplink => {
-        inherited => false,
-        value => false,
-      },
 
-      uplinkTeamingPolicy => {
-        inherited => false,
-        failureCriteria => {
-          inherited => false,
+#   defaultPortConfig => {
+
+#     blocked => {
+#       inherited => false,
+#       value => false,
+#     },
+
+#     inShapingPolicy => {
+#       inherited => false,
+#       averageBandwidth => {
+#         inherited => false,
+#         value => 3000,
+#       },
+#       burstSize => {
+#         inherited => false,
+#         value => 4500,
+#       },
+#       enabled => {
+#         inherited => false,
+#         value => true,
+#       },
+#       peakBandwidth => {
+#         inherited => false,
+#         value => 3500,
+#       },
+#     },
+
+
+#     networkResourcePoolKey => {
+#       inherited => false,
+#       value => 'vmotion',
+#     },
+
+#     outShapingPolicy => {
+#       inherited => false,
+#       averageBandwidth => {
+#         inherited => false,
+#         value => 2999,
+#       },
+#       burstSize => {
+#         inherited => false,
+#         value => 4499,
+#       },
+#       enabled => {
+#         inherited => false,
+#         value => true,
+#       },
+#       peakBandwidth => {
+#         inherited => false,
+#         value => 3499,
+#       },
+#     },
+
+
+#     ipfixEnabled => {
+#       inherited => false,
+#       value => false,
+#     },
+
+#     lacpPolicy => {
+#       inherited => false,
+#       enable => {
+#         inherited => false,
+#         value => false,
+#       },
+#       mode => {
+#         inherited => false,
+#         value => 'active',
+#       },
+#     },
+
+#     securityPolicy => {
+#       inherited => false,
+#       allowPromiscuous => {
+#         inherited => false,
+#         value => true,
+#       },
+#       forgedTransmits => {
+#         inherited => false,
+#         value => true,
+#       },
+#       macChanges => {
+#         inherited => false,
+#         value => true,
+#       },
+#     },
+
+#     txUplink => {
+#       inherited => false,
+#       value => false,
+#     },
+
+#     uplinkTeamingPolicy => {
+#       inherited => false,
+#       failureCriteria => {
+#         inherited => false,
 #         checkBeacon => {
 #           inherited => false,
 #           value => ,
@@ -138,7 +150,7 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #           inherited => false,
 #           value => ,
 #         },
-        },
+#       },
 #       notifySwitches => {
 #         inherited => false,
 #         value => ,
@@ -160,42 +172,51 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #         activeUplinkPort => ,
 #         standbyUplinkPort => ,
 #       },
-      },
+#     },
 
-      vlan => {
-        inherited => false,
+#     vlan => {
+#       inherited => false,
 #       vsphereType => 'VmwareDistributedVirtualSwitchVlanIdSpec',
 #       vlanIdSingle => 43,
 #       X vsphereType => 'VmwareDistributedVirtualSwitchPVlanSpec',
 #       X pvlanId => 411,
-        vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
-        vlanId => [
-          { start => 3005, end => 3305 },
-          { start => 1001, end => 1300 },
-        ],
-      },
-    },
-    defaultProxySwitchMaxNumPorts => 240,
+#       vsphereType => 'VmwareDistributedVirtualSwitchTrunkVlanSpec',
+#       vlanId => [
+#         { start => 3005, end => 3305 },
+#         { start => 1001, end => 1300 },
+#       ],
+#     },
+
+#   },
+
+#   defaultProxySwitchMaxNumPorts => 240,
+
     description => 'test dvswitch',
-    host => {
-      host => 'esx1',
-      operation => 'add',
-      backing => {
-        pnicSpec => [
-          {pnicDevice => 'en0',},
-          {pnicDevice => 'en1',},
-        ],
-      },
-    },
-    # extensionKey => 'extensionKey arbitrary string',
-    # dvswitch_name => 'attempttochange',
+
+#   extensionKey => 'extensionKey arbitrary string',
+
+#   host => {
+#     host => "${esx1['hostname']}",
+#     operation => 'add',
+#     backing => {
+#       pnicSpec => [
+#         {pnicDevice => 'vmnic0', uplinkPortgroupKey => 'dvs1-DVUplinks-26'},
+#         {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-DVUplinks-26'},
+#       ],
+#     },
+#   },
+
+#   dvswitch_name => 'attempttochange',
+
     numStandalonePorts => 42,
-    policy => {
-      autoPreInstallAllowed => true,
-      autoUpgradeAllowed => true,
-      partialUpgradeAllowed => false,
-    },
-    switchIpAddress => "8.8.8.8",
+
+#   policy => {
+#     autoPreInstallAllowed => true,
+#     autoUpgradeAllowed => true,
+#     partialUpgradeAllowed => false,
+#   },
+
+#   switchIpAddress => "8.8.8.8",
 
 #   uplinkPortgroup => ,
 
@@ -204,10 +225,11 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #     uplinkPortName => ['upl0', 'upl1'],
 #   },
 
-    vendorSpecificConfig => [
-      { key => 'key1', opaqueData => 'value11' },
-      { key => 'key2', opaqueData => 'value2' },
-    ],
+#   vendorSpecificConfig => [
+#     { key => 'key1', opaqueData => 'value11' },
+#     { key => 'key2', opaqueData => 'value2' },
+#   ],
 
   }
+
 }

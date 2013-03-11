@@ -166,6 +166,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
                     }
                     dvswitches.find{|d| d.name == basename}
                   end
+    require 'ruby-debug' ; debugger
     Puppet.debug "found dvswitch: #{@dvswitch.class} '#{@dvswitch.name}'" if @dvswitch
     @dvswitch
   end

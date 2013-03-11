@@ -846,11 +846,11 @@ host => {
         :host => {
           Node => NodeData[
             :node_type => 'DistributedVirtualSwitchHostMemberConfigSpec',
-            :misc => Set.new([::Array]),
+            # :misc => Set.new([::Array]),
           ],
           :backing => {
             Node => NodeData[
-              :node_type => "DistributedVirtualSwitchHostMemberBacking",
+              :node_type => "DistributedVirtualSwitchHostMemberPnicBacking",
             ],
             :pnicSpec => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,

@@ -191,10 +191,7 @@ define vcenter::dvswitch (
     description                        => nested_value($spec,['description']),
     extension_key                      => nested_value($spec,['extensionKey']),
     dvswitch_name                      => nested_value($spec,['name']),
-    host_host                          => nested_value($spec,['host', 'host']),
-    host_backing_pnic_spec             => nested_value($spec,['host', 'backing', 'pnicSpec']),
-    host_max_proxy_switch_ports        => nested_value($spec,['host', 'maxProxySwitchPorts']),
-    host_operation                     => nested_value($spec,['host', 'operation']),
+
     num_standalone_ports               => nested_value($spec,['numStandalonePorts']),
     policy_auto_pre_install_allowed    => nested_value($spec,['policy', 'autoPreInstallAllowed']),
     policy_auto_upgrade_allowed        => nested_value($spec,['policy', 'autoUpgradeAllowed']),
