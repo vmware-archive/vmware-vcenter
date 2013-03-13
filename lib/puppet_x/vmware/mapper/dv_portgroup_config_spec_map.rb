@@ -1,28 +1,21 @@
 # Copyright (C) 2013 VMware, Inc.
 module PuppetX::VMware::Mapper
 
-  class VMwareDVSConfigSpecMap < Map
+  class DVPortgroupConfigSpecMap < Map
     def initialize
       @initTree = {
         Node => NodeData[
-          :node_type => 'VMwareDVSConfigSpec',
+          :node_type => 'DVPortgroupConfigSpec',
+        ],
+
+        :autoExpand => LeafData[
+          :prop_name => PROP_NAME_IS_FULL_PATH,
+          :valid_enum => [:true, :false],
+
         ],
         :configVersion => LeafData[
           :desc => "Version string of switch to be changed. Required.",
         ],
-        :contact => {
-          Node => NodeData[
-            :node_type => 'DVSContactInfo',
-          ],
-          :name => LeafData[
-            :prop_name => :contact_name,
-            :desc => "responsible person's name",
-          ],
-          :contact => LeafData[
-            :prop_name => :contact_info,
-            :desc => "responsible person's contact info",
-          ],
-        },
 
         :defaultPortConfig => {
           Node => NodeData[
@@ -254,10 +247,10 @@ module PuppetX::VMware::Mapper
           },
 
           # from base class DVSPortSetting
-          # vendorSpecificConfig XXX unused?
+          # vendorSpecificConfig XXX unused
 
           # from base class DVSPortSetting
-          # vmDirectPathGen2Allowed XXX unused?
+          # vmDirectPathGen2Allowed XXX unused
 
           # from extended class VMwareDVSPortSetting
           :ipfixEnabled => {
@@ -790,170 +783,74 @@ module PuppetX::VMware::Mapper
           },
         },
 
-        :defaultProxySwitchMaxNumPorts => LeafData[
-          :desc => "The default host proxy switch maximum port number",
-          :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
-          :munge => PuppetX::VMware::Mapper::munge_to_i,
-        ],
         :description => LeafData[
           :desc => "description of the switch",
         ],
-        :extensionKey => LeafData[
-          :desc => "The key of the extension registered by a remote server "\
-                   "that controls the switch",
-        ],
-
-=begin
-
-        :host => {
-        },
-
-# Mapper can't yet handle array of objects, let alone 
-# an array of nested objects including arrays of objects
-
-DistributedVirtualSwitchHostMemberConfigSpec[] host
-> mo_ref host
-> xsd:int maxProxySwitchPorts OPTIONAL
-> xsd:string operation ENUM[add,edit,remove]
-> DistributedVirtualSwitch[HostMember]PnicBacking backing OPTIONAL
-> > DistributedVirtualSwitchHostMemberPnicSpec[] pnicSpec 
-> > > xsd:int connectionCookie
-> > > xsd:string pnicDevice
-> > > xsd:string uplinkPortgroupKey
-> > > xsd:string uplinkPortKey
-
-host => {
-  host => "esx1.my.local",
-  maxProxyPorts => 240,
-  operation => "add",
-  backing => {
-    pnicSpec0 => {
-      pnicDevice = "en0",
-      uplinkPortgroupKey => "dvUplink",
-    },
-    pnicSpec1 => {
-      pnicDevice = "en1",
-      uplinkPortgroupKey => "dvUplink",
-    },
-  },
-}
-
-=end
-
-        # The 'host' property fails to handle an array as it should
-        # for the reason discussed above. Instead, the 'host' property:
-        # -- handles only a single host, not an arrray
-        :host => {
-          Node => NodeData[
-            :node_type => 'DistributedVirtualSwitchHostMemberConfigSpec',
-            # :misc => Set.new([::Array]),
-          ],
-          :backing => {
-            Node => NodeData[
-              :node_type => "DistributedVirtualSwitchHostMemberPnicBacking",
-            ],
-            :pnicSpec => LeafData[
-              :prop_name => PROP_NAME_IS_FULL_PATH,
-              :olio => { 
-                Puppet::Property::VMware_Array_VIM_Object => { 
-                  :property_option => {
-                    :type => 'DistributedVirtualSwitchHostMemberPnicSpec', 
-                    :array_matching => :all,
-                    :comparison_scope => :array_element,
-                    :key => :pnicDevice,
-                  },
-                },
-              },
-            ],
-          },
-          :host => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Identifies host member of the DVS",
-          ],
-          :maxProxySwitchPorts => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Maximum number of ports in the HostProxySwitch",
-            :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
-            :munge => PuppetX::VMware::Mapper::munge_to_i,
-          ],
-          :operation => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Host member operation. One of add, edit, or remove",
-            :valid_enum => [
-              :add,
-              :edit,
-              :remove,
-            ],
-          ],
-        },
-
-        #maxPorts - deprecated
         :name => LeafData[
-          :prop_name => :dvswitch_name,
-          :desc => "name of the switch",
+          :desc => "name of the portgroup",
         ],
+        :numPorts => LeafData[
+          :prop_name => PROP_NAME_IS_FULL_PATH,
+          :desc => "number of ports in the portgroup",
+          :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+          :munge => PuppetX::VMware::Mapper::munge_to_i,
+        ],
+
+
         :numStandalonePorts => LeafData[
           :desc => "The The number of standalone ports in the switch. "\
                    "Standalone ports are ports that do not belong to any portgroup.",
           :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
           :munge => PuppetX::VMware::Mapper::munge_to_i,
         ],
+
         :policy => {
           Node => NodeData[
-            :node_type => 'DVSPolicy',
+            :node_type => 'DVPortgroupPolicy',
           ],
-          :autoPreInstallAllowed => LeafData[
+          :blockOverrideAllowed => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Switch usage policy. see "\
-              "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
             :valid_enum => [:true, :false],
-            :requires_siblings => [:autoUpgradeAllowed, :partialUpgradeAllowed],
           ],
-          :autoUpgradeAllowed => LeafData[
+          :livePortMovingAllowed => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Switch usage policy. see "\
-              "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
             :valid_enum => [:true, :false],
-            :requires_siblings => [:autoPreInstallAllowed, :partialUpgradeAllowed],
           ],
-          :partialUpgradeAllowed => LeafData[
+          :networkResourcePoolOverrideAllowed => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Switch usage policy. see "\
-              "http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/vim.DistributedVirtualSwitch.SwitchPolicy.html",
             :valid_enum => [:true, :false],
-            :requires_siblings => [:autoPreInstallAllowed, :autoUpgradeAllowed],
+          ],
+          :portConfigResetAtDisconnect => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
+          ],
+          :shapingOverrideAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
+          ],
+          :vendorConfigOverrideAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
           ],
         },
-        :switchIpAddress => LeafData[
-          :desc => "IP address for the switch, specified using IPv4 dot "\
-              "notation. The utility of this address is defined by other switch features."
+
+        :portNameFormat => LeafData[
+          :prop_name => PROP_NAME_IS_FULL_PATH,
+          :desc => "http://pubs.vmware.com/vsphere-51/topic/"\
+                   "com.vmware.wssdk.apiref.doc/"\
+                   "vim.dvs.DistributedVirtualPortgroup.ConfigInfo.html#portNameFormat",
         ],
-        :uplinkPortgroup => LeafData[
-          :desc => "The uplink portgroups",
-          :olio => {Puppet::Property::VMware_Array => {}},
-        ],
-        :uplinkPortPolicy => {
-          Node => NodeData[
-            :node_type => 'DVSNameArrayUplinkPortPolicy',
+        #scope - unimplemented
+        :type => LeafData[
+          :prop_name => PROP_NAME_IS_FULL_PATH,
+          :desc => "http://pubs.vmware.com/vsphere-51/topic/"\
+                   "com.vmware.wssdk.apiref.doc/"\
+                   "vim.dvs.DistributedVirtualPortgroup.PortgroupType.html",
+          :valid_enum => [
+            :earlyBinding,
+            :ephemeral,
+            :lateBinding,
           ],
-          :uplinkPortName => LeafData[
-            :desc => "Array of uniform names of uplink ports on each host. "\
-                     "The size of the array indicates the number of uplink ports "\
-                     "that will be created for each host in the switch.",
-            :olio => {Puppet::Property::VMware_Array => {}},
-          ],
-        },
-        :vendorSpecificConfig => LeafData[
-          :olio => { 
-            Puppet::Property::VMware_Array_VIM_Object => { 
-              :property_option => {
-                :type => 'DistributedVirtualSwitchKeyedOpaqueBlob', 
-                :array_matching => :all,
-                :comparison_scope => :array_element,
-                :key => :key,
-              },
-            },
-          },
         ],
 
 

@@ -1,38 +1,98 @@
 # Copyright (C) 2013 VMware, Inc.
+require 'pathname' # WORK_AROUND #14073 and #7788
+module_lib = Pathname.new(__FILE__).parent.parent.parent
+
+vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
+require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
+require File.join module_lib, 'puppet_x/vmware/mapper'
+
+require File.join vmware_module.path, 'lib/puppet/property/vmware'
+
 Puppet::Type.newtype(:vc_dvportgroup) do
-  @doc = "Manage vCenter Distributed Virtual Portgroups."
+  @doc = "Manages vCenter Distributed Virtual Portgroup"
 
   ensurable do
     newvalue(:present) do
       provider.create
     end
-
     newvalue(:absent) do
       provider.destroy
     end
-
-    defaultto(:present)
   end
 
-  newparam(:path, :namevar => true) do
-    desc "The path to the Cluster."
+  newparam(:name, :namevar => true) do
+    desc "/{path to dvswitch}:{name of dvportgroup}"
 
-    validate do |path|
-      raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(path)
+    munge do |value|
+      @resource[:dvswitch_name], @resource[:dvportgroup_name] = value.split(':',2)
+      value
     end
   end
 
-  newparam(:transport) do
-    desc "The connectivity to vCenter."
+  newparam(:dvswitch_path) do
+    munge do |value|
+      @resource[:dvswitch_name] = value.split('/').last
+    end
   end
 
-  newparam(:vlanid) do
-    desc "The numeric ID for the VLAN."
+  newparam(:dvportgroup_name) do
   end
 
-  autorequire(:vc_dvs) do
-    Pathname.new(self[:path]).parent.to_s
+  newparam(:path, :namevar => true) do
+    desc "The path to the dvportgroup."
+
+    validate do |value|
+      raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(value)
+    end
+  end
+
+  map = PuppetX::VMware::Mapper.new_map('DVPortgroupConfigSpecMap')
+  map.leaf_list.each do |leaf|
+    option = {}
+    if type_hash = leaf.olio[t = Puppet::Property::VMware_Array]
+      option.update(
+        :array_matching => :all,
+        :parent => t
+      )
+    elsif type_hash = leaf.olio[t = Puppet::Property::VMware_Array_Hash]
+      option.update(
+        # :array_matching => :all,
+        :parent => t
+      )
+    elsif type_hash = leaf.olio[t = Puppet::Property::VMware_Array_VIM_Object]
+      option.update(
+        # :array_matching => :all,
+        :parent => t
+      )
+    end
+    # require 'ruby-debug' ; debugger unless option.empty?
+    option.update(type_hash[:property_option]) if 
+        type_hash && type_hash[:property_option]
+
+    newproperty(leaf.prop_name, option) do
+      desc(leaf.desc) if leaf.desc
+      newvalues(*leaf.valid_enum) if leaf.valid_enum
+      munge {|val| leaf.munge.call(val)} if leaf.munge
+      validate {|val| leaf.validate.call(val)} if leaf.validate
+      eval <<-EOS
+        def change_to_s(is,should)
+          "[#{leaf.full_name}] changed \#{is.inspect} to \#{should.inspect}"
+        end
+      EOS
+      eval <<-EOS if leaf.misc.include?(PuppetX::VMware::Mapper::InheritablePolicyValue)
+        def insync?(is)
+          v = PuppetX::VMware::Mapper.insyncInheritablePolicyValue(
+              is, @resource, \"#{leaf.prop_name}\".to_sym)
+          v = super(is) if v.nil?
+          v
+        end
+      EOS
+    end
+  end
+
+  # autorequire datacenter
+  autorequire(:vc_dvswitch) do
+    self[:dvswitch]
   end
 
 end
-

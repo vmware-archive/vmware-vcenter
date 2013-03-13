@@ -12,12 +12,20 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
   @doc = "Manages vCenter Distributed Virtual Switch"
 
   def create
+    # build the spec for CreateDVS_Task
+    create_spec = RbVmomi::VIM::DVSCreateSpec.new
+    create_spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
+    create_spec.configSpec.name = basename
+    # find the network folder and invoke the task
     dc = vim.serviceInstance.find_datacenter(parent)
-    spec = RbVmomi::VIM::DVSCreateSpec.new
-    spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
-    spec.configSpec.name = basename
-    spec.configSpec.uplinkPortgroup = [basename]
-    dc.networkFolder.CreateDVS_Task(:spec => spec).wait_for_completion
+    task_create_dvs = dc.networkFolder.CreateDVS_Task(:spec => create_spec)
+    task_create_dvs.wait_for_completion
+    # now rename the default uplink portgroup so it's easy to find
+    if task_create_dvs.info.state == 'success'
+      @dvswitch = task_create_dvs.info.result
+      @dvswitch.config.uplinkPortgroup.first.
+        Rename_Task(:newName => "#{basename}-uplink-pg").wait_for_completion
+    end
   end
 
   def destroy
@@ -35,10 +43,9 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   map.leaf_list.each do |leaf|
     define_method(leaf.prop_name) do
-      value = PuppetX::VMware::Util::nested_value(config_is_now, leaf.path_is_now)
-      value = :true  if TrueClass  === value
-      value = :false if FalseClass === value
-      value
+      value = PuppetX::VMware::Mapper::munge_to_tfsyms.call(
+        PuppetX::VMware::Util::nested_value(config_is_now, leaf.path_is_now)
+      )
     end
 
     define_method("#{leaf.prop_name}=".to_sym) do |value|
@@ -113,14 +120,11 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
       fail "required properties missing - #{@properties_reqd.inspect}"
     end
 
-    require 'ruby-debug'; debugger
-
     # create RbVmomi objects with properties in place of hashes with keys
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
     Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
-    require 'ruby-debug' ; debugger
     spec
   end
 

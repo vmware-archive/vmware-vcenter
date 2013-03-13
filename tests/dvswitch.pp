@@ -189,7 +189,7 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 
 #   },
 
-#   defaultProxySwitchMaxNumPorts => 240,
+    defaultProxySwitchMaxNumPorts => 128,
 
     description => 'test dvswitch',
 
@@ -220,10 +220,10 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 
 #   uplinkPortgroup => ,
 
-#   --- can't update uplinkPortPolicy before proxy switches exist?
-#   uplinkPortPolicy => {
-#     uplinkPortName => ['upl0', 'upl1'],
-#   },
+    # can't update uplinkPortPolicy before proxy switches exist?
+    uplinkPortPolicy => {
+      uplinkPortName => ['uplink1', 'uplink2'],
+    },
 
 #   vendorSpecificConfig => [
 #     { key => 'key1', opaqueData => 'value11' },

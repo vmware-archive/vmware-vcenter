@@ -10,6 +10,7 @@ require 'puppet_x/vmware/mapper'
 
 map_type = 'ClusterConfigSpecExMap'
 map_type = 'VMwareDVSConfigSpecMap'
+map_type = 'DVPortgroupConfigSpecMap'
 
 map = PuppetX::VMware::Mapper.new_map(map_type)
 
