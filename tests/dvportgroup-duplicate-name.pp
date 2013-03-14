@@ -26,12 +26,13 @@ vcenter::dvswitch{ "${dc1['path']}/dvs2":
 }
 
 vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg1":
-  ensure => absent,
+  ensure => present,
   transport => Transport['vcenter'],
   spec => {}
 }
-vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg2":
-  ensure => absent,
+
+vcenter::dvportgroup{ "${dc1['path']}/dvs2:dvpg1":
+  ensure => present,
   transport => Transport['vcenter'],
   spec => {}
 }

@@ -18,29 +18,23 @@ Puppet::Type.newtype(:vc_dvportgroup) do
     newvalue(:absent) do
       provider.destroy
     end
+    def should_to_s(val)
+      require 'ruby-debug' ; debugger
+      provider.create_message
+    end
   end
 
   newparam(:name, :namevar => true) do
-    desc "/{path to dvswitch}:{name of dvportgroup}"
+    desc "{path to dvswitch}:{name of dvportgroup}"
 
     munge do |value|
-      @resource[:dvswitch_name], @resource[:dvportgroup_name] = value.split(':',2)
+      @resource[:dvswitch_path] = value.split(':',2)[0]
       value
     end
   end
 
   newparam(:dvswitch_path) do
-    munge do |value|
-      @resource[:dvswitch_name] = value.split('/').last
-    end
-  end
-
-  newparam(:dvportgroup_name) do
-  end
-
-  newparam(:path, :namevar => true) do
     desc "The path to the dvportgroup."
-
     validate do |value|
       raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(value)
     end
@@ -65,7 +59,6 @@ Puppet::Type.newtype(:vc_dvportgroup) do
         :parent => t
       )
     end
-    # require 'ruby-debug' ; debugger unless option.empty?
     option.update(type_hash[:property_option]) if 
         type_hash && type_hash[:property_option]
 
@@ -92,7 +85,7 @@ Puppet::Type.newtype(:vc_dvportgroup) do
 
   # autorequire datacenter
   autorequire(:vc_dvswitch) do
-    self[:dvswitch]
+    self[:dvswitch_path]
   end
 
 end

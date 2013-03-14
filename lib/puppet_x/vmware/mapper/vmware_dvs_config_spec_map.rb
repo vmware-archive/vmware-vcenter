@@ -740,13 +740,13 @@ module PuppetX::VMware::Mapper
                 :VmwareDistributedVirtualSwitchTrunkVlanSpec,
                 :VmwareDistributedVirtualSwitchPvlanSpec,
               ],
-              :misc => [InheritablePolicyExempt],
             ],
             :inherited => LeafData[
               :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is vlan setting inherited? true or false",
               :valid_enum => [:true, :false],
+              :requires_siblings => [:vsphereType],
             ],
             # XXX hack - vlanIdSingle - vsphere API name is vlanId
             :vlanIdSingle => LeafData[
@@ -887,7 +887,40 @@ host => {
           ],
         },
 
+        #ipfixConfig - unimplemented
         #maxPorts - deprecated
+
+        :linkDiscoveryProtocolConfig => {
+          Node => NodeData[
+            :node_type => 'LinkDiscoveryProtocolConfig',
+          ],
+          :operation => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => 'operation mode: advertise (send only) listen (only), both, none',
+            :valid_enum => [
+              :advertise,
+              :both,
+              :listen,
+              :none,
+            ],
+            :requires_siblings => [:protocol],
+          ],
+          :protocol => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :desc => 'protocol: cdp (Cisco) or lldp (generic)',
+            :valid_enum => [
+              :cdp,
+              :lldp,
+            ],
+            :requires_siblings => [:operation],
+          ],
+        },
+        :maxMtu => LeafData[
+          :prop_name => PROP_NAME_IS_FULL_PATH,
+          :desc => "Maximum MTU for entire switch",
+          :validate => PuppetX::VMware::Mapper::validate_i_in(0..9000),
+          :munge => PuppetX::VMware::Mapper::munge_to_i,
+        ],
         :name => LeafData[
           :prop_name => :dvswitch_name,
           :desc => "name of the switch",
@@ -924,6 +957,9 @@ host => {
             :requires_siblings => [:autoPreInstallAllowed, :autoUpgradeAllowed],
           ],
         },
+        
+        #pvlanConfigSpec - unimplemented
+
         :switchIpAddress => LeafData[
           :desc => "IP address for the switch, specified using IPv4 dot "\
               "notation. The utility of this address is defined by other switch features."
@@ -955,6 +991,8 @@ host => {
             },
           },
         ],
+
+        # vspanConfigSpec - unimplemented
 
 
       }

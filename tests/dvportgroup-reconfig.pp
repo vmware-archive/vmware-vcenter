@@ -17,7 +17,14 @@ vc_datacenter { "${dc1['path']}":
 vcenter::dvswitch{ "${dc1['path']}/dvs1":
   ensure => present,
   transport => Transport['vcenter'],
-  spec => {}
+  spec => {
+    maxMtu => 9000,
+    numStandalonePorts => 32,
+    linkDiscoveryProtocolConfig => {
+      operation => 'none',
+      protocol => 'lldp',
+    },
+  }
 }
 vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg1":
   ensure => present,

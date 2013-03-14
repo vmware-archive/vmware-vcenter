@@ -47,7 +47,6 @@ Puppet::Type.newtype(:vc_dvswitch) do
         :parent => t
       )
     end
-    # require 'ruby-debug' ; debugger unless option.empty?
     option.update(type_hash[:property_option]) if 
         type_hash && type_hash[:property_option]
 

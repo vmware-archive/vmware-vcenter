@@ -733,33 +733,33 @@ module PuppetX::VMware::Mapper
                 :VmwareDistributedVirtualSwitchTrunkVlanSpec,
                 :VmwareDistributedVirtualSwitchPvlanSpec,
               ],
-              :misc => [InheritablePolicyExempt],
             ],
             :inherited => LeafData[
               :misc => [InheritablePolicyInherited],
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :desc => "Is vlan setting inherited? true or false",
               :valid_enum => [:true, :false],
+              :requires_siblings => [:vsphereType],
             ],
+            #
+            # vlan.vlanId can't be automatically validated or munged
+            #
+            # 'vlan' may be VmwareDistributedVirtualSwitchVlanIdSpec or
+            # VmwareDistributedVirtualSwitchTrunkVlanSpec -- so vlanId 
+            # is either an integer or an array of NumericRange objects
+            #
+            # until abstract types are 'improved' in Node, only 
+            # one of these properties can be active at a time.
+            #
             # XXX hack - vlanIdSingle - vsphere API name is vlanId
-            :vlanIdSingle => LeafData[
+            :vlanId => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :requires_siblings => [:vsphereType],
-              #
-              # vlan.vlanId can't be automatically validated or munged
-              #
-              # 'vlan' may be VmwareDistributedVirtualSwitchVlanIdSpec or
-              # VmwareDistributedVirtualSwitchTrunkVlanSpec -- so vlanId 
-              # is either an integer or an array of NumericRange objects
-              #
-              #VmwareDistributedVirtualSwitchVlanIdSpec.vlanid
-              # validate => PuppetX::VMware::Mapper::validate_i_ge(0),
-              # munge => PuppetX::VMware::Mapper::munge_to_i,
-              #VmwareDistributedVirtualSwitchTrunkVlanSpec.vlanid
-              # olio => {Puppet::Property::VMware_Array_VIM_Object => {}},
-              #
+              :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
+              :munge => PuppetX::VMware::Mapper::munge_to_i,
             ],
-            :vlanId => LeafData[
+            # XXX hack - vlanIdRanges - vsphere API name is vlanId
+            :vlanIdRanges => LeafData[
               :prop_name => PROP_NAME_IS_FULL_PATH,
               :requires_siblings => [:vsphereType],
               :olio => { 
@@ -787,6 +787,7 @@ module PuppetX::VMware::Mapper
           :desc => "description of the switch",
         ],
         :name => LeafData[
+          :prop_name => :dvportgroup_name,
           :desc => "name of the portgroup",
         ],
         :numPorts => LeafData[
@@ -797,17 +798,11 @@ module PuppetX::VMware::Mapper
         ],
 
 
-        :numStandalonePorts => LeafData[
-          :desc => "The The number of standalone ports in the switch. "\
-                   "Standalone ports are ports that do not belong to any portgroup.",
-          :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
-          :munge => PuppetX::VMware::Mapper::munge_to_i,
-        ],
-
         :policy => {
           Node => NodeData[
-            :node_type => 'DVPortgroupPolicy',
+            :node_type => 'VMwareDVSPortgroupPolicy',
           ],
+          # DVPortgroupPolicy
           :blockOverrideAllowed => LeafData[
             :prop_name => PROP_NAME_IS_FULL_PATH,
             :valid_enum => [:true, :false],
@@ -832,6 +827,23 @@ module PuppetX::VMware::Mapper
             :prop_name => PROP_NAME_IS_FULL_PATH,
             :valid_enum => [:true, :false],
           ],
+          # VMwareDVSPortgroupPolicy - additional properties
+          :ipfixOverrideAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
+          ],
+          :securityPolicyOverrideAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
+          ],
+          :uplinkTeamingOverrideAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
+          ],
+          :vlanOverrideAllowed => LeafData[
+            :prop_name => PROP_NAME_IS_FULL_PATH,
+            :valid_enum => [:true, :false],
+          ],
         },
 
         :portNameFormat => LeafData[
@@ -852,7 +864,7 @@ module PuppetX::VMware::Mapper
             :lateBinding,
           ],
         ],
-
+        #vendorSpecificConfig - unimplemented
 
       }
 

@@ -332,21 +332,29 @@ module PuppetX
               # require my 'aunt' inherited property, if there is one
               path_mine = leaf_mine.path_should
               if path_mine.size >= 2 # don't try to back up above root
-                path_aunt = path_mine[0..-3] + [:inherit]
+                path_aunt = path_mine[0..-3] + [:inherited]
                 aunt = @leaf_list.find{|l| l.path_should == path_aunt}
-                leaf_mine.require.push aunt.prop_name unless 
-                  aunt.nil? or leaf_mine.require.include? aunt.prop_name
+                leaf_mine.requires.push aunt.prop_name unless 
+                  aunt.nil? or leaf_mine.requires.include? aunt.prop_name
               end
 
               # add myself as a requirement for each non-exempt sibling
+              # and also mark it as InheritablePolicyValue so it will use
+              # insyncInheritablePolicyValue -- not modular, but...
               name_mine = leaf_mine.prop_name
               path_prefix_sib = path_mine[0..-2]
               @leaf_list.
                 select{|leaf| leaf.path_should[0..-2] == path_prefix_sib}.
                 reject{|leaf| leaf.prop_name == name_mine}.
                 reject{|sib|  sib.misc.include? InheritablePolicyExempt}.
-                reject{|sib|  sib.requires.include? name_mine}.
-                each  {|sib|  sib.requires.push name_mine}
+                tap   {|siblings|  
+                  siblings.
+                    reject{|sib| sib.requires.include? name_mine}.
+                    each  {|sib| sib.requires.push name_mine}
+                  siblings.
+                    reject{|sib| sib.misc.include? InheritablePolicyValue}.
+                    each  {|sib| sib.misc.push InheritablePolicyValue}
+                }
             }
         end
 
