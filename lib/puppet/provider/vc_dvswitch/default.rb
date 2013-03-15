@@ -121,10 +121,12 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     end
 
     # create RbVmomi objects with properties in place of hashes with keys
+    # require 'ruby-debug' ; debugger
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
     Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
+    # require 'ruby-debug' ; debugger
     spec
   end
 

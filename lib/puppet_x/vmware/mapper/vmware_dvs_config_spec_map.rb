@@ -827,65 +827,26 @@ host => {
   maxProxyPorts => 240,
   operation => "add",
   backing => {
-    pnicSpec0 => {
-      pnicDevice = "en0",
-      uplinkPortgroupKey => "dvUplink",
-    },
-    pnicSpec1 => {
-      pnicDevice = "en1",
-      uplinkPortgroupKey => "dvUplink",
-    },
+    {pnicDevice = "vmnic0", uplinkPortgroupKey => "dvUplink"},
+    {pnicDevice = "vmnic1", uplinkPortgroupKey => "dvUplink"},
   },
 }
 
 =end
 
-        # The 'host' property fails to handle an array as it should
-        # for the reason discussed above. Instead, the 'host' property:
-        # -- handles only a single host, not an arrray
-        :host => {
-          Node => NodeData[
-            :node_type => 'DistributedVirtualSwitchHostMemberConfigSpec',
-            # :misc => Set.new([::Array]),
-          ],
-          :backing => {
-            Node => NodeData[
-              :node_type => "DistributedVirtualSwitchHostMemberPnicBacking",
-            ],
-            :pnicSpec => LeafData[
-              :prop_name => PROP_NAME_IS_FULL_PATH,
-              :olio => { 
-                Puppet::Property::VMware_Array_VIM_Object => { 
-                  :property_option => {
-                    :type => 'DistributedVirtualSwitchHostMemberPnicSpec', 
-                    :array_matching => :all,
-                    :comparison_scope => :array_element,
-                    :key => :pnicDevice,
-                  },
-                },
+        :host => LeafData[
+          :prop_name => PROP_NAME_IS_FULL_PATH,
+          :olio => { 
+            Puppet::Property::VMware_Array_VIM_Object => { 
+              :property_option => {
+                :type => 'DistributedVirtualSwitchHostMemberConfigSpec', 
+                :array_matching => :all,
+                :comparison_scope => :array_element,
+                :key => :host,
               },
-            ],
+            },
           },
-          :host => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Identifies host member of the DVS",
-          ],
-          :maxProxySwitchPorts => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Maximum number of ports in the HostProxySwitch",
-            :validate => PuppetX::VMware::Mapper::validate_i_ge(0),
-            :munge => PuppetX::VMware::Mapper::munge_to_i,
-          ],
-          :operation => LeafData[
-            :prop_name => PROP_NAME_IS_FULL_PATH,
-            :desc => "Host member operation. One of add, edit, or remove",
-            :valid_enum => [
-              :add,
-              :edit,
-              :remove,
-            ],
-          ],
-        },
+        ],
 
         #ipfixConfig - unimplemented
         #maxPorts - deprecated

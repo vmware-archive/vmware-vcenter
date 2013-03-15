@@ -170,7 +170,7 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #       uplinkPortOrder => {
 #         inherited => false,
 #         activeUplinkPort => ,
-#         standbyUplinkPort => ,
+  #         standbyUplinkPort => ,
 #       },
 #     },
 
@@ -195,16 +195,28 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 
 #   extensionKey => 'extensionKey arbitrary string',
 
-#   host => {
-#     host => "${esx1['hostname']}",
-#     operation => 'add',
-#     backing => {
-#       pnicSpec => [
-#         {pnicDevice => 'vmnic0', uplinkPortgroupKey => 'dvs1-DVUplinks-26'},
-#         {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-DVUplinks-26'},
-#       ],
-#     },
-#   },
+    host => [
+      {
+        # host => "${esx1['hostname']}",
+        host => 'host-31',
+        operation => 'add',
+        backing => {
+          pnicSpec => [
+            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvportgroup-39'},
+          ],
+        },
+      },
+      {
+        # host => "${esx2['hostname']}",
+        host => 'host-35',
+        operation => 'add',
+        backing => {
+          pnicSpec => [
+            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvportgroup-39'},
+          ],
+        },
+      },
+    ],
 
 #   dvswitch_name => 'attempttochange',
 

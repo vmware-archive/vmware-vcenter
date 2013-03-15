@@ -164,6 +164,18 @@ define vcenter::dvswitch (
 # sample #   },
 # sample #   defaultProxySwitchMaxNumPorts => ,
 # sample #   description => ,
+# sample #   host => {
+# sample #     backing => {
+# sample #       pnicSpec => {
+# sample #         pnicDevice => ,
+# sample #         uplinkPortgroupKey => ,
+# sample #         uplinkPortKey => ,
+# sample #       },
+# sample #     },
+# sample #     host => ,
+# sample #     maxProxySwitchPorts => ,
+# sample #     operation => [add | edit | remove],
+# sample #   },
 # sample #   linkDiscoveryProtocolConfig => {
 # sample #     operation => ,
 # sample #     protocol => ,
@@ -196,6 +208,7 @@ define vcenter::dvswitch (
     description                              => nested_value($spec, ['description']),
     dvswitch_name                            => nested_value($spec, ['name']),
     extension_key                            => nested_value($spec, ['extensionKey']),
+    host                                     => nested_value($spec, ['host']),
     link_discovery_protocol_config_operation => nested_value($spec, ['linkDiscoveryProtocolConfig', 'operation']),
     link_discovery_protocol_config_protocol  => nested_value($spec, ['linkDiscoveryProtocolConfig', 'protocol']),
     max_mtu                                  => nested_value($spec, ['maxMtu']),

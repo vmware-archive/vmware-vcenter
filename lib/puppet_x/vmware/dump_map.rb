@@ -9,12 +9,15 @@ Puppet.initialize_settings
 require 'puppet_x/vmware/mapper'
 
 map_type = 'ClusterConfigSpecExMap'
-map_type = 'VMwareDVSConfigSpecMap'
 map_type = 'DVPortgroupConfigSpecMap'
+map_type = 'VMwareDVSConfigSpecMap'
+
+map_type = ARGV[0]
+puts '=== code for defined type: set puppet properties from input nested hash'
+puts "=== for map type #{map_type}"
 
 map = PuppetX::VMware::Mapper.new_map(map_type)
 
-puts '=== code for defined type: set puppet properties from input nested hash'
 map.leaf_list.each do |leaf|
   path = leaf.path_should
   # puts "#{leaf.prop_name}\t=> nested_value($spec, #{path.inspect}),"
