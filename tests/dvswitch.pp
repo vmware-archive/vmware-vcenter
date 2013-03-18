@@ -197,28 +197,26 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 
     host => [
       {
-        # host => "${esx1['hostname']}",
-        host => 'host-31',
+        host => "${esx1['hostname']}",
         operation => 'add',
         backing => {
           pnicSpec => [
-            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvportgroup-39'},
+            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
           ],
         },
+        maxProxySwitchPorts => 256,
       },
       {
-        # host => "${esx2['hostname']}",
-        host => 'host-35',
+        host => "${esx2['hostname']}",
         operation => 'add',
         backing => {
           pnicSpec => [
-            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvportgroup-39'},
+            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
           ],
         },
+        maxProxySwitchPorts => 256,
       },
     ],
-
-#   dvswitch_name => 'attempttochange',
 
     numStandalonePorts => 42,
 

@@ -145,6 +145,62 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     @map ||= map
   end
 
+  def mo_ref_by_name opts
+    name = opts[:name]
+    type = opts[:type]
+    scope = opts[:scope] || :datacenter
+
+    myfile = File.expand_path(__FILE__) + ":mo_ref_by_name"
+
+    # require 'ruby-debug' ; debugger
+
+    if type == VIM::HostSystem
+      case scope
+      when :datacenter
+      list = vim.serviceInstance.content.
+          dvSwitchManager.QueryCompatibleHostForNewDvs(
+            :container => datacenter,
+            :recursive => true
+          )
+      else
+        fail "#{myfile}: scope \"#{scope}\" unimplemented for #{type}"
+      end
+    elsif type == VIM::DistributedVirtualSwitch
+      case scope
+      when :dvswitch
+        list = [dvswitch]
+      when :datacenter
+        list = datacenter.networkFolder.children.
+          select{|child| child.class == type}
+      else
+        fail "#{myfile}: scope \"#{scope}\" unimplemented for #{type}"
+      end
+    elsif type == VIM::DistributedVirtualPortgroup
+      case scope
+      when :dvswitch
+        list = dvswitch.portgroup
+      when :datacenter
+        list = datacenter.networkFolder.children.
+          select{|child| child.class == type}
+      else
+        fail "#{myfile}: scope \"#{scope}\" unimplemented for #{type}"
+      end
+    elsif type == VIM::DistributedVirtualPort
+        fail "#{myfile}: unimplemented for #{type}"
+    else
+        fail "#{myfile}: unimplemented for #{type}"
+    end
+
+    # require 'ruby-debug' ; debugger
+
+    if list
+      ref = list.find{|obj| obj.name == name}._ref
+    else
+      nil
+    end
+      
+  end
+
   private
 
   def properties_rcvd
@@ -162,6 +218,10 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   def config_should
     @config_should ||= {}
+  end
+
+  def datacenter
+    @datacenter||= vim.serviceInstance.find_datacenter(parent)
   end
 
   def dvswitch
