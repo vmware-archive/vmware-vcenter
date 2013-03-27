@@ -69,3 +69,8 @@ $nfs_datastore2 = {
   'remote_host' => '172.16.231.1',
   'remote_path' => '/exports/ds2',
 }
+
+$vm1 = {
+  'name'  => 'test',
+  'power_state' => 'poweredOn',
+}
