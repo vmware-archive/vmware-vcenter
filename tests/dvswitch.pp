@@ -196,6 +196,7 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 #   extensionKey => 'extensionKey arbitrary string',
 
     host => [
+
       {
         host => "${esx1['hostname']}",
         operation => 'add',
@@ -204,8 +205,9 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
             {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
           ],
         },
-        maxProxySwitchPorts => 256,
+        maxProxySwitchPorts => 128,
       },
+
       {
         host => "${esx2['hostname']}",
         operation => 'add',
@@ -214,8 +216,9 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
             {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
           ],
         },
-        maxProxySwitchPorts => 256,
+        maxProxySwitchPorts => 128,
       },
+
     ],
 
     numStandalonePorts => 42,

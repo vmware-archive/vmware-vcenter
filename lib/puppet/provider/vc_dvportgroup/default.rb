@@ -19,13 +19,6 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
       fail "Missing dvswitch '#{dvsw_path}': can't create portgroup '#{dvpg_name}"
     end
 
-=begin
-    spec = RbVmomi::VIM::DVPortgroupConfigSpec.new
-    spec.name = dvpg_name
-    spec.type = 'earlyBinding'
-    dvswitch.CreateDVPortgroup_Task(:spec => spec).wait_for_completion
-=end
-
     @creating = true
     @create_message ||= [ "#{dvsw_path}:#{dvpg_name} initialized" ]
     # fetch properties from resource
@@ -40,7 +33,7 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
     # can't leave for flush's ReconfigurePortgroup_Task
     # because create needs AddDVPortgroup_Task
     spec = flush_prep
-    require 'ruby-debug' ; debugger
+    # require 'ruby-debug' ; debugger
     dvswitch.CreateDVPortgroup_Task(:spec => spec).wait_for_completion
     @flush_required = false
 

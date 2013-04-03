@@ -41,32 +41,6 @@ vc_cluster_evc { "${cluster1['path']}":
 anchor { "${cluster1['path']}":
 }
 
-vc_cluster { "${cluster2['path']}":
-  ensure    => present,
-  transport => Transport['vcenter'],
-  #
-  before => Anchor["${cluster2['path']}"],
-}
-vc_cluster_drs { "${cluster2['path']}":
-  enabled => true,
-  enable_vm_behavior_overrides => false,
-  default_vm_behavior => 'manual',
-  vmotion_rate => 4,
-  transport => Transport['vcenter'],
-  #
-  require => Vc_cluster["${cluster2['path']}"],
-  before => Anchor["${cluster2['path']}"],
-}
-vc_cluster_evc { "${cluster2['path']}":
-  evc_mode_key => 'disabled',
-  transport => Transport['vcenter'],
-  #
-  require => Vc_cluster_drs["${cluster2['path']}"],
-  before => Anchor["${cluster2['path']}"],
-}
-anchor { "${cluster2['path']}":
-}
-
 vcenter::host { [
     "${esx1['hostname']}",
     "${esx2['hostname']}",
@@ -74,24 +48,24 @@ vcenter::host { [
   path      => "${cluster1['path']}",
   username  => "${esx_shared_username}",
   password  => "${esx_shared_password}",
+
+  shells => {
+    esxi_shell_time_out             => 0,
+    esxi_shell_interactive_time_out => 0,
+    suppress_shell_warning          => 1,
+    ssh => {
+      running => true,
+      policy => 'automatic',
+    },
+  },
+
   transport => Transport['vcenter'],
 }
 
-# no host34 #vcenter::host { [
-# no host34 #    "${esx3['hostname']}",
-# no host34 #    "${esx4['hostname']}",
-# no host34 #  ]:
-# no host34 #  path      => "${cluster2['path']}",
-# no host34 #  username  => "${esx_shared_username}",
-# no host34 #  password  => "${esx_shared_password}",
-# no host34 #  transport => Transport['vcenter'],
-# no host34 #}
 
 esx_syslog { [
     "${esx1['hostname']}",
     "${esx2['hostname']}",
-# no host34 #    "${esx3['hostname']}",
-# no host34 #    "${esx4['hostname']}",
   ]:
   log_dir_unique => true,
   transport      => Transport['vcenter'],
@@ -101,8 +75,6 @@ esx_syslog { [
 esx_datastore { [
       "${esx1['hostname']}:${nfs_datastore1['name']}",
       "${esx2['hostname']}:${nfs_datastore1['name']}",
-# no host34 #      "${esx3['hostname']}:${nfs_datastore1['name']}",
-# no host34 #      "${esx4['hostname']}:${nfs_datastore1['name']}",
     ]:
   ensure      => present,
   type        => 'nfs',
@@ -113,8 +85,6 @@ esx_datastore { [
 esx_datastore { [
       "${esx1['hostname']}:${nfs_datastore2['name']}",
       "${esx2['hostname']}:${nfs_datastore2['name']}",
-# no host34 #      "${esx3['hostname']}:${nfs_datastore2['name']}",
-# no host34 #      "${esx4['hostname']}:${nfs_datastore2['name']}",
     ]:
   ensure      => present,
   type        => 'nfs',
