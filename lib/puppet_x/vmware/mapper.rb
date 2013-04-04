@@ -6,9 +6,19 @@ require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 
 module_lib = Pathname.new(__FILE__).parent.parent.parent
 
+require 'set'
+
 module PuppetX
   module VMware
     module Mapper
+
+      # constant for a meaningful unique name that you don't have to invent
+      PROP_NAME_IS_FULL_PATH = :PROP_NAME_IS_FULL_PATH
+
+      # constants for use in Leaf Nodes for InheritablePolicy
+      InheritablePolicyInherited = :InheritablePolicyInherited
+      InheritablePolicyExempt = :InheritablePolicyExempt
+      InheritablePolicyValue = :InheritablePolicyValue
 
       def self.new_map mapname
         mapfile = PuppetX::VMware::Util.snakeize mapname
@@ -68,10 +78,12 @@ module PuppetX
             :desc,
             :misc,
             :munge,
+            :olio,
             :path_is_now,
             :path_should,
             :prop_name,
             :requires,
+            :requires_siblings,
             :validate,
             :valid_enum,
           ]
@@ -84,15 +96,30 @@ module PuppetX
           fail "#{self.class} doesn't include 'path_should'" unless
             @props[:path_should]
           @props[:misc] ||= []
+          @props[:olio] ||= {}
           @props[:requires] ||= []
+          @props[:requires_siblings] ||= []
 
           # set defaults and munge
           @props[:path_is_now] ||= @props[:path_should]
             # .dup not necessary because of following map to_sym
           @props[:path_is_now] = @props[:path_is_now].map{|v| v.to_sym}
           @props[:path_should] = @props[:path_should].map{|v| v.to_sym}
-          @props[:prop_name] ||=
-            PuppetX::VMware::Util.snakeize(@props[:path_should][-1]).to_sym
+          @props[:prop_name] =
+            case @props[:prop_name]
+            when nil
+              # autogenerate using last element in path
+              PuppetX::VMware::Util.snakeize(@props[:path_should][-1]).to_sym
+            when PROP_NAME_IS_FULL_PATH
+              # autogenerate using full path
+              x = @props[:path_should].
+                  map{|name| PuppetX::VMware::Util.snakeize name}.
+                  join "_"
+              x = x.to_sym
+            else
+              # specified explicitly in map
+              @props[:prop_name]
+            end
         end
 
         self.property_access Prop_names
@@ -100,6 +127,7 @@ module PuppetX
 
       class Node < MapComponent
         Prop_names = [
+            :misc,
             :node_type,
             :node_type_key,
             :path_should,
@@ -114,6 +142,7 @@ module PuppetX
           # check for required values
           fail "#{self.class} doesn't include 'node_type'" unless
             @props[:node_type]
+          @props[:misc] ||= Set.new()
 
           # set defaults and munge
           @props[:path_is_now] ||= @props[:path_should]
@@ -152,6 +181,12 @@ module PuppetX
 
           # walk down the initTree and find the leaves
           walk_down @initTree, [], @leaf_list, @node_list
+
+          # now that it's complete, go through leaf_list 
+          # to resolve interdependencies
+          requires_for_inheritable_policy
+          requires_for_requires_siblings
+
         end
 
         attr_reader :leaf_list, :node_list
@@ -275,6 +310,72 @@ module PuppetX
             end
           end
         end
+
+        def requires_for_inheritable_policy
+          #
+          # path notes for 'inherited' leaf:
+          # path[0..-1]                my path
+          # path[0..-2]                path to my container, my parent
+          # path[0..-3]                path to my container's container,
+          #                            my grandparent
+          # path[0..-2] + [:sib]       path to my sibling property 'sib',
+          #                            which should require me
+          # path[0..-3] + [:inherited] path to 'inherited' property that
+          #                            is a child of my grandparent (an 
+          #                            aunt, say), which I should require
+          # 
+          @leaf_list.
+            # find each leaf of type InheritedPolicyInherited 
+            select{|leaf| leaf.misc.include? InheritablePolicyInherited}.
+            each  {|leaf_mine|
+
+              # require my 'aunt' inherited property, if there is one
+              path_mine = leaf_mine.path_should
+              if path_mine.size >= 2 # don't try to back up above root
+                path_aunt = path_mine[0..-3] + [:inherited]
+                aunt = @leaf_list.find{|l| l.path_should == path_aunt}
+                leaf_mine.requires.push aunt.prop_name unless 
+                  aunt.nil? or leaf_mine.requires.include? aunt.prop_name
+              end
+
+              # add myself as a requirement for each non-exempt sibling
+              # and also mark it as InheritablePolicyValue so it will use
+              # insyncInheritablePolicyValue -- not modular, but...
+              name_mine = leaf_mine.prop_name
+              path_prefix_sib = path_mine[0..-2]
+              @leaf_list.
+                select{|leaf| leaf.path_should[0..-2] == path_prefix_sib}.
+                reject{|leaf| leaf.prop_name == name_mine}.
+                reject{|sib|  sib.misc.include? InheritablePolicyExempt}.
+                tap   {|siblings|  
+                  siblings.
+                    reject{|sib| sib.requires.include? name_mine}.
+                    each  {|sib| sib.requires.push name_mine}
+                  siblings.
+                    reject{|sib| sib.misc.include? InheritablePolicyValue}.
+                    each  {|sib| sib.misc.push InheritablePolicyValue}
+                }
+            }
+        end
+
+        def requires_for_requires_siblings
+          # resolve requires_siblings (path-based) to requires (prop_names)
+          @leaf_list.
+            reject{|leaf| leaf.requires_siblings.empty?}.
+            each  {|leaf|
+              leaf.requires_siblings.each do |sib|
+                sib_path = leaf.path_is_now[0..-2] + [sib]
+                sib_leaf = @leaf_list.find{|l| l.path_is_now == sib_path}
+                if sib_leaf
+                  leaf.requires.push sib_leaf.prop_name.to_sym unless
+                    leaf.requires.include? sib_leaf.prop_name.to_sym
+                else
+                  fail "Not found: sibling #{sib} for '#{leaf.full_name}'"
+                end
+              end
+            }
+        end
+
       end
 
 =begin
@@ -326,6 +427,78 @@ in Proc, while others allow tailoring the block to specific cases.
         end
       end
 
+=begin
+
+This is a version of insync? for InheritablePolicy 'value'
+properties. It looks at the current (is_now) and desired (should)
+values of 'inheritable' (finding it at the same level of nesting)
+to determine whether the property of interest should be considered
+to be 'in sync'. If that can't be determined, the calling routine
+should call the normal insync for the property's class.
+
+Here's what usage looks like in the type:
+
+  newproperty(:foo, ...) do
+    :
+    def insync?(is)
+      v = PuppetX::VMware::Mapper.
+          insyncInheritablePolicyValue is, @resource, :foo
+      v = super(is) if v.nil?
+      v
+    end
+    :
+  end
+
+XXX TODO fix this to return a block, to directly call super(is)
+XXX TODO fix this to return a block, to directly use @resource
+XXX TODO fix this to hold prop_name in a closure, so the caller 
+         doesn't have to fool around with eval and interpolation
+         when automatically generating newproperty
+
+=end
+
+      def self.insyncInheritablePolicyValue is, resource, prop_name
+
+        provider = resource.provider
+        map = provider.map
+
+        # find the leaf for the value to be insync?'d
+        leaf_value = map.leaf_list.find do |leaf|
+          leaf.prop_name == prop_name
+        end
+
+        # for the corresponding 'inherited' value, generate the path
+        path_is_now_inherited = leaf_value.path_is_now[0..-2].dup.push(:inherited)
+
+        # for the corresponding 'inherited' value, find leaf, get prop_name
+        prop_name_inherited = map.leaf_list.find do |leaf|
+                                leaf.path_is_now == path_is_now_inherited
+                              end.prop_name
+
+        # get 'is_now' value for 'inherited' from provider
+        is_now_inherited = provider.send "#{prop_name_inherited}".to_sym
+        # get 'should' value for 'inherited' from resource
+        should_inherited = resource[prop_name_inherited]
+        # munge
+        is_now_inherited = munge_to_tfsyms.call is_now_inherited
+        should_inherited = munge_to_tfsyms.call should_inherited
+
+        case [is_now_inherited, should_inherited]
+        # 'should' be inherited, so current value is ignored
+        when [:true,  :true]  ; then return false
+        when [:false, :true]  ; then return false
+        # was inherited, but should be no longer - must supply all values
+        when [:true, :false]  ; then return false
+        # value is and should be uninherited, so normal insync?
+        when [:false, :false] ; then return nil
+        else
+          # require 'ruby-debug'; debugger
+          fail "For InheritedPolicy #{leaf_value.full_name}, "\
+            "current '.inherited' is '#{is_now_inherited.inspect}', "\
+            "requested '.inherited' is '#{should_inherited.inspect}'"
+        end
+      end
+  
     end
   end
 end
