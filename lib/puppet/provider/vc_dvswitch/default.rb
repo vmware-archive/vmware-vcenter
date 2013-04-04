@@ -201,6 +201,22 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
       
   end
 
+  def fixup_is type, is, should
+    # see comments for class VMware_Array_VIM_Object
+    # in vmware_lib/lib/puppet/property/vmware.rb
+    case type
+    when VIM::DistributedVirtualSwitchHostMemberConfigSpec.class
+      if config_is_now
+        config_is_now.host.map{|element| element.config}
+      else
+        nil
+      end
+    else
+      Puppet.notice "fixup_is: unexpected type #{type.inspect}"
+      is
+    end
+  end
+
   private
 
   def properties_rcvd

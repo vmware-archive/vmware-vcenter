@@ -57,7 +57,7 @@ Puppet::Type.newtype(:vc_dvswitch) do
       validate {|val| leaf.validate.call(val)} if leaf.validate
       eval <<-EOS
         def change_to_s(is,should)
-          "[#{leaf.full_name}] changed \#{is.inspect} to \#{should.inspect}"
+          "[#{leaf.full_name}] changed \#{is_to_s(is).inspect} to \#{should_to_s(should).inspect}"
         end
       EOS
       eval <<-EOS if leaf.misc.include?(PuppetX::VMware::Mapper::InheritablePolicyValue)
