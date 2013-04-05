@@ -8,8 +8,8 @@ require File.join module_lib, 'puppet_x/vmware/mapper'
 
 require File.join vmware_module.path, 'lib/puppet/property/vmware'
 
-Puppet::Type.newtype(:vc_dvportgroup) do
-  @doc = "Manages vCenter Distributed Virtual Portgroup"
+Puppet::Type.newtype(:vc_dvswitch) do
+  @doc = "Manages vCenter Distributed Virtual Switch"
 
   ensurable do
     newvalue(:present) do
@@ -18,32 +18,17 @@ Puppet::Type.newtype(:vc_dvportgroup) do
     newvalue(:absent) do
       provider.destroy
     end
-    def change_to_s(is, should)
-      if should == :present
-        provider.create_message
-      else
-        "removed"
-      end
-    end
   end
 
-  newparam(:name, :namevar => true) do
-    desc "{path to dvswitch}:{name of dvportgroup}"
+  newparam(:path, :namevar => true) do
+    desc "The path to the dvswitch."
 
-    munge do |value|
-      @resource[:dvswitch_path] = value.split(':',2)[0]
-      value
-    end
-  end
-
-  newparam(:dvswitch_path) do
-    desc "The path to the dvportgroup."
     validate do |value|
       raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(value)
     end
   end
 
-  map = PuppetX::VMware::Mapper.new_map('DVPortgroupConfigSpecMap')
+  map = PuppetX::VMware::Mapper.new_map('VMwareDVSConfigSpecMap')
   map.leaf_list.each do |leaf|
     option = {}
     if type_hash = leaf.olio[t = Puppet::Property::VMware_Array]
@@ -71,7 +56,7 @@ Puppet::Type.newtype(:vc_dvportgroup) do
       munge {|val| leaf.munge.call(val)} if leaf.munge
       validate {|val| leaf.validate.call(val)} if leaf.validate
       eval <<-EOS
-        def change_to_s(is, should)
+        def change_to_s(is,should)
           "[#{leaf.full_name}] changed \#{is_to_s(is).inspect} to \#{should_to_s(should).inspect}"
         end
       EOS
@@ -87,8 +72,8 @@ Puppet::Type.newtype(:vc_dvportgroup) do
   end
 
   # autorequire datacenter
-  autorequire(:vc_dvswitch) do
-    self[:dvswitch_path]
+  autorequire(:vc_datacenter) do
+    Pathname.new(self[:path]).parent.to_s
   end
 
 end
