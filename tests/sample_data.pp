@@ -74,3 +74,12 @@ $vm1 = {
   'name'  => 'test',
   'power_state' => 'poweredOn',
 }
+
+# the complete list is available by: 
+# 1. browsing to https://<vcenter>/mob/?moid=ServiceInstance&method=retrieveContent
+# 2. click on Invoke Method
+# 3. select VpxSettings, just strip the 'setting[]' from any item
+$vpx_settings = {
+  'event.maxAgeEnabled' => false,
+  'event.maxAge'        => l4,
+}
