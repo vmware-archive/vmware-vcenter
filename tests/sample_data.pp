@@ -1,3 +1,5 @@
+# Copyright (C) 2013 VMware, Inc.
+
 $vcenter = {
   'username' => 'root',
   'password' => 'vmware',
