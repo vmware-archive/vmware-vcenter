@@ -1,5 +1,32 @@
 # Copyright (C) 2013 VMware, Inc.
 
+=begin
+
+This program is used during development to read a
+type-specific 'map' and generate code for inclusion in
+the corresponding defined type (manifest/*.pp) file.
+
+For each property a line is generated including property
+name and key path. For example:
+
+failover_level      => \
+  nested_value($spec, ['dasConfig', 'admissionControlPolicy', 'failoverLevel']),
+isolation_response  => \
+  nested_value($spec, ['dasConfig', 'defaultVmSettings', 'isolationResponse']),
+restart_priority    => \
+  nested_value($spec, ['dasConfig', 'defaultVmSettings', 'restartPriority']),
+failure_interval    => \
+  nested_value($spec, ['dasConfig', 'defaultVmSettings', 'vmToolsMonitoringSettings', 'failureInterval']),
+max_failures        => \
+  nested_value($spec, ['dasConfig', 'defaultVmSettings', 'vmToolsMonitoringSettings', 'maxFailures']),
+
+default_port_config_blocked_inherited   => \
+  nested_value($spec, ['defaultPortConfig', 'blocked', 'inherited']),
+default_port_config_blocked_value       => \
+  nested_value($spec, ['defaultPortConfig', 'blocked', 'value']),
+
+=end
+
 require 'rubygems'
 require 'hashdiff'
 require 'puppet'
@@ -10,6 +37,16 @@ unless Puppet.settings[:confdir]
   Puppet.initialize_settings if
     Puppet.respond_to? :initialize_settings
 end
+
+# when using puppet enterprise, it will be necessary
+# to insure that you are using its included ruby
+# for example:
+#   PATH=/opt/puppet/bin:$PATH
+#
+# it also may be necessary to define RUBYLIB so puppet 
+# can find the mapper files under development
+# for example:
+#   RUBYLIB=/etc/puppetlabs/puppet/modules/vcenter/lib:/etc/puppetlabs/puppet/modules/vmware_lib/lib
 
 require 'puppet_x/vmware/mapper'
 
@@ -38,13 +75,5 @@ sample input for the defined type (minus values, of course)
 Idea is to create output with two elements:
 * sortable path to put everything in the right order (and remove duplicates)
 * text for sample
-
-map.leaf_list.each do |leaf|
-  indent = ' ' * 4
-  leaf.path_should[0..-2].each_with_index do |el, ix|
-    puts "#{leaf.path_should[0..ix].inspect}\t#{indent * ix}#{el} => {"
-  end
-  puts "#{leaf.path_should.inspect}\t#{indent * (leaf.path_should.size - 1)}#{leaf.path_should[-1]}"
-end if false
 
 =end
