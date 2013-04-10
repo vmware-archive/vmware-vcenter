@@ -18,6 +18,13 @@ Puppet::Type.newtype(:vc_dvswitch) do
     newvalue(:absent) do
       provider.destroy
     end
+    def change_to_s(is, should)
+      if should == :present
+        provider.create_message
+      else
+        "removed"
+      end
+    end
   end
 
   newparam(:path, :namevar => true) do

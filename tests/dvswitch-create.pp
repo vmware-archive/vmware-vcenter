@@ -19,5 +19,9 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
   ensure => present,
   transport => Transport['vcenter'],
 
-  spec => {}
+  spec => {
+#   uplinkPortPolicy => {
+#     uplinkPortName => ['uplink1', 'uplink2'],
+#   },
+  },
 }
