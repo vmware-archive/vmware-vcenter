@@ -25,7 +25,7 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
       p = leaf.prop_name
       unless (value = @resource[p]).nil?
         self.send("#{p}=".to_sym, value)
-        @create_message << "#{leaf.full_name} => \"#{value}\""
+        @create_message << "#{leaf.full_name} => #{value.inspect}"
       end
     end
     # can't leave for flush's ReconfigurePortgroup_Task
@@ -68,43 +68,6 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
     end
   end
 
-=begin
-  # munge the list of member hosts returned by the API
-  # - convert ManagedObjects to ManagedObjectReferences (mo_ref)
-  # - sort array to allow consistent comparisons
-  alias get_host_host host_host
-  def host_host
-    fail "this isn't how to get current host list"
-    fail "and it may not even be useful to do so"
-    v = get_host_host
-    v = v.map{|host| host.name} if v.is_a? Array
-    v
-  end
-
-  # change input host list from hostname to mo_ref
-  # - look only in this dvswitch's datacenter
-  alias set_host_host host_host=
-  def host_host= host_list
-    host_list = [host_list] unless host_list.is_a? Array
-    dc = locate(@resource[:path], RbVmomi::VIM::Datacenter)
-    mo_ref_list = []
-    misses_list = []
-    host_list.each do |host_name|
-      host = vim.searchIndex.FindByDnsName(
-        :datacenter => dc, :dnsName => host_name, :vmSearch => false)
-      if host._ref
-        mo_ref_list << host._ref
-      else
-        misses_list << host_name
-      end
-    end
-    unless misses_list.empty?
-      raise Puppet::Error, "requested hosts not in datacenter: #{misses_list.inspect}"
-    end
-    set_host_host mo_ref_list
-  end
-=end
-
   def flush_prep
     # dvswitch requires matching configVersion
     unless @creating
@@ -141,7 +104,6 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
     Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
-    # require 'ruby-debug' ; debugger
     spec
   end
 
@@ -163,16 +125,12 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
   end
 
   def properties_reqd
-    @properties_reqd ||= Set.new
+    @properties_reqd ||= Set.new([:type])
   end
 
   def config_is_now
     @config_is_now ||= 
-        if not @creating
-          map.annotate_is_now dvportgroup.config
-        else
-          { }
-        end
+        (@creating ? {} : map.annotate_is_now(dvportgroup.config))
   end
 
   def config_should

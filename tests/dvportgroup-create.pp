@@ -24,18 +24,21 @@ vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg1":
   transport => Transport['vcenter'],
   spec => {
     type => 'earlyBinding',
-    autoExpand => false,
-    numPorts => 128,
-    numStandalonePorts => 12,
-    defaultPortConfig => {
-      vlan => {
-        typeVmwareDistributedVirtualSwitchVlanIdSpec => {
-          inherited => false,
-          vlanId => 17,
-        },
-      },
-    },
+
+#   autoExpand => false,
+#   numPorts => 128,
+#   numStandalonePorts => 12,
+#   defaultPortConfig => {
+#     vlan => {
+#       typeVmwareDistributedVirtualSwitchVlanIdSpec => {
+#         inherited => false,
+#         vlanId => 17,
+#       },
+#     },
+#   },
+
   },
+
 }
 
 vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg2":
