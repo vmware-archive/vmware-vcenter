@@ -12,9 +12,28 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
   @doc = "Manages vCenter Distributed Virtual Switch"
 
   def create
+    @creating = true
+    @create_message ||= []
+    # fetch properties from resource
+    map.leaf_list.each do |leaf|
+      p = leaf.prop_name
+      unless (value = @resource[p]).nil?
+        self.send("#{p}=".to_sym, value)
+        @create_message << "#{leaf.full_name} => #{value.inspect}"
+      end
+    end
+    dvs_config_spec = 
+      if @create_message == []
+        RbVmomi::VIM::DVSConfigSpec.new
+      else
+        flush_prep
+      end
+    # can't let DistributedVirtualSwitch.ReconfigureDvs_Task be 
+    # called by flush, because create needs Folder.CreateDVS_Task
+    #
     # build the spec for CreateDVS_Task
     create_spec = RbVmomi::VIM::DVSCreateSpec.new
-    create_spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
+    create_spec.configSpec = dvs_config_spec
     create_spec.configSpec.name = basename
     # find the network folder and invoke the task
     dc = vim.serviceInstance.find_datacenter(parent)
@@ -26,6 +45,12 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
       @dvswitch.config.uplinkPortgroup.first.
         Rename_Task(:newName => "#{basename}-uplink-pg").wait_for_completion
     end
+    @flush_required = false
+  end
+
+  def create_message
+    @create_message ||= []
+    "created using {#{@create_message.join ", "}}"
   end
 
   def destroy
@@ -58,7 +83,9 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   def flush_prep
     # dvswitch requires matching configVersion
-    config_should[:configVersion] = config_is_now[:configVersion]
+    unless @creating
+      config_should[:configVersion] = config_is_now[:configVersion]
+    end
 
     # To change some properties, the API requires others that may not have 
     # changed. If not, they must be fetched from the type. When additional 
@@ -84,12 +111,10 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     end
 
     # create RbVmomi objects with properties in place of hashes with keys
-    # require 'ruby-debug' ; debugger
     Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
     Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
-    # require 'ruby-debug' ; debugger
     spec
   end
 
@@ -190,7 +215,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
 
   def config_is_now
     @config_is_now ||= 
-        map.annotate_is_now dvswitch.config
+        (@creating ? {} : map.annotate_is_now(dvswitch.config))
   end
 
   def config_should
