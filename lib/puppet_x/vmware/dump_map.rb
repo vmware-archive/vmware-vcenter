@@ -6,7 +6,10 @@ require 'puppet'
 require 'puppet_x/vmware/util'
 require 'puppet/property/vmware'
 
-Puppet.initialize_settings
+unless Puppet.settings[:confdir]
+  Puppet.initialize_settings if
+    Puppet.respond_to? :initialize_settings
+end
 
 require 'puppet_x/vmware/mapper'
 
