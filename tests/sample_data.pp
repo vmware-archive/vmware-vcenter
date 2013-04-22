@@ -31,32 +31,32 @@ $cluster3 = {
 
 $log_host = $vcenter['server']
 
-$esx_shared_password = 'happyHolidays'
 $esx_shared_username = 'root'
+$esx_shared_password = 'happyHolidays'
 
 $esx1 = {
-  'username' => $esx_shared_password,
-  'password' => $esx_shared_username,
+  'username' => $esx_shared_username,
+  'password' => $esx_shared_password,
   'hostname' => 'esx1.nosuchdomain.',
 }
 $esx2 = {
-  'username' => $esx_shared_password,
-  'password' => $esx_shared_username,
+  'username' => $esx_shared_username,
+  'password' => $esx_shared_password,
   'hostname' => 'esx2.nosuchdomain.',
 }
 $esx3 = {
-  'username' => $esx_shared_password,
-  'password' => $esx_shared_username,
+  'username' => $esx_shared_username,
+  'password' => $esx_shared_password,
   'hostname' => 'esx3.nosuchdomain.',
 }
 $esx4 = {
-  'username' => $esx_shared_password,
-  'password' => $esx_shared_username,
+  'username' => $esx_shared_username,
+  'password' => $esx_shared_password,
   'hostname' => 'esx4.nosuchdomain.',
 }
 $esxA = {
-  'username' => $esx_shared_password,
-  'password' => $esx_shared_username,
+  'username' => $esx_shared_username,
+  'password' => $esx_shared_password,
   'hostname' => 'nosuchhost.',
 }
 
