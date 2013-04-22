@@ -2,6 +2,7 @@
 # Manage vcenter vmware distributed virtual switch
 define vcenter::dvswitch (
   $ensure,
+  $networkResourceManagementEnabled = nil,
   $spec = {},
   # transport is a metaparameter
 ) {
@@ -197,6 +198,10 @@ define vcenter::dvswitch (
 # sample # }
 
   $path = $name
+
+  vc_dvswitch_nioc { $path:
+    network_resource_management_enabled => $networkResourceManagementEnabled
+  }
 
   vc_dvswitch { $path:
     ensure    => $ensure,
