@@ -244,27 +244,27 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1":
 
     host => [
 
-#     {
-#       host => "${esx1['hostname']}",
-#       operation => 'add',
-#       backing => {
-#         pnicSpec => [
-#           {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
-#         ],
-#       },
-#       maxProxySwitchPorts => 128,
-#     },
+      {
+        host => "${esx1['hostname']}",
+        operation => 'add',
+        backing => {
+          pnicSpec => [
+            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
+          ],
+        },
+        maxProxySwitchPorts => 128,
+      },
 
-#     {
-#       host => "${esx2['hostname']}",
-#       operation => 'add',
-#       backing => {
-#         pnicSpec => [
-#           {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
-#         ],
-#       },
-#       maxProxySwitchPorts => 128,
-#     },
+      {
+        host => "${esx2['hostname']}",
+        operation => 'add',
+        backing => {
+          pnicSpec => [
+            {pnicDevice => 'vmnic1', uplinkPortgroupKey => 'dvs1-uplink-pg'},
+          ],
+        },
+        maxProxySwitchPorts => 128,
+      },
 
     ],
 
