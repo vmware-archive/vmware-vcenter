@@ -92,6 +92,16 @@ Puppet::Type.type(:esx_vmknic).provide(:esx_vmknic, :parent => Puppet::Provider:
   end
 
   def flush_prep
+    ###################################################################
+    # special for esx_vmknic: when switching from dhcp to static while 
+    # keeping the same ip address and netmask, since they don't change, 
+    # they must be fetched from the resource
+    if (properties_rcvd.include? :dhcp) && (@resource[:dhcp] == :false)
+      properties_reqd.merge([:ip_address, :subnet_mask])
+    end
+    #
+    ###################################################################
+
     # To change some properties, the API requires others that may not have 
     # changed. If not, they must be fetched from the type. When additional 
     # properties are fetched, new items may be added to required_properties,
