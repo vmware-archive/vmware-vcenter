@@ -15,26 +15,9 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
   def create
     @creating = true
     @create_message ||= []
-    # fetch properties from resource
-    map.leaf_list.each do |leaf|
-      p = leaf.prop_name
-      unless (value = @resource[p]).nil?
-        self.send("#{p}=".to_sym, value)
-        @create_message << "#{leaf.full_name} => #{value.inspect}"
-      end
-    end
-    dvs_config_spec = 
-      if @create_message == []
-        RbVmomi::VIM::DVSConfigSpec.new
-      else
-        flush_prep
-      end
-    # can't let DistributedVirtualSwitch.ReconfigureDvs_Task be 
-    # called by flush, because create needs Folder.CreateDVS_Task
-    #
     # build the spec for CreateDVS_Task
     create_spec = RbVmomi::VIM::DVSCreateSpec.new
-    create_spec.configSpec = dvs_config_spec
+    create_spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
     create_spec.configSpec.name = basename
     # find the network folder and invoke the task
     dc = vim.serviceInstance.find_datacenter(parent)
@@ -45,13 +28,14 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
       @dvswitch = task_create_dvs.info.result
       @dvswitch.config.uplinkPortgroup.first.
         Rename_Task(:newName => "#{basename}-uplink-pg").wait_for_completion
+      @create_message << "uplink portgroup renamed to \"#{basename}-uplink-pg\""
     end
     @flush_required = false
   end
 
   def create_message
     @create_message ||= []
-    "created using {#{@create_message.join ", "}}"
+    "created (#{@create_message.join "; "})"
   end
 
   def destroy
