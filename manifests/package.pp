@@ -5,7 +5,6 @@ class vcenter::package (
   package { [
     'hashdiff',
     'rest-client',
-    'gyoku',
     'net-ssh',
   ]:
     ensure   => present,
@@ -15,6 +14,22 @@ class vcenter::package (
   # nori 2.0.0 gem is not compatible with PE (nokogiri?)
   package { 'nori':
     ensure   => '1.1.4',
+    provider => $::vcenter::params::provider,
+  }
+
+  # custom gyoku to support array of attributes with no value:
+  #   <refs>
+  #     <ref name="1" />
+  #     <ref name="2" />
+  #   </refs>
+
+  staging::file { 'gyoku.gem':
+    source => 'puppet:///modules/vcenter/gyoku-1.0.0.z1.gem',
+  } ->
+
+  package { 'gyoku':
+    ensure   => '1.0.0z1',
+    source   => '/opt/staging/vcenter/gyoku.gem',
     provider => $::vcenter::params::provider,
   }
 
