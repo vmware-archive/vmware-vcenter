@@ -7,11 +7,11 @@ Puppet::Type.type(:esx_iscsi).provide(:esx_iscsi,
   @doc = "Enables or disables internet iSCSI on ESX hosts."
 
   def create
-    host.configManager.storageSystem.UpdateSoftwareInternetScsiEnabled(:enabled => true)
+    esxhost.configManager.storageSystem.UpdateSoftwareInternetScsiEnabled(:enabled => true)
   end
 
   def destroy
-    host.configManager.storageSystem.UpdateSoftwareInternetScsiEnabled(:enabled => false)
+    esxhost.configManager.storageSystem.UpdateSoftwareInternetScsiEnabled(:enabled => false)
   end
 
   def exists?

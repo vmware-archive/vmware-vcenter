@@ -6,7 +6,7 @@ Puppet::Type.newtype(:esx_iscsi_hba_name) do
     desc "<esxhost>:<hba>"
 
     munge do |value|
-      @resource[:esx_host], @resource[:hba] = value.split(':',2)
+      @resource[:esx_host], @resource[:hba_name] = value.split(':',2)
       value
     end
   end
@@ -15,12 +15,13 @@ Puppet::Type.newtype(:esx_iscsi_hba_name) do
   	desc "ESX host name"
   end
 
-  newparam(:hba) do
+  newparam(:hba_name) do
   	desc "target iSCSI HBA"
   end
 
   newparam(:iscsi_name) do
   	desc "Desired name for iSCSI HBA"
   end
-
+  
 end
+
