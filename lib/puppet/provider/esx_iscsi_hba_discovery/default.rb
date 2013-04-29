@@ -63,9 +63,9 @@ Puppet::Type.type(:esx_iscsi_hba_discovery).provide(:esx_iscsi_hba_discovery, :p
   end
 
   def flush
-    nic = flush_prep
-    esxhost.configManager.storageSystem.UpdateInternetScsiDiscoveryProperties(:iScsiHbaDevice => ,
-     :discoveryProperties => )
+    disc_props = flush_prep
+    esxhost.configManager.storageSystem.UpdateInternetScsiDiscoveryProperties(:iScsiHbaDevice => resource[:iscsi_hba_device],
+     :discoveryProperties => disc_props )
   end
 
   # not private: used by insyncInheritablePolicy
@@ -94,7 +94,7 @@ Puppet::Type.type(:esx_iscsi_hba_discovery).provide(:esx_iscsi_hba_discovery, :p
   end
 
   def esxhost
-    @esxhost ||= vim.searchIndex.FindByDnsName(:dnsName => @resource[:esxi_host],
+    @esxhost ||= vim.searchIndex.FindByDnsName(:dnsName => @resource[:esx_host],
       :vmSearch => false)
   end
 
@@ -108,44 +108,6 @@ Puppet::Type.type(:esx_iscsi_hba_discovery).provide(:esx_iscsi_hba_discovery, :p
     else
       nil
     end
-  end
-
-  def datacenter
-    @datacenter ||= find_parent_of_class(esxhost, RbVmomi::VIM::Datacenter)
-  end
-
-  def get_dvportgroup_by_name (dvpg_name)
-    dvswitch.portgroup.find {|pg| pg.config.name == dvpg_name}
-  end
-
-  def get_dvportgroup_by_key (dvpg_key)
-    dvswitch.portgroup.find {|pg| pg.config.key == dvpg_key}
-  end
-
-  def get_portgroup
-    esxhost.configManager.networkSystem.networkConfig.portgroup.find {|pg|
-      pg[:spec].name == @resource[:standardportgroupname]}
-  end
-
-  def all_dvswitch
-    @all_dvswitch ||= datacenter.networkFolder.children.select{|n|
-      n.class == RbVmomi::VIM::VmwareDistributedVirtualSwitch}
-  end
-
-  def dvswitch
-    @dvswitch ||=
-      begin
-        all_dvswitch.find{|s| s.name == @resource[:dvswitchname]}
-      end
-    @dvswitch
-  end
-
-  def find_vmknic (nic_name)
-    esxhost.configManager.networkSystem.networkConfig.vnic.find {|n| n[:device] == nic_name}
-  end
-
-  def vmknic
-    @vmknic ||= find_vmknic @resource[:nicname]
   end
 
 end
