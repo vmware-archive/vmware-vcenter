@@ -14,8 +14,12 @@ vc_datacenter { "${dc1['path']}":
   transport => Transport['vcenter'],
 }
 
+vcenter::dvswitch{ "${dc1['path']}/dvs1:run1":
+  ensure => present,
+  transport => Transport['vcenter'],
+}
 
-vcenter::dvswitch{ "${dc1['path']}/dvs1":
+vcenter::dvswitch{ "${dc1['path']}/dvs1:run2":
   ensure => present,
   transport => Transport['vcenter'],
 

@@ -14,13 +14,11 @@ define vcenter::dvswitch (
 # http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.pg.doc/PG_Preface.html
 # http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/right-pane.html
 
-  $path = $name
-
-  vc_dvswitch_nioc { $path:
+  vc_dvswitch_nioc { $name:
     network_resource_management_enabled => $networkResourceManagementEnabled
   }
 
-  vc_dvswitch { $path:
+  vc_dvswitch { $name:
     ensure    => $ensure,
     transport => $transport,
     config_version                           => nested_value($spec, ['configVersion']),

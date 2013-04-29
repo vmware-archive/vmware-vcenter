@@ -27,9 +27,16 @@ Puppet::Type.newtype(:vc_dvswitch) do
     end
   end
 
-  newparam(:path, :namevar => true) do
-    desc "The path to the dvswitch."
+  newparam(:name, :namevar => true) do
+    desc "{path to dvswitch}{:optional tag to make resource name unique}"
+    munge do |value|
+      @resource[:path], ignore = value.split(':',2)
+      value
+    end
+  end
 
+  newparam(:path) do
+    desc "The path to the dvswitch."
     validate do |value|
       raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(value)
     end

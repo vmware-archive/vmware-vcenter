@@ -8,12 +8,18 @@ Puppet::Type.newtype(:vc_dvswitch_nioc) do
   @doc = "Manages vCenter Distributed Virtual Switch "\
          "Network Resource Management (NIOC)"
 
-  newparam(:path, :namevar => true) do
-    desc "The path to the dvswitch."
+  newparam(:name, :namevar => true) do
+    desc "{path to dvswitch}{:optional tag to make resource name unique}"
+    munge do |value|
+      @resource[:path], ignore = value.split(':',2)
+      value
+    end
+  end
 
+  newparam(:path) do
+    desc "The path to the dvswitch."
     validate do |value|
-      raise "Absolute path required: #{value}" unless 
-          Puppet::Util.absolute_path?(value)
+      raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(value)
     end
   end
 
@@ -24,7 +30,7 @@ Puppet::Type.newtype(:vc_dvswitch_nioc) do
 
   # autorequire switch
   autorequire(:vc_dvswitch) do
-    Pathname.new(self[:path]).to_s
+    Pathname.new(self[:name]).to_s
   end
 
 end
