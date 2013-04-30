@@ -6,6 +6,9 @@ summary      'VMware vCenter puppet module'
 description  'VMware vCenter resource management.'
 project_page 'https://github.com/puppetlabs/vmware-vcenter'
 
+moduledir = File.dirname(__FILE__)
+ENV['GIT_DIR'] = moduledir + '/.git'
+
 git_version = %x{git describe --dirty --tags}.chomp.sub(/\.([0-9]+)-/) {|v| ".#{v[1..-2].to_i(10) + 1}-" }
 unless $?.success? and git_version =~ /^\d+\.\d+\.\d+/
   raise "Unable to determine version using git: #{$?} => #{git_version.inspect}"
