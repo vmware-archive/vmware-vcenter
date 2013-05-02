@@ -19,7 +19,7 @@ Puppet::Type.newtype(:esx_iscsi_hba_name) do
   	desc "target iSCSI HBA"
   end
 
-  newparam(:iscsi_name) do
+  newproperty(:iscsi_name) do
   	desc "Desired name for iSCSI HBA"
   end
   

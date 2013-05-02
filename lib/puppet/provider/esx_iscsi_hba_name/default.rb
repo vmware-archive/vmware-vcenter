@@ -12,8 +12,8 @@ Puppet::Type.type(:esx_iscsi_hba_name).provide(:esx_iscsi_hba_name, :parent => P
 
   def iscsi_name=(value)
     Puppet.debug "## Calling iscsi_name setter"
-    esxhost.configManager.storageSystem.UpdateInternetScsiName(:iScsiHbaDevice => hba.iScsiName,
-     iScsiName => value)
+    esxhost.configManager.storageSystem.UpdateInternetScsiName(:iScsiHbaDevice => resource[:hba_name],
+     :iScsiName => value)
   end
 
   private
