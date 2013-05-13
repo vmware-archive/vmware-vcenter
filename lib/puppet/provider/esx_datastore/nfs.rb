@@ -25,6 +25,21 @@ Puppet::Type.type(:esx_datastore).provide(:nfs, :parent => Puppet::Provider::Vce
       volume[:userName] = resource[:user_name] if resource[:user_name]
       volume[:password] = resource[:password] if resource[:password]
       host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
+    when 'VMFS'
+      host.configManager.storageSystem.RescanAllHba()
+      host_scsi_disks = host.configManager.datastoreSystem.QueryAvailableDisksForVmfs()
+      host_scsi_disks.each do |host_scsi_disk|
+        if scsi_lun(host_scsi_disk.uuid) == resource[:lun]
+          vmfs_ds_options = host.configManager.datastoreSystem.QueryVmfsDatastoreCreateOptions(
+            :devicePath => host_scsi_disk.devicePath)
+          # Use the 1st (only?) spec provided by the QueryVmfsDatastoreCreateOptions call
+          spec = vmfs_ds_options[0].spec
+          # set the name of the soon to be created datastore
+          spec.vmfs[:volumeName] = resource[:local_path]
+          # create the datastore
+          host.configManager.datastoreSystem.CreateVmfsDatastore(:spec => spec)
+        end
+      end
     end
   end
 
@@ -53,6 +68,19 @@ Puppet::Type.type(:esx_datastore).provide(:nfs, :parent => Puppet::Provider::Vce
   end
 
   private
+
+  def scsi_lun (uuid)
+    @host.configManager.storageSystem.storageDeviceInfo.scsiTopology.adapter.each do |adapter|
+      adapter.target.each do |target|
+        target.lun.each do |lun_obj|
+          # This is a hack to work around a RbVmomi bug where the scsiLun property is returned
+          #   as a blank object rather than a string
+          return lun_obj.lun if lun_obj.key =~ /#{uuid}/
+        end
+      end
+    end
+    nil
+  end
 
   def host
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)

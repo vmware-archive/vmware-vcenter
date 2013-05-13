@@ -60,9 +60,20 @@ Puppet::Type.newtype(:esx_datastore) do
   newparam(:password) do
   end
 
+  # VMFS only parameters
+  newparam(:lun) do
+    munge do |value|
+      Integer(value)
+    end
+  end
+
   validate do
-    raise Puppet::Error, "Missing remote_host property" unless self[:remote_host]
-    raise Puppet::Error, "Missing remote_path property" unless self[:remote_path]
+    if [:nfs, :cifs].include? self[:type] 
+      raise Puppet::Error, "Missing remote_host property" unless self[:remote_host]
+      raise Puppet::Error, "Missing remote_path property" unless self[:remote_path]
+    elsif self[:type] == :vmfs
+      raise Puppet::Error, "Missing lun property" unless self[:lun]
+    end
   end
 
   autorequire(:vc_host) do
