@@ -11,7 +11,13 @@ require File.join module_lib, 'puppet_x/vmware/mapper'
 Puppet::Type.type(:esx_iscsi_targets).provide(:esx_iscsi_targets, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages iSCSI targets."
 
-  map ||= PuppetX::VMware::Mapper.new_map('HostInternetScsiHbaSendTargetMap')
+  def self.map
+    @map ||= PuppetX::VMware::Mapper.new_map('HostInternetScsiHbaSendTargetMap')
+  end
+
+  def map
+    self.class.map
+  end
 
   map.leaf_list.each do |leaf|
     define_method(leaf.prop_name) do
