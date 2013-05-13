@@ -22,9 +22,9 @@ vcenter::iscsi_send_target { "${esx2['hostname']}:vmhba33":
     #authentication_properties_mutual_chap_secret
     #authentication_properties_mutual_chap_authentication_type
     #authentication_properties_chap_auth_enabled
-    address => ${iscsi_target_ip{,
+    address => ${iscsi_target_ip},
     port => 3260,
-    avanced_options => [
+    advanced_options => [
       {key => 'DelayedAck', value => true, isInherited => false}
     ],
     #parent
