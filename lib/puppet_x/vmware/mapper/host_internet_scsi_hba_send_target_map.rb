@@ -102,6 +102,7 @@ module PuppetX::VMware::Mapper
         :port => LeafData[
           :desc => "The TCP port of the storage device. If not specified, the "\
                     "standard default of 3260 is used.",
+          :munge => PuppetX::VMware::Mapper::munge_to_i,
         ]
       }
       super
