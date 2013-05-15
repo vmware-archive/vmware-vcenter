@@ -21,7 +21,7 @@ module PuppetX::VMware::Mapper
                 :type => 'HostInternetScsiHbaParamValue',
                 :array_matching => :all,
                 :comparison_scope => :array_element,
-                :key => [:key, :value],
+                :key => [:key],
               },
             },
           },

@@ -2,8 +2,6 @@
 Puppet::Type.newtype(:esx_datastore) do
   @doc = "Manage vCenter esx hosts service."
 
-  feature :remote, "Manage remote CIFS/NFS filesystem."
-
   newparam(:name, :namevar => true) do
     desc "ESX host:service name."
 
@@ -27,8 +25,8 @@ Puppet::Type.newtype(:esx_datastore) do
 
   newproperty(:type) do
     desc "The datastore type."
-    newvalues(:vmfs, :nfs, :cifs)
-    defaultto(:nfs)
+    isrequired
+    newvalues(:nfs, :cifs, :vmfs)
     munge do |value|
       value.upcase
     end
@@ -38,19 +36,21 @@ Puppet::Type.newtype(:esx_datastore) do
   end
 
   newparam(:access_mode) do
-    desc 'Enum - HostMountMode: Defines the access mode of the datastore.'
-    newvalues('readOnly', 'readWrite')
-    defaultto('readWrite')
+    desc "Enum - HostMountMode: Defines the access mode of the datastore."
+    newvalues("readOnly", "readWrite")
+    defaultto("readWrite")
     munge do |value|
       value.to_s
     end
   end
 
   # CIFS/NFS only properties.
-  newproperty(:remote_host, :required_features => :remote) do
+  newproperty(:remote_host) do
+    desc "Name or IP of remote storage host.  Specify only for file based storage."
   end
 
-  newproperty(:remote_path, :required_features => :remote) do
+  newproperty(:remote_path) do
+    desc "Path to volume on remote storage host.  Specify only for file based storage."
   end
 
   # CIFS only parameters.
@@ -62,17 +62,22 @@ Puppet::Type.newtype(:esx_datastore) do
 
   # VMFS only parameters
   newparam(:lun) do
+    desc "LUN number of storage volume.  Specify only for block storage."
     munge do |value|
       Integer(value)
     end
   end
 
   validate do
-    if [:nfs, :cifs].include? self[:type] 
+    raise Puppet::Error, "Must supply a value for type" if self[:type].nil?
+    if ["NFS", "CIFS"].include? self[:type]
       raise Puppet::Error, "Missing remote_host property" unless self[:remote_host]
       raise Puppet::Error, "Missing remote_path property" unless self[:remote_path]
-    elsif self[:type] == :vmfs
+      raise Puppet::Error, "lun property should only be included if type is 'vmfs'" if self[:lun]
+    elsif self[:type] == "VMFS"
       raise Puppet::Error, "Missing lun property" unless self[:lun]
+      raise Puppet::Error, "remote_host property should only be included if type is 'nfs' or 'cifs'" if self[:remote_host]
+      raise Puppet::Error, "remote_path property should only be included if type is 'nfs' or 'cifs'" if self[:remote_path]
     end
   end
 

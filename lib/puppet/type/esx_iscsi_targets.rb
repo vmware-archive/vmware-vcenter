@@ -82,14 +82,6 @@ Puppet::Type.newtype(:esx_iscsi_targets) do
           "[#{leaf.full_name}] changed \#{is_to_s(is).inspect} to \#{should_to_s(should).inspect}"
         end
       EOS
-      eval <<-EOS if leaf.misc.include?(PuppetX::VMware::Mapper::InheritablePolicyValue)
-        def insync?(is)
-          v = PuppetX::VMware::Mapper.insyncInheritablePolicyValue(
-              is, @resource, \"#{leaf.prop_name}\".to_sym)
-          v = super(is) if v.nil?
-          v
-        end
-      EOS
     end
   end
 end

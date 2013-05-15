@@ -15,7 +15,6 @@ Puppet::Type.type(:esx_iscsi_hba_name).provide(:esx_iscsi_hba_name, :parent => P
   end
 
   private
-
   def esxhost
     @esxhost ||= vim.searchIndex.FindByDnsName(:dnsName => @resource[:esx_host],
       :vmSearch => false)
@@ -25,6 +24,5 @@ Puppet::Type.type(:esx_iscsi_hba_name).provide(:esx_iscsi_hba_name, :parent => P
     @hba ||= esxhost.configManager.storageSystem.storageDeviceInfo.hostBusAdapter.find{|a|
       a.device == resource[:hba_name]}
   end
-
 end
 

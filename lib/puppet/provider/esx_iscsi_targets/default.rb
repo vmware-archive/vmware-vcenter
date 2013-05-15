@@ -138,8 +138,4 @@ Puppet::Type.type(:esx_iscsi_targets).provide(:esx_iscsi_targets, :parent => Pup
   def send_target
     @send_target ||= hba.configuredSendTarget.find{|t| t.address == resource[:address]}
   end
-
 end
-
-
-
