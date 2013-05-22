@@ -24,11 +24,11 @@ class vcenter::package (
   #   </refs>
 
   staging::file { 'gyoku.gem':
-    source => 'puppet:///modules/vcenter/gyoku-1.0.0.z1.gem',
+    source => 'puppet:///modules/vcenter/gyoku-1.0.0.z2.gem',
   } ->
 
   package { 'gyoku':
-    ensure   => '1.0.0z1',
+    ensure   => '1.0.0z2',
     source   => '/opt/staging/vcenter/gyoku.gem',
     provider => $::vcenter::params::provider,
   }
