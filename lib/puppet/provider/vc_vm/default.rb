@@ -60,12 +60,28 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def destroy
-    Puppet.notice("Feature not implemented")
-    #vm.Destroy_Task.wait_for_completion
+    vm.Destroy_Task.wait_for_completion
   end
 
   def exists?
     vm
+  end
+
+  def power_state
+    # did not use '.guest.powerState' since it only works if vmware tools are running
+    vm.runtime.powerState
+  end
+
+  def power_state=(value)
+    if value == :poweredOff
+      if vm.guest.toolsStatus == 'toolsNotInstalled'
+        vm.PowerOffVM_Task.wait_for_completion
+      else
+        vm.ShutdownGuest.wait_for_completion
+      end
+    else
+      vm.PowerOnVM_Task.wait_for_completion
+    end
   end
 
   private
@@ -93,30 +109,13 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     @vm_obj
   end
 
-    def datacenter(name=resource[:datacenter_name])
-      vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
-    end
+  def datacenter(name=resource[:datacenter_name])
+    vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
+  end
 
   def vm
-    findvm(datacenter.vmFolder,resource[:name])
-    #@vm = locate(File.join(resource[:path], resource[:name]), RbVmomi::VIM::VirtualMachine)
-  end
-
-  def power_state
-    # did not use '.guest.powerState' since it only works if vmware tools are running
-    cur_state = vm.runtime.powerState
-  end
-
-  def power_state=(value)
-    if value == :poweredOff
-      if vm.guest.toolsStatus == 'toolsNotInstalled'
-        vm.PowerOffVM_Task.wait_for_completion
-      else
-        vm.ShutdownGuest.wait_for_completion
-      end
-    else
-      vm.PowerOnVM_Task.wait_for_completion
-    end
+    # findvm(datacenter.vmFolder,resource[:name])
+    @vm ||= findvm(datacenter.vmFolder, resource[:name])
   end
 end
 
