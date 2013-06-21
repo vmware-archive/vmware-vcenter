@@ -1,6 +1,7 @@
 # Copyright (C) 2013 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
+require 'resolv'
 
 Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts service."
@@ -51,7 +52,11 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
   end
 
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
+    if resource[:host] =~ Resolv::IPv4::Regex
+      @host ||= vim.searchIndex.FindByIp(:ip => resource[:host], :vmSearch => false)
+     else
+      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
+     end
   end
 end
 
