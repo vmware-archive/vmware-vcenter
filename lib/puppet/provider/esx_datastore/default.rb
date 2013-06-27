@@ -21,20 +21,28 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
       host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
     when 'VMFS'
       found_lun = false
-      host.configManager.storageSystem.RescanAllHba()
-      host_scsi_disks = host.configManager.datastoreSystem.QueryAvailableDisksForVmfs()
-      host_scsi_disks.each do |host_scsi_disk|
-        if scsi_lun(host_scsi_disk.uuid) == resource[:lun]
-          found_lun = true
-          vmfs_ds_options = host.configManager.datastoreSystem.QueryVmfsDatastoreCreateOptions(
-            :devicePath => host_scsi_disk.devicePath)
-          # Use the 1st (only?) spec provided by the QueryVmfsDatastoreCreateOptions call
-          spec = vmfs_ds_options[0].spec
-          # set the name of the soon to be created datastore
-          spec.vmfs[:volumeName] = resource[:datastore]
-          # create the datastore
-          host.configManager.datastoreSystem.CreateVmfsDatastore(:spec => spec)
+      attempt = 3
+      while ! found_lun and attempt > 0
+        host.configManager.storageSystem.RescanAllHba()
+        # Sleeping because scanning is async:
+        # http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.apiref.doc/vim.host.StorageSystem.html#rescanAllHba
+        sleep 5
+
+        host_scsi_disks = host.configManager.datastoreSystem.QueryAvailableDisksForVmfs()
+        host_scsi_disks.each do |host_scsi_disk|
+          if scsi_lun(host_scsi_disk.uuid) == resource[:lun]
+            found_lun = true
+            vmfs_ds_options = host.configManager.datastoreSystem.QueryVmfsDatastoreCreateOptions(
+              :devicePath => host_scsi_disk.devicePath)
+            # Use the 1st (only?) spec provided by the QueryVmfsDatastoreCreateOptions call
+            spec = vmfs_ds_options[0].spec
+            # set the name of the soon to be created datastore
+            spec.vmfs[:volumeName] = resource[:datastore]
+            # create the datastore
+            host.configManager.datastoreSystem.CreateVmfsDatastore(:spec => spec)
+          end
         end
+        attempt -= 1
       end
       fail("LUN #{resource[:lun]} not detected.") unless found_lun
     end
