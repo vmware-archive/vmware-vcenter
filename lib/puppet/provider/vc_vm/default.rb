@@ -74,10 +74,17 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def power_state=(value)
     if value == :poweredOff
-      if vm.guest.toolsStatus == 'toolsNotInstalled'
-        vm.PowerOffVM_Task.wait_for_completion
+      if (vm.guest.toolsStatus != 'toolsNotInstalled') and resource[:graceful_shutdown] == :true
+        vm.ShutdownGuest
+        # Since vm.ShutdownGuest doesn't return a task we need to poll the VM powerstate before returning
+        attempt = 12  # let's check 12 times (3 minutes) before we forcibly poweroff the VM
+        while power_state != "poweredOff" and attempt > 0
+          sleep 15
+          attempt -= 1
+        end
+        vm.PowerOffVM_Task.wait_for_completion if power_state != "poweredOff"
       else
-        vm.ShutdownGuest.wait_for_completion
+        vm.PowerOffVM_Task.wait_for_completion
       end
     else
       vm.PowerOnVM_Task.wait_for_completion
