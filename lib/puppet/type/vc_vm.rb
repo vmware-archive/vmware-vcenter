@@ -42,6 +42,12 @@ Puppet::Type.newtype(:vc_vm) do
   newparam(:datastore) do
   end
 
+  newparam(:graceful_shutdown) do
+    desc 'Perform a graceful shutdown if possible.  This parameter has no effect unless :power_state is set to :poweredOff'
+    newvalues(:true,:false)
+    defaultto(:true)
+  end
+
   newproperty(:power_state) do
     desc 'set the powerstate for the vm to either poweredOn/poweredOff, for poweredOff, if tools is running a shutdownGuest will be issued, otherwise powerOffVM_TASK'
     newvalues(:poweredOn,:poweredOff)
