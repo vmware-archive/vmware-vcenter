@@ -15,6 +15,11 @@ Puppet::Type.type(:vc_vpxsettings).provide(:vc_vpxsettings, :parent => Puppet::P
           # do nothing, note: v = :false caused setter to run even if they match
         when TrueClass
           # do nothing, note: v = :true      ''          ''          ''
+        # TODO: This is necessary for ENC data which are integer instead of string.
+        # The current behavior is correct for puppet manifests, but not idempotent
+        # for ENC integer values. This is pending fix or workaround for #21807.
+        #when Integer
+        #  v
         else
           v = v.to_s
         end
@@ -29,7 +34,7 @@ Puppet::Type.type(:vc_vpxsettings).provide(:vc_vpxsettings, :parent => Puppet::P
       value_type = config.supportedOption.find{|x| x[:key] == prop}[:optionType].class
       case value_type.to_s
       when 'IntOption'
-        raise Puppet::Error, " value for #{prop}: #{value},  must be an integer" if value !~ /^\d+/
+        raise Puppet::Error, " value for #{prop}: #{value},  must be an integer" unless value.is_a? Integer or value =~ /\d+/
         # TODO, add check for min/max values allowed
         value = RbVmomi::BasicTypes::Int.new value
       when 'BoolOption'
