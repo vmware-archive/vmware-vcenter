@@ -3,7 +3,6 @@ class vcenter::package (
 ) inherits vcenter::params {
 
   package { [
-    'hashdiff',
     'rest-client',
     'net-ssh',
   ]:
@@ -11,9 +10,15 @@ class vcenter::package (
     provider => $::vcenter::params::provider,
   }
 
+  # hashdiff 1.0.0 is not compatible with PE
+  package { 'hashdiff':
+    ensure   => '0.0.6',
+    provider => $::vcenter::params::provider,
+  }
+
   # nori 2.0.0 gem is not compatible with PE (nokogiri?)
   package { 'nori':
-    ensure   => '1.1.4',
+    ensure   => '1.1.5',
     provider => $::vcenter::params::provider,
   }
 
