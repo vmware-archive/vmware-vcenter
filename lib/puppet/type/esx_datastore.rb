@@ -68,6 +68,10 @@ Puppet::Type.newtype(:esx_datastore) do
     end
   end
 
+  # Not implemented
+  newparam(:uid) do
+  end
+
   validate do
     raise Puppet::Error, "Must supply a value for type" if self[:type].nil?
     if ["NFS", "CIFS"].include? self[:type]
