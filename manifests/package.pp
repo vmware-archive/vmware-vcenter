@@ -4,9 +4,14 @@ class vcenter::package (
 
   package { [
     'rest-client',
-    'net-ssh',
   ]:
     ensure   => present,
+    provider => $::vcenter::params::provider,
+  }
+
+  # net-ssh gem 2.1.4 (PE3) is incompatible with vcsa 5.5 security settings:
+  package { 'net-ssh':
+    ensure   => '2.7.0',
     provider => $::vcenter::params::provider,
   }
 
