@@ -6,7 +6,7 @@ ESX host and clusters.
 ## Description
 
 VMware vCenter can be deployed either via an [virtual appliance (vmware-vcsa
-module)](https://github.com/puppetlabs/vmware-vcsa) or installed on a windows
+module)](https://github.com/vmware/vmware-vcsa) or installed on a windows
 server. This module manages vCenter 5.1 resources via the [vSphere
 API](http://www.vmware.com/support/developer/vc-sdk/) using [rbvmomi
 gem](https://github.com/vmware/rbvmomi):
