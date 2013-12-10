@@ -1,0 +1,22 @@
+lib/puppet/type/esx_debug.rb
+lib/puppet/provider/esx_debug/default.rb
+*.gem
+*.rbc
+.bundle
+.config
+.bak
+coverage
+InstalledFiles
+lib/bundler/man
+pkg
+rdoc
+spec/reports
+test/tmp
+test/version_tmp
+tests/data.pp
+tmp
+
+# YARD artifacts
+.yardoc
+_yardoc
+doc/
