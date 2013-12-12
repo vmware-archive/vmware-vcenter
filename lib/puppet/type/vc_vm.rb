@@ -15,7 +15,7 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newproperty(:power_state) do
-      newvalues(:poweron, :poweroff, :reset, :suspend)
+      newvalues(:poweredOn, :poweredOff, :reset, :suspend)
   end
 
   newparam(:name, :namevar => true) do
