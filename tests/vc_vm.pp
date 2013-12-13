@@ -8,8 +8,59 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-# This resource is not ready for testing:
-vc_vm { 'test':
-  path      => '/dc1/192.168.232.240',
-  transport => Transport['vcenter'],
+vc_vm { $newVM['vmName']:
+  ensure     => $newVM['ensure'],
+  datacenter => $newVM['datacenter'],
+  goldvm => $goldVMName['name'],  
+  memorymb => $newVM['memoryMB'],
+  dnsdomain => $newVM['dnsDomain'],  
+  numcpu => $newVM['numCPU'],
+  transport  => Transport['vcenter'],
+  host => $newVM['host'],  
+  cluster => $newVM['cluster'],
+  diskformat  => $newVM['diskformat'],
+  
+  #Guest Customization Params
+  guestcustomization => $newVM['guestCustomization'],
+  guesthostname => $newVM['guesthostname'],  
+  guesttype => $newVM['guesttype'],  
+  
+  #Linux guest os specific
+  linuxtimezone => $newVM['linuxtimezone'],  
+  
+  #Windows guest os specific
+  windowstimezone  => $newVM['windowstimezone'],
+  guestwindowsdomain => $newVM['guestwindowsdomain'],
+  guestwindowsdomainadministrator => $newVM['guestwindowsdomainadministrator'],
+  guestwindowsdomainadminpassword => $newVM['guestwindowsdomainadminpassword'],
+  windowsadminpassword => $newVM['windowsadminpassword'],
+  productid  => $newVM['productid'],
+  
+  windowsguestowner  => $newVM['windowsguestowner'],
+  windowsguestorgnization  => $newVM['windowsguestorgnization'],
+  
+  #Guest OS nic specific params  
+  nicspec => {
+    nic => [{
+      ip    => $newVM['ip1'],
+      subnet => $newVM['subnet1'],
+	  dnsserver => $newVM['dnsserver1'],
+	  gateway => $newVM['gateway1']
+    },{
+      ip    => "172.21.95.81",
+      subnet => $newVM['subnet1'],
+	  dnsserver => $newVM['dnsserver1'],
+	  gateway => $newVM['gateway1']
+    },{
+      ip    => "172.21.95.82",
+      subnet => $newVM['subnet1'],
+	  dnsserver => $newVM['dnsserver1'],
+	  gateway => $newVM['gateway1']
+    },{
+      ip    => "172.21.95.83",
+      subnet => $newVM['subnet1'],
+	  dnsserver => $newVM['dnsserver1'],
+	  gateway => $newVM['gateway1']
+    }],
+  }
 }
