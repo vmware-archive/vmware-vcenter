@@ -13,19 +13,35 @@ Puppet::Type.newtype(:vm_snapshot) do
   end
 
   newparam(:name, :namevar => true) do
-    desc "The virtual machine name."
+    desc "Name of the snapshot."
+	validate do |value|
+		unless value =~ /^\w+\s*\w+$/
+		    raise ArgumentError, "%s is invalid snapshot name." % value
+		end
+	end
   end
 
-  newparam(:snapshot_name) do 
-    desc "Name of the snapshot."
+  newparam(:vm_name) do 
+    desc "Name of the vm."
+	validate do |value|
+		unless value =~ /^\w+\s*\w+$/
+		    raise ArgumentError, "%s is invalid vm name." % value
+		end
+	end
   end
   
   newproperty (:snapshot_operation)do
+    desc "Operation to remove or revert the snapshot."
     newvalues(:revert, :remove)
   end
 
   newparam(:datacenter) do 
     desc "Name of the datacenter."
+	validate do |value|
+		unless value =~ /^\w+\s*\w+$/
+		    raise ArgumentError, "%s is invalid datacenter name." % value
+		end
+	end
   end
 
 end

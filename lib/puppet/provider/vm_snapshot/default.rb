@@ -6,9 +6,9 @@ require 'rbvmomi'
 Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vCenter VMs Snapshot Operation."
   def create
-    puts "Inside Create Method."
+    puts "Creating the snapshot."
     begin
-      vm.CreateSnapshot_Task(:name=> resource[:snapshot_name], :memory => false, :quiesce => true).wait_for_completion
+      vm.CreateSnapshot_Task(:name=> resource[:name], :memory => false, :quiesce => true).wait_for_completion
     rescue Exception => e
       puts "Exception occured with following message:"
       puts e.message
@@ -33,16 +33,18 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
   # Performs the snapshot operation
   def snapshot_operation=(value)
     begin
-      ss_name = resource[:snapshot_name]
+      ss_name = resource[:name]
       vmSnapshot = vm.snapshot
       if vmSnapshot == nil
-        raise "No snapshots found associated to vm."
+        raise "No snapshots found on vm."
       end
       snapshot_list = vmSnapshot.rootSnapshotList
       snapshot = find_node(snapshot_list, ss_name)
       if value == :revert
+	    puts "Reverting the snapshot."
         snapshot.RevertToSnapshot_Task(:suppressPowerOn => false).wait_for_completion
       elsif value == :remove
+	    puts "Removing the snapshot."
         snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
       end
     rescue Exception => e
@@ -74,7 +76,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
 
   def vm
     dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-    @vmObj ||= dc.find_vm(resource[:name]) or abort "VM not found."
+    @vmObj ||= dc.find_vm(resource[:vm_name]) or abort "VM not found."
   end
 end
 
