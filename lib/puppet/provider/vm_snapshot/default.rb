@@ -6,11 +6,11 @@ require 'rbvmomi'
 Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vCenter VMs Snapshot Operation."
   def create
-    puts "Creating the snapshot."
+    puts "Creating the snapshot of the Virtual Machine."
     begin
       vm.CreateSnapshot_Task(:name=> resource[:name], :memory => false, :quiesce => true).wait_for_completion
     rescue Exception => e
-      puts "Exception occured with following message:"
+      puts "Unable to perform the operation because the following exception occurred."
       puts e.message
     end
   end
@@ -36,19 +36,19 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
       ss_name = resource[:name]
       vmSnapshot = vm.snapshot
       if vmSnapshot == nil
-        raise "No snapshots found on vm."
+        raise "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
       end
       snapshot_list = vmSnapshot.rootSnapshotList
       snapshot = find_node(snapshot_list, ss_name)
       if value == :revert
-	    puts "Reverting the snapshot."
+	    puts "Reverting the snapshot of the Virtual Machine."
         snapshot.RevertToSnapshot_Task(:suppressPowerOn => false).wait_for_completion
       elsif value == :remove
-	    puts "Removing the snapshot."
+	    puts "Removing the snapshot of the Virtual Machine."
         snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
       end
     rescue Exception => e
-      puts "Exception occured with following message:"
+      puts "Unable to perform the operation because the following exception occurred."
       puts e.message
     end
   end
@@ -67,7 +67,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
       end
       return snapshot
     rescue Exception => e
-      puts "Exception occured with following message:"
+      puts "Unable to perform the operation because the following exception occurred."
       puts e.message
     end
   end
