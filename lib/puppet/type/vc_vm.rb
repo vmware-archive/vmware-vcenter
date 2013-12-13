@@ -20,14 +20,14 @@ Puppet::Type.newtype(:vc_vm) do
   newparam(:name, :namevar => true) do
     desc "The virtual machine name."
     validate do |value|
-      unless value =~ /^\w+$/
+      unless value =~ /^\w+\s*\w+$/
         raise ArgumentError, "%s is invalid vm name." % value
       end
     end
   end
 
   newparam(:goldvm ) do
-    desc "The new virtual machine name."
+    desc "The gold virtual machine name."
   end
 
   newparam(:graceful_shutdown) do
@@ -38,6 +38,11 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:datacenter) do
     desc "Name of the datacenter."
+	validate do |value|
+      unless value =~ /^\w+\s*\w+$/
+        raise ArgumentError, "%s is invalid datacenter name." % value
+      end
+    end
   end
 
   newparam(:memorymb) do
