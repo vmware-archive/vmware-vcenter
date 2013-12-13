@@ -16,17 +16,16 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       # Calling createRelocateSpec method
       relocateSpec    = createRelocateSpec
       if relocateSpec == nil
-		raise Puppet::Error, "Unable to get VM relocate spec."
+        raise Puppet::Error, "Unable to get VM relocate spec."
       end
 
       config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => resource[:name],
       :memoryMB => resource[:memorymb],
       :numCPUs => resource[:numcpu])
-      
 
       if resource[:guestcustomization].eql?('true')
         puts "Performing guest customization."
-        
+
         # Calling getGuestCustomizationSpec method in case guestcustomization
         # parameter is specified with value true
         customization_spec_info = getGuestCustomizationSpec ( goldVMAdapter )
@@ -84,36 +83,36 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => tempVMName )
 
-    if resource[:guesttype].eql?('windows')	  
+    if resource[:guesttype].eql?('windows')
       if resource[:productid].chomp.length == 0
-	    #raise Puppet::Error, "Product ID cannot be blank."
-		#return nil
-	  end
-		  
-	  if resource[:dnsdomain].chomp.length > 0 and 
-	     resource[:guestwindowsdomainadministrator].chomp.length > 0 and 
-		 resource[:guestwindowsdomainadminpassword].chomp.length > 0
-		 
-		 domainAdminPassword = RbVmomi::VIM.CustomizationPassword(:plainText=>true,
-																  :value=> resource[:guestwindowsdomainadminpassword])
-		 cust_identification = RbVmomi::VIM.CustomizationIdentification(:domainAdmin => resource[:guestwindowsdomainadministrator],
-																		:domainAdminPassword => domainAdminPassword ,
-																		:joinDomain => resource[:dnsdomain])
-	  else
-	     cust_identification = RbVmomi::VIM.CustomizationIdentification
-	  end
+        #raise Puppet::Error, "Product ID cannot be blank."
+        #return nil
+      end
 
-	  if resource[:windowsadminpassword].chomp.length > 0
-	    adminPassword =  RbVmomi::VIM.CustomizationPassword(:plainText=>true,
-															 :value=> resource[:windowsadminpassword] )
-		cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
-			  :password => adminPassword,
-			  :autoLogonCount => 1,
-			  :timeZone => resource[:windowstimezone])
+      if resource[:dnsdomain].chomp.length > 0 and
+      resource[:guestwindowsdomainadministrator].chomp.length > 0 and
+      resource[:guestwindowsdomainadminpassword].chomp.length > 0
+
+        domainAdminPassword = RbVmomi::VIM.CustomizationPassword(:plainText=>true,
+        :value=> resource[:guestwindowsdomainadminpassword])
+        cust_identification = RbVmomi::VIM.CustomizationIdentification(:domainAdmin => resource[:guestwindowsdomainadministrator],
+        :domainAdminPassword => domainAdminPassword ,
+        :joinDomain => resource[:dnsdomain])
       else
-		cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
-			  :autoLogonCount => 1,
-			  :timeZone => resource[:windowstimezone])
+        cust_identification = RbVmomi::VIM.CustomizationIdentification
+      end
+
+      if resource[:windowsadminpassword].chomp.length > 0
+        adminPassword =  RbVmomi::VIM.CustomizationPassword(:plainText=>true,
+        :value=> resource[:windowsadminpassword] )
+        cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
+        :password => adminPassword,
+        :autoLogonCount => 1,
+        :timeZone => resource[:windowstimezone])
+      else
+        cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
+        :autoLogonCount => 1,
+        :timeZone => resource[:windowstimezone])
       end
 
       cust_name = RbVmomi::VIM.CustomizationFixedName(:name => tempVMName);
@@ -132,7 +131,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :licenseFilePrintData => licenseFilePrintData,
       :userData => cust_user_data)
     else
-      
+
       cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(:domain => resource[:dnsdomain],
       :hostName => custom_host_name,
       :timeZone => resource[:linuxtimezone])

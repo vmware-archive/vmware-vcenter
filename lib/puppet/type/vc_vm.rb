@@ -13,17 +13,17 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newproperty(:power_state) do
-      desc "Power state of the vm."
-      newvalues(:poweredOn, :poweredOff, :reset, :suspend)
+    desc "Power state of the vm."
+    newvalues(:poweredOn, :poweredOff, :reset, :suspend)
   end
 
   newparam(:name, :namevar => true) do
     desc "The virtual machine name."
-	validate do |value|
-		unless value =~ /^\w+$/
-		    raise ArgumentError, "%s is invalid vm name." % value
-		end
-	end
+    validate do |value|
+      unless value =~ /^\w+$/
+        raise ArgumentError, "%s is invalid vm name." % value
+      end
+    end
   end
 
   newparam(:goldvm ) do
@@ -164,8 +164,8 @@ Puppet::Type.newtype(:vc_vm) do
     munge do |value|
       if value.chomp.length == 0
         dvalue
-	  else
-	    value
+      else
+        value
       end
     end
   end
@@ -177,8 +177,8 @@ Puppet::Type.newtype(:vc_vm) do
     munge do |value|
       if value.chomp.length == 0
         dvalue
-	  else
-	    value
+      else
+        value
       end
     end
   end
@@ -190,8 +190,8 @@ Puppet::Type.newtype(:vc_vm) do
     munge do |value|
       if value.chomp.length == 0
         dvalue
-	  else
-	    value
+      else
+        value
       end
     end
   end
@@ -203,8 +203,8 @@ Puppet::Type.newtype(:vc_vm) do
     munge do |value|
       if value.chomp.length == 0
         dvalue
-	  else
-	    value
+      else
+        value
       end
     end
   end
@@ -216,14 +216,14 @@ Puppet::Type.newtype(:vc_vm) do
     munge do |value|
       if value.chomp.length == 0
         dvalue
-	  else
-	    value
+      else
+        value
       end
     end
   end
 
   newparam(:productid) do
-    desc "Product ID for Windows."    
+    desc "Product ID for Windows."
   end
 
   newparam(:windowsguestorgnization) do
@@ -233,8 +233,8 @@ Puppet::Type.newtype(:vc_vm) do
     munge do |value|
       if value.chomp.length == 0
         dvalue
-	  else
-	    value
+      else
+        value
       end
     end
   end
