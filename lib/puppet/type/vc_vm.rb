@@ -15,11 +15,17 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newproperty(:power_state) do
+      desc "Power state of the vm."
       newvalues(:poweredOn, :poweredOff, :reset, :suspend)
   end
 
   newparam(:name, :namevar => true) do
     desc "The virtual machine name."
+	validate do |value|
+		unless value =~ /^\w+$/
+		    raise ArgumentError, "%s is invalid vm name." % value
+		end
+	end
   end
 
   newparam(:cpucount) do 
@@ -31,12 +37,18 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:graceful_shutdown) do
+     desc "Do the gracefull shut down of vm."
      newvalues(:true, :false)
 	 defaultto(:true)
   end
 
-  newparam(:datacenter) do 
+  newparam(:datacenter) do
     desc "Name of the datacenter."
+	validate do |value|
+		unless value =~ /^\w+$/
+		    raise ArgumentError, "%s is invalid datacenter name." % value
+		end
+	end
   end
 
   #autorequire(:vc_folder) do
