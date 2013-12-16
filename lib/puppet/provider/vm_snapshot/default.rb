@@ -6,7 +6,7 @@ require 'rbvmomi'
 Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vCenter VMs Snapshot Operation."
   def create
-    puts "Creating the snapshot of the Virtual Machine."
+    puts "Creating a Virtual Machine snapshot."
     begin
       vm.CreateSnapshot_Task(:name=> resource[:name], :memory => false, :quiesce => true).wait_for_completion
     rescue Exception => exception
@@ -41,10 +41,10 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
       snapshot_list = vmSnapshot.rootSnapshotList
       snapshot = find_node(snapshot_list, ss_name)
       if value == :revert
-	    puts "Reverting the snapshot of the Virtual Machine."
+	    puts "Reverting a Virtual Machine snapshot."
         snapshot.RevertToSnapshot_Task(:suppressPowerOn => false).wait_for_completion
       elsif value == :remove
-	    puts "Removing the snapshot of the Virtual Machine."
+	    puts "Removing a Virtual Machine snapshot."
         snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
       end
     rescue Exception => exception
