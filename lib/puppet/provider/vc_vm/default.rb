@@ -219,12 +219,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       if key == "dnsserver"
         dnsserver = value
-        dnsserver_arr = Array [ dnsserver ]
+		dnsserver_arr.push (dnsserver)
       end
 
       if key == "gateway"
         gateway = value
-        gateway_arr = Array [ gateway ]
+		gateway_arr.push (gateway)
       end
     }
 
