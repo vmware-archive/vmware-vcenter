@@ -17,6 +17,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
     begin
       ss_name = resource[:name]
       if value == :create
+	  Puppet.info "Creating a Virtual Machine snapshot."
         vm.CreateSnapshot_Task(:name=> resource[:name], :memory => resource[:memory_snapshot], :quiesce => true).wait_for_completion
       else
         vmsnapshot = vm.snapshot
@@ -26,13 +27,13 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
         snapshot_list = vmsnapshot.rootSnapshotList
         snapshot = find_node(snapshot_list, ss_name)
         if snapshot == nil
-          raise Puppet::Error, "The specified snapshot does not exists on the virtual machine."
+          raise Puppet::Error, "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
         end
         if value == :revert
-          Puppet.info "Reverting the snapshot of the Virtual Machine."
+          Puppet.info "Reverting a Virtual Machine snapshot."
           snapshot.RevertToSnapshot_Task(:suppressPowerOn => resource[:snapshot_supress_power_on]).wait_for_completion
         elsif value == :remove
-          Puppet.info "Removing the snapshot of the Virtual Machine."
+          Puppet.info "Removing a Virtual Machine snapshot."
           snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
         end
       end
@@ -47,7 +48,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
   def vm
     begin
       dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-      @vmObj ||= dc.find_vm(resource[:vm_name]) or raise Puppet::Error, "VM not found."
+      @vmObj ||= dc.find_vm(resource[:vm_name]) or raise Puppet::Error, "Unable to find the Virtual Machine because the Virtual Machine does not exist."
     rescue Exception => e
       Puppet.err "Unable to perform the operation because the following exception occurred."
       Puppet.err e.message
