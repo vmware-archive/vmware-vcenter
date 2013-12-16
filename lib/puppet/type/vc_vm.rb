@@ -55,7 +55,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = 1024
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -72,7 +72,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = 1
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -94,43 +94,20 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:diskformat) do
     desc "Name of the target datastore."
-    dvalue = 'thin'
-    defaultto(dvalue)
-    munge do |value|
-      if value.chomp.length == 0
-        dvalue.downcase
-      else
-        value.downcase
-      end
-    end
+    newvalues(:thin, :thick)
+    defaultto(:thin)
   end
 
   newparam(:guestcustomization ) do
     desc "Flag for guest customization"
-    dvalue = 'false'
-    defaultto(dvalue)
-    munge do |value|
-      if value.chomp.length == 0
-        dvalue.downcase
-      else
-        value.downcase
-      end
-    end
-
+    newvalues(:true, :false)
+    defaultto(:false)
   end
 
   newparam(:guesttype) do
     desc "Name of Guest OS type of Clone VM."
-    dvalue = "windows"
-    defaultto(dvalue)
-
-    munge do |value|
-      if value.chomp.length == 0
-        dvalue.downcase
-      else
-        value.downcase
-      end
-    end
+	newvalues(:windows, :linux)
+	defaultto(:windows)
   end
 
   newparam(:guesthostname) do
@@ -146,7 +123,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = "EST"
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue.upcase
       else
         value.upcase
@@ -159,7 +136,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = 035
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -172,7 +149,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = ''
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue
       else
         value
@@ -185,7 +162,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = ''
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue
       else
         value
@@ -198,7 +175,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = ''
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue
       else
         value
@@ -211,7 +188,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = ''
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue
       else
         value
@@ -224,7 +201,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = 'TestOwner'
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue
       else
         value
@@ -241,10 +218,36 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = 'TestOrg'
     defaultto(dvalue)
     munge do |value|
-      if value.chomp.length == 0
+      if value.strip.length == 0
         dvalue
       else
         value
+      end
+    end
+  end
+  
+  newparam(:customizationlicensedatamode ) do
+    desc "Flag for guest customization license data mode."
+    newvalues(:perSeat, :perServer)
+    defaultto(:perServer)
+  end
+  
+  newparam(:autologon ) do
+    desc "Flag to determine whether or not the machine automatically logs on as Administrator."
+    newvalues(:true, :false)
+    defaultto(:true)
+  end
+  
+  newparam(:autologoncount ) do
+    desc "If the AutoLogon flag is set,	then 
+	the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator."
+    dvalue = '1'
+    defaultto(dvalue)
+    munge do |value|
+      if value.strip.length == 0
+        dvalue.to_i
+      else
+        value.to_i
       end
     end
   end

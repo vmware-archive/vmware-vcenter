@@ -4,201 +4,165 @@ require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Manages vCenter VMs."
+  @doc = "Manages vCenter Virtual Machines."
+
   def create
     flag = 0
     begin
-      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-      virtualMachineObj = dc.find_vm(resource[:goldvm]) or abort "VM not found"
-
-      goldVMAdapter = virtualMachineObj.summary.config.numEthernetCards
-
-      # Calling createRelocateSpec method
-      relocateSpec    = createRelocateSpec
-      if relocateSpec == nil
-        raise Puppet::Error, "Unable to get VM relocate spec."
+      dc_name = resource[:datacenter]
+      vm_name = resource[:name]
+      dc = vim.serviceInstance.find_datacenter(dc_name)
+      virtualmachine_obj = dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
+      goldvm_adapter = virtualmachine_obj.summary.config.numEthernetCards
+      # Calling createrelocate_spec method
+      relocate_spec = createrelocate_spec
+      if relocate_spec.nil?
+        raise Puppet::Error, "Unable to retrieve the specification required to relocate the Virtual Machine."
       end
 
-      config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => resource[:name],
-      :memoryMB => resource[:memorymb],
+      config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
       :numCPUs => resource[:numcpu])
 
       if resource[:guestcustomization].eql?('true')
-        puts "Performing guest customization."
-
-        # Calling getGuestCustomizationSpec method in case guestcustomization
+        Puppet.info "Customizing the guest OS."
+        # Calling getguestcustomization_spec method in case guestcustomization
         # parameter is specified with value true
-        customization_spec_info = getGuestCustomizationSpec ( goldVMAdapter )
-
-        if customization_spec_info == nil
-          raise Puppet::Error, "Unable to get customization spec."
+        customization_spec_info = getguestcustomization_spec ( goldvm_adapter )
+        if customization_spec_info.nil?
+          raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
         end
-
-        spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocateSpec,
-        :powerOn => false,
-        :template => false,
-        :customization => customization_spec_info,
-        :config => config_spec)
+        spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
+        :template => false, :customization => customization_spec_info, :config => config_spec)
       else
-        spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocateSpec,
-        :powerOn => false,
-        :template => false,
-        :config => config_spec)
+        spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
+        :template => false, :config => config_spec)
       end
 
-      virtualMachineObj.CloneVM_Task( :folder => virtualMachineObj.parent,
-      :name => resource[:name] ,
+      virtualmachine_obj.CloneVM_Task( :folder => virtualmachine_obj.parent, :name => vm_name ,
       :spec => spec).wait_for_completion
-    rescue Exception => exception
+    rescue Exception => exc
       flag = 1
-      raise Puppet::Error, exception.message
+      Puppet.err(exc.message)
     end
-
-    if flag == 1
-      # Delete the VM as excetion occured.
-      # puts "Delete the VM as excetion occured."
-    else
+    if flag != 1
       # Validate if VM is cloned successfully.
-      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-
-      newVMObj = dc.find_vm(resource[:name])
-
-      if defined?(newVMObj.name)
-        puts "VM '"+resource[:name]+"' is cloned successfully."
-
-        # Power on the clone VM.
-        newVMObj.PowerOnVM_Task.wait_for_completion
+      if vm
+          Puppet.info "Successfully cloned the Virtual Machine '"+vm_name+"'."
       else
-        raise Puppet::Error, "Failed to clone VM '"+resource[:name]+"'."
+          Puppet.err "Unable to clone the Virtual Machine '"+vm_name+"'."
       end
+     
     end
   end
 
-  def getGuestCustomizationSpec ( numOfVMAdapter )
-    if resource[:guesthostname]
-      tempVMName = resource[:guesthostname]
+  def getguestcustomization_spec ( vm_adaptercount )
+    guest_hostname = resource[:guesthostname]
+    if guest_hostname
+      temp_vmname = guest_hostname
     else
-      tempVMName = resource[:name]
+      temp_vmname = resource[:name]
     end
 
-    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => tempVMName )
-
+    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => temp_vmname )
+    guestwindowsdomain_administrator = resource[:guestwindowsdomainadministrator]
+    guestwindowsdomain_adminpassword = resource[:guestwindowsdomainadminpassword]
+    dns_domain = resource[:dnsdomain]
     if resource[:guesttype].eql?('windows')
-      if resource[:productid].chomp.length == 0
-        #raise Puppet::Error, "Product ID cannot be blank."
-        #return nil
-      end
-
-      if resource[:dnsdomain].chomp.length > 0 and
-      resource[:guestwindowsdomainadministrator].chomp.length > 0 and
-      resource[:guestwindowsdomainadminpassword].chomp.length > 0
-
-        domainAdminPassword = RbVmomi::VIM.CustomizationPassword(:plainText=>true,
-        :value=> resource[:guestwindowsdomainadminpassword])
-        cust_identification = RbVmomi::VIM.CustomizationIdentification(:domainAdmin => resource[:guestwindowsdomainadministrator],
-        :domainAdminPassword => domainAdminPassword ,
-        :joinDomain => resource[:dnsdomain])
-      else
-        cust_identification = RbVmomi::VIM.CustomizationIdentification
-      end
-
-      if resource[:windowsadminpassword].chomp.length > 0
-        adminPassword =  RbVmomi::VIM.CustomizationPassword(:plainText=>true,
-        :value=> resource[:windowsadminpassword] )
-        cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
-        :password => adminPassword,
-        :autoLogonCount => 1,
-        :timeZone => resource[:windowstimezone])
-      else
-        cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
-        :autoLogonCount => 1,
-        :timeZone => resource[:windowstimezone])
-      end
-
-      cust_name = RbVmomi::VIM.CustomizationFixedName(:name => tempVMName);
-
-      cust_user_data = RbVmomi::VIM.CustomizationUserData(:computerName => cust_name,
-      :fullName => resource[:windowsguestowner],
-      :orgName => resource[:windowsguestorgnization],
-      :productId => resource[:productid])
-
-      customLicenseDataMode = RbVmomi::VIM.CustomizationLicenseDataMode('perServer');
-      licenseFilePrintData = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customLicenseDataMode,
-      :autoUsers => 5)
-
-      cust_prep = RbVmomi::VIM.CustomizationSysprep(:guiUnattended => cust_gui_unattended,
-      :identification => cust_identification,
-      :licenseFilePrintData => licenseFilePrintData,
-      :userData => cust_user_data)
+      # Creating custom specification for windows
+      cust_prep = get_cs_win
     else
-
-      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(:domain => resource[:dnsdomain],
+      # for linux
+      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(:domain => dns_domain,
       :hostName => custom_host_name,
       :timeZone => resource[:linuxtimezone])
     end
 
     customization_global_settings = RbVmomi::VIM.CustomizationGlobalIPSettings
 
+    #Creating NIC specification
+    cust_adapter_mapping_arr = get_nics(vm_adaptercount)
+
+    customization_spec = RbVmomi::VIM.CustomizationSpec(:identity => cust_prep,
+    :globalIPSettings => customization_global_settings,
+    :nicSettingMap=> cust_adapter_mapping_arr)
+    return customization_spec
+  end
+
+  # Get Custom Spec for windows
+  def get_cs_win
+
+    dns_domain = resource[:dnsdomain]
+    product_id = resource[:productid]
+
+    if dns_domain.strip.length > 0 and
+    guestwindowsdomain_administrator.strip.length > 0 and
+    guestwindowsdomain_adminpassword.strip.length > 0
+
+      if product_id.strip.length == 0
+        raise Puppet::Error, "Product ID cannot be blank."
+        return nil
+      end
+
+      domain_adminpassword = RbVmomi::VIM.CustomizationPassword(:plainText=>true,
+      :value=> guestwindowsdomain_adminpassword)
+      cust_identification = RbVmomi::VIM.CustomizationIdentification(:domainAdmin => guestwindowsdomain_administrator,
+      :domainAdminPassword => domain_adminpassword ,
+      :joinDomain => dns_domain)
+    else
+      cust_identification = RbVmomi::VIM.CustomizationIdentification
+    end
+
+    windows_adminpassword = resource[:windowsadminpassword]
+
+    win_timezone = resource[:windowstimezone]
+
+    if windows_adminpassword.strip.length > 0
+      admin_password =  RbVmomi::VIM.CustomizationPassword(:plainText=>true, :value=> windows_adminpassword )
+      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
+      :password => admin_password, :autoLogonCount => 1, :timeZone => win_timezone)
+    else
+      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => resource[:autologon],
+      :autoLogonCount => resource[:autologoncount], :timeZone => win_timezone)
+    end
+
+    cust_user_data = RbVmomi::VIM.CustomizationUserData(:computerName => custom_host_name,
+    :fullName => resource[:windowsguestowner], :orgName => resource[:windowsguestorgnization],
+    :productId => product_id)
+
+    customlicense_datamode = RbVmomi::VIM.CustomizationLicenseDataMode(resource[:customizationlicensedatamode]);
+    licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customLicenseDataMode,
+    :autoUsers => 5)
+
+    cust_prep = RbVmomi::VIM.CustomizationSysprep(:guiUnattended => cust_gui_unattended,
+    :identification => cust_identification, :licenseFilePrintData => licensefile_printdata,
+    :userData => cust_user_data)
+
+    return cust_prep
+
+  end
+
+  # Get Nic Specification
+  def get_nics(vm_adaptercount)
     cust_adapter_mapping_arr = nil
     customization_spec = nil
-    numOfNic = 0
-    if resource[:nicspec]
-      nicSpecHash = resource[:nicspec]
+    nic_count = 0
+    nic_spechash = resource[:nicspec]
+    if nic_spechash
+      nic_val = nic_spechash["nic"]
 
-      if nicSpecHash["nic"]
-        nicVal = nicSpecHash["nic"]
-        numOfNic = nicVal.length
+      if nic_val
+        nic_count = nic_val.length
 
-        if numOfNic > 0
+        if nic_count > 0
           count = 0
-          nicVal.each_index {
+          nic_val.each_index {
             |index, val|
 
-            if count > numOfVMAdapter-1
+            if count > vm_adaptercount-1
               break
             end
-
-            ipAddress = nil
-            subnet = nil
-            dnsserver = nil
-            gateway = nil
-
-            dnsServerArr = []
-            gatewayArr = []
-
-            nicVal[index].each_pair {
-              |key, value|
-
-              if key == "ip"
-                ipAddress = value
-              end
-
-              if key == "subnet"
-                subnet = value
-              end
-
-              if key == "dnsserver"
-                dnsserver = value
-                dnsServerArr = Array [ dnsserver ]
-              end
-
-              if key == "gateway"
-                gateway = value
-                gatewayArr = Array [ gateway ]
-              end
-            }
-
-            if ipAddress
-              customization_fixed_ip = RbVmomi::VIM.CustomizationFixedIp(:ipAddress => ipAddress)
-            else
-              customization_fixed_ip = RbVmomi::VIM.CustomizationDhcpIpGenerator
-            end
-
-            cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(:ip => customization_fixed_ip ,
-            :subnetMask => subnet ,
-            :dnsServerList => dnsServerArr ,
-            :gateway => gatewayArr,
-            :dnsDomain => resource[:dnsdomain] )
+            iparray = nic_val[index] 
+            cust_ip_settings = gvm_ipspec(iparray)
 
             cust_adapter_mapping = RbVmomi::VIM.CustomizationAdapterMapping(:adapter => cust_ip_settings )
 
@@ -215,114 +179,169 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     # Update the remaining adapters of with defaults settings.
-    remainingAdapter = numOfVMAdapter - numOfNic
+    remaining_adapterscount = vm_adaptercount - nic_count
 
-    if remainingAdapter > 0
-      customization_fixed_ip = RbVmomi::VIM.CustomizationDhcpIpGenerator
-      cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(:ip => customization_fixed_ip )
-      cust_adapter_mapping = RbVmomi::VIM.CustomizationAdapterMapping(:adapter => cust_ip_settings )
-      cust_adapter_mapping_arr.push (cust_adapter_mapping)
+    if remaining_adapterscount > 0
+      remaining_customization_fixed_ip = RbVmomi::VIM.CustomizationDhcpIpGenerator
+      remaining_cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(:ip => remaining_customization_fixed_ip )
+      remianing_cust_adapter_mapping = RbVmomi::VIM.CustomizationAdapterMapping(:adapter => remaining_cust_ip_settings )
+      cust_adapter_mapping_arr.push (remianing_cust_adapter_mapping)
     end
-
-    customization_spec = RbVmomi::VIM.CustomizationSpec(:identity => cust_prep,
-    :globalIPSettings => customization_global_settings,
-    :nicSettingMap=> cust_adapter_mapping_arr)
-    return customization_spec
+    return cust_adapter_mapping_arr
   end
 
-  def createRelocateSpec
+  # Guest VM IP spec
+  def gvm_ipspec(iparray)
+
+    ip_address = nil
+    subnet = nil
+    dnsserver = nil
+    gateway = nil
+
+    dnsserver_arr = []
+    gateway_arr = []
+
+    iparray.each_pair {
+      |key, value|
+
+      if key == "ip"
+        ip_address = value
+      end
+
+      if key == "subnet"
+        subnet = value
+      end
+
+      if key == "dnsserver"
+        dnsserver = value
+        dnsserver_arr = Array [ dnsserver ]
+      end
+
+      if key == "gateway"
+        gateway = value
+        gateway_arr = Array [ gateway ]
+      end
+    }
+
+    if ip_address
+      customization_fixed_ip = RbVmomi::VIM.CustomizationFixedIp(:ipAddress => ip_address)
+    else
+      customization_fixed_ip = RbVmomi::VIM.CustomizationDhcpIpGenerator
+    end
+
+    cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(:ip => customization_fixed_ip ,
+    :subnetMask => subnet , :dnsServerList => dnsserver_arr , :gateway => gateway_arr,
+    :dnsDomain => dns_domain )
+
+    return cust_ip_settings
+
+  end
+
+  def createrelocate_spec
     dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
 
+    cluster_name = resource[:cluster]
+    host_ip = resource[:host]
+    target_datastore = resource[:target_datastore]
+
+    checkfor_ds = "true"
     relocate_spec = nil
-    if resource[:cluster] and resource[:cluster].chomp.length != 0
-      # incase cluster name is provided
-      # Check whether the host name is provided
-      if resource[:host]
-        # unsetting the value of resource[:host]
-        # as cluster name is provided.
-        resource[:host] = ''
-      end
+    if cluster_name and cluster_name.strip.length != 0
+      relocate_spec = rs_cluster(dc,cluster_name)
 
-      cluster ||= dc.find_compute_resource(resource[:cluster])
+    elsif host_ip and host_ip.strip.length != 0
+      relocate_spec = rs_host(dc,host_ip)
 
-      if !cluster
-        raise Puppet::Error, "Unable to find cluster '"+resource[:cluster]+"'."
-      else
-        relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:pool => cluster.resourcePool)
-
-        if resource[:target_datastore] and resource[:target_datastore].chomp.length != 0
-          # Incase target_datastore value is provided.
-          ds ||= dc.find_datastore(resource[:target_datastore])
-          if !ds
-            raise Puppet::Error, "Unable to find target datastore '"+resource[:target_datastore]+"'."
-            relocate_spec = nil
-          else
-            relocate_spec.datastore = ds
-          end
-        end
-      end
-    elsif resource[:host] and resource[:host].chomp.length != 0
-      host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => resource[:host], :vmSearch => false)
-
-      if !host_view
-        raise Puppet::Error, "Unable to find host '"+resource[:host]+"'."
-      else
-        if resource[:diskformat].eql?('thin')
-          diskFormat = "sparse"
-        elsif resource[:diskformat].eql?('thick')
-          diskFormat = "flat"
-        else
-          diskFormat = "sparse"
-        end
-
-        transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(diskFormat);
-        relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view,
-        :pool => host_view.parent.resourcePool,
-        :transform => transform)
-
-        if resource[:target_datastore] and resource[:target_datastore].chomp.length != 0
-          ds ||= dc.find_datastore(resource[:target_datastore])
-          if !ds
-            raise Puppet::Error, "Unable to find target datastore '"+resource[:target_datastore]+"'."
-            relocate_spec = nil
-          else
-            relocate_spec.datastore = ds
-          end
-        end
-      end
     else
+      checkfor_ds = "false"
       # Neither host not cluster name is provided. Getting the relocate specification
       # from VM view
       relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec
+    end
+    if checkfor_ds.eql?(true) and !relocate_spec.nil?
+      relocate_spec = rs_datastore(dc,target_datastore,relocate_spec)
     end
 
     return relocate_spec
   end
 
-  def destroy
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+  def rs_cluster(dc,cluster_name)
+    cluster_relocate_spec = nil
+    cluster ||= dc.find_compute_resource(cluster_name)
+    if !cluster
+      raise Puppet::Error, "Unable to find the cluster '"+cluster_name+"'because the cluster is either invalid or does not exist."
+    else
+      cluster_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:pool => cluster.resourcePool)
+    end
+    return cluster_relocate_spec
 
-    if dc
-      virtualMachineObj = nil
-      if resource[:name]
-        virtualMachineObj = dc.find_vm(resource[:name]) or abort "VM not found"
-      elsif resource[:path]
-        virtualMachineObj  = dc.find_vm(resource[:path]) or abort "VM not found"
-      end
+  end
 
-      if virtualMachineObj
-        vmPowerState = virtualMachineObj.runtime.powerState
-        if vmPowerState.eql?('poweredOff')
-          puts "VM is already powered off."
-        elsif vmPowerState.eql?('poweredOn')
-          puts "VM is powered on.Need to power it off."
-          virtualMachineObj.PowerOffVM_Task.wait_for_completion
-        elsif vmPowerState.eql?('suspended')
-          puts "VM is suspended."
-        end
+  def rs_datastore(dc,target_datastore, relocate_spec)
+    if target_datastore and target_datastore.strip.length != 0
+      ds ||= dc.find_datastore(target_datastore)
+      if !ds
+        raise Puppet::Error, "Unable to find the target datastore '"+target_datastore+"'because the target datastore is either invalid or does not exist."
+        relocate_spec = nil
+      else
+        relocate_spec.datastore = ds
       end
     end
-    virtualMachineObj.Destroy_Task.wait_for_completion
+    return relocate_spec
+
+  end
+
+  # Relocate spec for host
+  def rs_host(dc,host_ip)
+    host_relocate_spec = nil
+
+    host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip, :vmSearch => false)
+
+    if !host_view
+      raise Puppet::Error, "Unable to find the host '"+host_ip+"'because the host is either invalid or does not exist."
+    else
+
+      disk_format =  resource[:diskformat]
+      if disk_format.eql?('thin')
+        updated_diskformat = "sparse"
+      elsif disk_format.eql?('thick')
+        updated_diskformat = "flat"
+      else
+        updated_diskformat = "sparse"
+      end
+
+      transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(updated_diskformat);
+      host_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view, :pool => host_view.parent.resourcePool,
+      :transform => transform)
+    end
+    return host_relocate_spec
+  end
+
+  def destroy
+    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+    vm_name = resource[:name]
+
+    if dc
+      virtualmachine_obj = nil
+      if vm_name
+        virtualmachine_obj = dc.find_vm(vm_name)
+      end
+
+      if virtualmachine_obj
+        vmPower_state = virtualmachine_obj.runtime.powerState
+        if vmPower_state.eql?('poweredOff')
+          Puppet.info "Virtual Machine is already powered off."
+        elsif vmPower_state.eql?('poweredOn')
+          Puppet.info "Virtual Machine is powered on.Need to power it off."
+          virtualmachine_obj.PowerOffVM_Task.wait_for_completion
+        elsif vmPower_state.eql?('suspended')
+          Puppet.info "Virtual Machine is suspended."
+        end
+      else
+        puppet.err("Unable to find Virtual Machine.")
+      end
+    end
+    virtualmachine_obj.Destroy_Task.wait_for_completion
   end
 
   def exists?
@@ -408,8 +427,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     begin
       dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
       @vmObj ||= dc.find_vm(resource[:name])
-    rescue Exception => exception
-      raise Puppet::Error, exception.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 end

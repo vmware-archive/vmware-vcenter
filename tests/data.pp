@@ -12,7 +12,7 @@ $goldVMName = {
 }
 
 $newVM = {
-  'vmName'  => 'WinCloneGuestVM1',
+  'vmName'  => 'WinCloneGuestVM',
   
   'memoryMB' => '2048',
   'dnsDomain' => 'asm.test',  
@@ -25,7 +25,7 @@ $newVM = {
   'guestCustomization' => 'true',
   'guesthostname' => 'ClonedVM',
   
-  'guesttype' => 'windows',
+  #'guesttype' => 'windows',
   
   'linuxtimezone'  => 'EST',
   
@@ -35,10 +35,14 @@ $newVM = {
   'guestwindowsdomainadminpassword'  => '',
   'windowsadminpassword'  =>iforgot,
   'productid'  => '',
-  'diskformat'  => 'Thin',
+  #'diskformat'  => 'Thin',
   
   'windowsguestowner' => 'TestOwner',
   'windowsguestorgnization' => 'TestOrg',
+  
+  #'customizationlicensedatamode' => 'perServer',
+  #'autologon' => 'perServer',
+  'autologoncount' => '',
   
   'ip1' => "172.21.95.80",
   'subnet1' => '255.255.240.0',

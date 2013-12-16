@@ -39,6 +39,10 @@ vc_vm { $newVM['vmName']:
   windowsguestowner  => $newVM['windowsguestowner'],
   windowsguestorgnization  => $newVM['windowsguestorgnization'],
   
+  customizationlicensedatamode => $newVM['customizationlicensedatamode'],
+  autologon => $newVM['autologon'],
+  autologoncount => $newVM['autologoncount'],
+
   #Guest OS nic specific params  
   nicspec => {
     nic => [{
