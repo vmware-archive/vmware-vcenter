@@ -40,7 +40,12 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
   end
 
   def destroy
-    @host.Destroy_Task.wait_for_completion
+    parentFolder = @host.parent
+    if parentFolder.to_s =~ /ClustercomputeResource/i
+        @host.Destroy_Task.wait_for_completion
+    else
+        @host.parent.Destroy_Task.wait_for_completion
+    end
   end
 
   # TODO: implement real path checking.
