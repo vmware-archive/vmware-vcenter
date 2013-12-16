@@ -5,26 +5,8 @@ require 'rbvmomi'
 
 Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vCenter VMs Snapshot Operation."
-  def create
-    puts "Creating a Virtual Machine snapshot."
-    begin
-      vm.CreateSnapshot_Task(:name=> resource[:name], :memory => false, :quiesce => true).wait_for_completion
-    rescue Exception => exception
-      puts "Unable to perform the operation because the following exception occurred."
-      puts exception.message
-    end
-  end
-
-  def destroy
-  end
-
   def exists?
-    puts "Inside the exists method."
-    if(resource[:snapshot_operation] == nil)
-      return false;
-    else
-      return true;
-    end
+    return true;
   end
 
   def snapshot_operation
@@ -34,49 +16,43 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
   def snapshot_operation=(value)
     begin
       ss_name = resource[:name]
-      vmSnapshot = vm.snapshot
-      if vmSnapshot == nil
-        raise "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
-      end
-      snapshot_list = vmSnapshot.rootSnapshotList
-      snapshot = find_node(snapshot_list, ss_name)
-      if value == :revert
-	    puts "Reverting a Virtual Machine snapshot."
-        snapshot.RevertToSnapshot_Task(:suppressPowerOn => false).wait_for_completion
-      elsif value == :remove
-	    puts "Removing a Virtual Machine snapshot."
-        snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
-      end
-    rescue Exception => exception
-      puts "Unable to perform the operation because the following exception occurred."
-      puts exception.message
-    end
-  end
-
-  private
-
-  def find_node(tree, name)
-    begin
-      snapshot = nil
-      tree.each do |node|
-        if node.name == name
-          snapshot = node.snapshot
-        elsif !node.childSnapshotList.empty?
-          snapshot = find_node(node.childSnapshotList, name)
+      if value == :create
+        vm.CreateSnapshot_Task(:name=> resource[:name], :memory => resource[:memory_snapshot], :quiesce => true).wait_for_completion
+      else
+        vmsnapshot = vm.snapshot
+        if vmsnapshot == nil
+          raise Puppet::Error, "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
+        end
+        snapshot_list = vmsnapshot.rootSnapshotList
+        snapshot = find_node(snapshot_list, ss_name)
+        if snapshot == nil
+          raise Puppet::Error, "The specified snapshot does not exists on the virtual machine."
+        end
+        if value == :revert
+          Puppet.info "Reverting the snapshot of the Virtual Machine."
+          snapshot.RevertToSnapshot_Task(:suppressPowerOn => resource[:snapshot_supress_power_on]).wait_for_completion
+        elsif value == :remove
+          Puppet.info "Removing the snapshot of the Virtual Machine."
+          snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
         end
       end
-      return snapshot
-    rescue Exception => exception
-      puts "Unable to perform the operation because the following exception occurred."
-      puts exception.message
+    rescue Exception => e
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err e.message
     end
   end
 
   private
 
   def vm
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-    @vmObj ||= dc.find_vm(resource[:vm_name]) or abort "VM not found."
+    begin
+      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+      @vmObj ||= dc.find_vm(resource[:vm_name]) or raise Puppet::Error, "VM not found."
+    rescue Exception => e
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err e.message
+    end
   end
+
 end
 
