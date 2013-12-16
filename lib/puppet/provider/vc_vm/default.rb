@@ -22,8 +22,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
       :numCPUs => resource[:numcpu])
-
-      if resource[:guestcustomization].eql?('true')
+	  
+	  guestcustomizationflag = resource[:guestcustomization]
+	  guestcustomizationflag = guestcustomizationflag.to_s
+	  
+      if guestcustomizationflag.eql?('true')
         Puppet.info "Customizing the guest OS."
         # Calling getguestcustomization_spec method in case guestcustomization
         # parameter is specified with value true
@@ -64,12 +67,14 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => temp_vmname )
-    guestwindowsdomain_administrator = resource[:guestwindowsdomainadministrator]
-    guestwindowsdomain_adminpassword = resource[:guestwindowsdomainadminpassword]
+
     dns_domain = resource[:dnsdomain]
-    if resource[:guesttype].eql?('windows')
+	
+	guesttypeflag = resource[:guesttype]
+	guesttypeflag = guesttypeflag.to_s
+    if guesttypeflag.eql?('windows')
       # Creating custom specification for windows
-      cust_prep = get_cs_win
+      cust_prep = get_cs_win (custom_host_name)
     else
       # for linux
       cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(:domain => dns_domain,
@@ -80,7 +85,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     customization_global_settings = RbVmomi::VIM.CustomizationGlobalIPSettings
 
     #Creating NIC specification
-    cust_adapter_mapping_arr = get_nics(vm_adaptercount)
+    cust_adapter_mapping_arr = get_nics(vm_adaptercount,dns_domain)
 
     customization_spec = RbVmomi::VIM.CustomizationSpec(:identity => cust_prep,
     :globalIPSettings => customization_global_settings,
@@ -89,8 +94,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # Get Custom Spec for windows
-  def get_cs_win
-
+  def get_cs_win (custom_host_name)
+    guestwindowsdomain_administrator = resource[:guestwindowsdomainadministrator]
+    guestwindowsdomain_adminpassword = resource[:guestwindowsdomainadminpassword]
     dns_domain = resource[:dnsdomain]
     product_id = resource[:productid]
 
@@ -130,7 +136,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     :productId => product_id)
 
     customlicense_datamode = RbVmomi::VIM.CustomizationLicenseDataMode(resource[:customizationlicensedatamode]);
-    licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customLicenseDataMode,
+    licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode,
     :autoUsers => 5)
 
     cust_prep = RbVmomi::VIM.CustomizationSysprep(:guiUnattended => cust_gui_unattended,
@@ -142,7 +148,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # Get Nic Specification
-  def get_nics(vm_adaptercount)
+  def get_nics(vm_adaptercount,dns_domain)
     cust_adapter_mapping_arr = nil
     customization_spec = nil
     nic_count = 0
@@ -152,7 +158,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       if nic_val
         nic_count = nic_val.length
-
         if nic_count > 0
           count = 0
           nic_val.each_index {
@@ -162,7 +167,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
               break
             end
             iparray = nic_val[index] 
-            cust_ip_settings = gvm_ipspec(iparray)
+            cust_ip_settings = gvm_ipspec(iparray,dns_domain)
 
             cust_adapter_mapping = RbVmomi::VIM.CustomizationAdapterMapping(:adapter => cust_ip_settings )
 
@@ -191,7 +196,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # Guest VM IP spec
-  def gvm_ipspec(iparray)
+  def gvm_ipspec(iparray,dns_domain)
 
     ip_address = nil
     subnet = nil
