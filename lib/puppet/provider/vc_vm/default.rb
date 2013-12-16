@@ -49,9 +49,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       virtualMachineObj.CloneVM_Task( :folder => virtualMachineObj.parent,
       :name => resource[:name] ,
       :spec => spec).wait_for_completion
-    rescue Exception => e
+    rescue Exception => exception
       flag = 1
-      raise Puppet::Error, e.message
+      raise Puppet::Error, exception.message
     end
 
     if flag == 1
@@ -336,8 +336,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     begin
       # Did not use '.guest.powerState' since it only works if vmware tools are running.
       vm.runtime.powerState
-    rescue Exception => e
-      puts e.message
+    rescue Exception => exception
+      puts exception.message
     end
   end
 
@@ -395,10 +395,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       end
 
-    rescue Exception => e
+    rescue Exception => exception
       flag = 1
       puts "Unable to perform the operation because the following exception occurred."
-      puts e.message
+      puts exception.message
     end
   end
 
@@ -408,8 +408,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     begin
       dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
       @vmObj ||= dc.find_vm(resource[:name])
-    rescue Exception => e
-      raise Puppet::Error, e.message
+    rescue Exception => exception
+      raise Puppet::Error, exception.message
     end
   end
 end

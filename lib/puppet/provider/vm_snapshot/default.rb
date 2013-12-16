@@ -9,9 +9,9 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
     puts "Creating the snapshot of the Virtual Machine."
     begin
       vm.CreateSnapshot_Task(:name=> resource[:name], :memory => false, :quiesce => true).wait_for_completion
-    rescue Exception => e
+    rescue Exception => exception
       puts "Unable to perform the operation because the following exception occurred."
-      puts e.message
+      puts exception.message
     end
   end
 
@@ -47,9 +47,9 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
 	    puts "Removing the snapshot of the Virtual Machine."
         snapshot.RemoveSnapshot_Task(:removeChildren => false).wait_for_completion
       end
-    rescue Exception => e
+    rescue Exception => exception
       puts "Unable to perform the operation because the following exception occurred."
-      puts e.message
+      puts exception.message
     end
   end
 
@@ -66,9 +66,9 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
         end
       end
       return snapshot
-    rescue Exception => e
+    rescue Exception => exception
       puts "Unable to perform the operation because the following exception occurred."
-      puts e.message
+      puts exception.message
     end
   end
 
