@@ -52,7 +52,7 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:memorymb) do
     desc "Amount of memory to be assigned to provisioned VM."
-    dvalue = 1024
+    dvalue = '1024'
     defaultto(dvalue)
     munge do |value|
       if value.strip.length == 0
@@ -69,7 +69,7 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:numcpu) do
     desc "Number of CPU."
-    dvalue = 1
+    dvalue = '1'
     defaultto(dvalue)
     munge do |value|
       if value.strip.length == 0
@@ -133,7 +133,7 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:windowstimezone) do
     desc "Time zone for Windows guest OS."
-    dvalue = 035
+    dvalue = '035'
     defaultto(dvalue)
     munge do |value|
       if value.strip.length == 0
