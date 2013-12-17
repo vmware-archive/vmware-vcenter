@@ -37,6 +37,7 @@ vc_vm { $newVM['vmName']:
   customizationlicensedatamode     => $newVM['customizationlicensedatamode'],
                          autologon => $newVM['autologon'],
                     autologoncount => $newVM['autologoncount'],
+					autousers      => $newVM['autousers'],
 
   #Guest OS nic specific params
   nicspec => {

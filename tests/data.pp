@@ -35,6 +35,7 @@ $newVM = {
   #'customizationlicensedatamode'  => 'perServer',
   #'autologon'                     => 'perServer',
   'autologoncount'                 => '',
+  'autousers'                      => '',
   'ip1'                            => '172.21.95.80',
   'subnet1'                        => '255.255.240.0',
   'dnsserver1'                     => '172.21.88.100',

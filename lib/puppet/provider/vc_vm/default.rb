@@ -120,23 +120,32 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     windows_adminpassword = resource[:windowsadminpassword]
 
     win_timezone = resource[:windowstimezone]
+    autologon = resource[:autologon]
+	autologoncount = resource[:autologoncount]
 
     if windows_adminpassword.strip.length > 0
       admin_password =  RbVmomi::VIM.CustomizationPassword(:plainText=>true, :value=> windows_adminpassword )
-      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => 1,
-      :password => admin_password, :autoLogonCount => 1, :timeZone => win_timezone)
+      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => autologon,
+      :password => admin_password, :autoLogonCount => autologoncount, :timeZone => win_timezone)
     else
-      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => resource[:autologon],
-      :autoLogonCount => resource[:autologoncount], :timeZone => win_timezone)
+      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => autologon,
+      :autoLogonCount => autologoncount, :timeZone => win_timezone)
     end
 
     cust_user_data = RbVmomi::VIM.CustomizationUserData(:computerName => custom_host_name,
     :fullName => resource[:windowsguestowner], :orgName => resource[:windowsguestorgnization],
     :productId => product_id)
 
-    customlicense_datamode = RbVmomi::VIM.CustomizationLicenseDataMode(resource[:customizationlicensedatamode]);
+	customlicensedatamode = resource[:customizationlicensedatamode]
+    customlicense_datamode = RbVmomi::VIM.CustomizationLicenseDataMode(customlicensedatamode);
+
+	if customlicensedatamode.eql?('perServer')
+	   autousers = resource[:autousers]
     licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode,
-    :autoUsers => 5)
+       :autoUsers => autousers)	
+	else
+       licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode)
+	end
 
     cust_prep = RbVmomi::VIM.CustomizationSysprep(:guiUnattended => cust_gui_unattended,
     :identification => cust_identification, :licenseFilePrintData => licensefile_printdata,

@@ -251,4 +251,18 @@ Puppet::Type.newtype(:vc_vm) do
       end
     end
   end
+  
+  newparam(:autousers ) do
+    desc "This key is valid only if customizationlicensedatamode = perServer. 
+	The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. "
+    dvalue = '1'
+    defaultto(dvalue)
+    munge do |value|
+      if value.strip.length == 0
+        dvalue.to_i
+      else
+        value.to_i
+      end
+    end
+  end
 end
