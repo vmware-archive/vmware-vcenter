@@ -353,24 +353,22 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # Get the power state.
   def power_state
-    puts "Retrieving the power state of the Virtual Machine."
-    puts caller[0]
+    Puppet.debug "Retrieving the power state of the virtual machine."
     begin
       # Did not use '.guest.powerState' since it only works if vmware tools are running.
       vm.runtime.powerState
-    rescue Exception => exception
-      puts exception.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
   # Set the power state.
   def power_state=(value)
-    puts "Setting the power state of the Virtual Machine."
+    Puppet.debug "Setting the power state of the virtual machine."
     begin
 
-      # perform operations if desired power_state=:poweredOff
+      # Perform operations if desired power_state=:poweredOff
       if value == :poweredOff
-        if power_state != "poweredOff"
           if ((vm.guest.toolsStatus != 'toolsNotInstalled') or (vm.guest.toolsStatus != 'toolsNotRunning')) and resource[:graceful_shutdown] == :true
             vm.ShutdownGuest
             # Since vm.ShutdownGuest doesn't return a task we need to poll the VM powerstate before returning.
@@ -381,46 +379,29 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
             end
             vm.PowerOffVM_Task.wait_for_completion if power_state != "poweredOff"
           else
-            if power_state != "poweredOff"
               vm.PowerOffVM_Task.wait_for_completion
-            else
-              puts "Unable to power Off the Virtual Machine because the Virtual Machine is already in powered Off state."
-            end
           end
-        elsif power_state == "poweredOff"
-          puts "Unable to power Off the Virtual Machine because the Virtual Machine is already in powered Off state."
-        end
-
-        # perform operations if desired power_state=:poweredOn
+      # Perform operations if desired power_state=:poweredOn
       elsif value == :poweredOn
-        if power_state != "poweredOn"
           vm.PowerOnVM_Task.wait_for_completion
-        elsif power_state == "poweredOn"
-          puts "Unable to power On the Virtual Machine because the Virtual Machine is already in powered On state."
-        end
-
-        # perform operations if desired power_state=:suspend
-      elsif value == :suspend
-        if power_state != "poweredOff"
+      # Perform operations if desired power_state=:suspend
+      elsif value == :suspended
+        if power_state == "poweredOn"
           vm.SuspendVM_Task.wait_for_completion
-        elsif power_state == "poweredOff"
-          puts "Unable to power Off the Virtual Machine because the Virtual Machine is already in powered Off state."
+        else
+          raise Puppet::Error, "Unable to suspend the virtual machine because the virtual machine is in powered Off state."
         end
-
-        # perform operations if desired power_state=:reset
+        # Perform operations if desired power_state=:reset
       elsif value == :reset
-        if power_state != "poweredOff"
+        if power_state !~ /poweredOff|suspended/i 
           vm.ResetVM_Task.wait_for_completion
         else
-          puts "Unable to reset the Virtual Machine because the Virtual Machine is powered Off. Make sure that the Virtual Machine is powered On."
+          raise Puppet::Error, "Unable to reset the virtual machine because the virtual machine is powered Off or suspended. Make sure that the virtual machine is powered On."
         end
-
       end
-
-    rescue Exception => exception
-      flag = 1
-      puts "Unable to perform the operation because the following exception occurred."
-      puts exception.message
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err excep.message
     end
   end
 
