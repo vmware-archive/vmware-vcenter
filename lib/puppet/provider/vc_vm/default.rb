@@ -5,7 +5,6 @@ require 'rbvmomi'
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter Virtual Machines."
-
   def create
     flag = 0
     begin
@@ -22,12 +21,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
       :numCPUs => resource[:numcpu])
-	  
-	  guestcustomizationflag = resource[:guestcustomization]
-	  guestcustomizationflag = guestcustomizationflag.to_s
-	  
+
+      guestcustomizationflag = resource[:guestcustomization]
+      guestcustomizationflag = guestcustomizationflag.to_s
+
       if guestcustomizationflag.eql?('true')
-        Puppet.info "Customizing the guest OS."
+        Puppet.notice "Customizing the guest OS."
         # Calling getguestcustomization_spec method in case guestcustomization
         # parameter is specified with value true
         customization_spec_info = getguestcustomization_spec ( goldvm_adapter )
@@ -50,11 +49,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if flag != 1
       # Validate if VM is cloned successfully.
       if vm
-          Puppet.info "Successfully cloned the Virtual Machine '"+vm_name+"'."
+        Puppet.notice "Successfully cloned the Virtual Machine '"+vm_name+"'."
       else
-          Puppet.err "Unable to clone the Virtual Machine '"+vm_name+"'."
+        Puppet.err "Unable to clone the Virtual Machine '"+vm_name+"'."
       end
-     
+
     end
   end
 
@@ -69,9 +68,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => temp_vmname )
 
     dns_domain = resource[:dnsdomain]
-	
-	guesttypeflag = resource[:guesttype]
-	guesttypeflag = guesttypeflag.to_s
+
+    guesttypeflag = resource[:guesttype]
+    guesttypeflag = guesttypeflag.to_s
     if guesttypeflag.eql?('windows')
       # Creating custom specification for windows
       cust_prep = get_cs_win (custom_host_name)
@@ -85,7 +84,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     customization_global_settings = RbVmomi::VIM.CustomizationGlobalIPSettings
 
     #Creating NIC specification
-    cust_adapter_mapping_arr = get_nics(vm_adaptercount,dns_domain)
+    cust_adapter_mapping_arr = get_nics(vm_adaptercount)
 
     customization_spec = RbVmomi::VIM.CustomizationSpec(:identity => cust_prep,
     :globalIPSettings => customization_global_settings,
@@ -148,7 +147,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # Get Nic Specification
-  def get_nics(vm_adaptercount,dns_domain)
+  def get_nics(vm_adaptercount)
     cust_adapter_mapping_arr = nil
     customization_spec = nil
     nic_count = 0
@@ -166,8 +165,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
             if count > vm_adaptercount-1
               break
             end
-            iparray = nic_val[index] 
-            cust_ip_settings = gvm_ipspec(iparray,dns_domain)
+            iparray = nic_val[index]
+            cust_ip_settings = gvm_ipspec(iparray)
 
             cust_adapter_mapping = RbVmomi::VIM.CustomizationAdapterMapping(:adapter => cust_ip_settings )
 
@@ -196,7 +195,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # Guest VM IP spec
-  def gvm_ipspec(iparray,dns_domain)
+  def gvm_ipspec(iparray)
 
     ip_address = nil
     subnet = nil
@@ -219,12 +218,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       if key == "dnsserver"
         dnsserver = value
-		dnsserver_arr.push (dnsserver)
+        dnsserver_arr.push (dnsserver)
       end
 
       if key == "gateway"
         gateway = value
-		gateway_arr.push (gateway)
+        gateway_arr.push (gateway)
       end
     }
 
@@ -236,7 +235,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(:ip => customization_fixed_ip ,
     :subnetMask => subnet , :dnsServerList => dnsserver_arr , :gateway => gateway_arr,
-    :dnsDomain => dns_domain )
+    :dnsDomain => resource[:dnsdomain] )
 
     return cust_ip_settings
 
@@ -331,16 +330,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       if vm_name
         virtualmachine_obj = dc.find_vm(vm_name)
       end
-
       if virtualmachine_obj
-        vmPower_state = virtualmachine_obj.runtime.powerState
-        if vmPower_state.eql?('poweredOff')
-          Puppet.info "Virtual Machine is already powered off."
-        elsif vmPower_state.eql?('poweredOn')
-          Puppet.info "Virtual Machine is powered on.Need to power it off."
+        vmpower_state = virtualmachine_obj.runtime.powerState
+        if vmpower_state.eql?('poweredOff')
+          Puppet.notice "Virtual Machine is already in powered Off state."
+        elsif vmpower_state.eql?('poweredOn')
+          Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
           virtualmachine_obj.PowerOffVM_Task.wait_for_completion
-        elsif vmPower_state.eql?('suspended')
-          Puppet.info "Virtual Machine is suspended."
+        elsif vmpower_state.eql?('suspended')
+          Puppet.notice "Virtual Machine is in suspended state."
         end
       else
         puppet.err("Unable to find Virtual Machine.")
