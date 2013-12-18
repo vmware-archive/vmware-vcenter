@@ -87,3 +87,13 @@ An ESX host can be attached and managed indirectly via vSphere API:
     }
 
 See tests folder for additional examples.
+
+## Refrences
+Following functaionality related readme's are kept at docs folder.
+
+1) vc_vm_readme.md: This readme file talks about following VMware functionalities.
+   a) Creating the VMware Virtual Machine instance based on the specified base image or the base image template name. 
+   b) Deleting the Virtual Machine from the vCenter environment.
+   
+   
+
