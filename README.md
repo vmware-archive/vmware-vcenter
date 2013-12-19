@@ -95,5 +95,8 @@ Following functaionality related readme's are kept at docs folder.
    a) Creating the VMware Virtual Machine instance based on the specified base image or the base image template name. 
    b) Deleting the Virtual Machine from the vCenter environment.
    
-   
+2) esx_maintmode.md: This readme file talks about following host system functionalities.
+   a) Switches the host in to maintenance mode.
+   b) Gets the host out of the maintenance mode.
+    
 
