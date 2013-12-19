@@ -271,7 +271,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       # from VM view
       relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec
     end
-    if checkfor_ds.eql?(true) and !relocate_spec.nil?
+    if checkfor_ds.eql?('true') and !relocate_spec.nil?
       relocate_spec = rs_datastore(dc,target_datastore,relocate_spec)
     end
 
