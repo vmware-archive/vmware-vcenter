@@ -19,10 +19,10 @@ Puppet::Type.newtype(:vc_migratevm) do
     desc "Migrate VM Host and Datastore."
     validate do |value|
       if value.split(",").first.strip.length == 0
-        raise ArgumentError, "Please specify the argument in proper format '<target_host,<target_datastore>'."
+        raise ArgumentError, "A valid format for specifying the argument is '<target_host>,<target_datastore>'."
       end
-      if value.split(",").end.strip.length == 0
-        raise ArgumentError, "Please specify the argument in proper format '<target_host,<target_datastore>'."
+      if value.split(",").last.strip.length == 0
+        raise ArgumentError, "A valid format for specifying the argument is '<target_host>,<target_datastore>'."
       end
     end
     munge do |value|
