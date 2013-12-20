@@ -3,7 +3,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
-Puppet::Type.type(:vc_vswitch).provide(:vc_vswitch, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter vSwitch"
   #Create vSwitch method.
   def create

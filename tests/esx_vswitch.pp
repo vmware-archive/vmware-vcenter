@@ -8,7 +8,7 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-vc_vswitch { 'name':
+esx_vswitch { 'name':
   name      => "vSwitch5",
   ensure    => present,
   host      => "172.16.103.95",
