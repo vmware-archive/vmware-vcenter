@@ -30,8 +30,8 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 
 	ensure: (Required) This parameter is required to call the Create or Destroy method.
     Possible values: present/absent
-    If the value of the ensure parameter is set to present, the RA calls the Create method.
-    If the value of the ensure parameter is set to absent, the RA calls the Destroy method.
+    If the value of the ensure parameter is set to present, the module calls the Create method.
+    If the value of the ensure parameter is set to absent, the module calls the Destroy method.
 
 
     timeout: The task completes only when the host successfully enters the maintenance mode or the timeout expires, and in the latter case the task  contains a Timeout fault. If the timeout is less than or equal to zero, there is no timeout. The timeout is specified in seconds. 

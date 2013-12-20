@@ -53,8 +53,8 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
     host: (Optional) This parameter defines the host name where the new Virtual Machine is to be created. 
 
     cluster: (Optional) This parameter defines the cluster name where the new Virtual Machine is to be created. 
-    NOTE:- If the cluster value is specified, the RA ignores the specified host value in the input file.
-           If both parameter values are not provided, the RA attempts to create the new Virtual Machine in the gold VM host.
+    NOTE:- If the cluster value is specified, the module ignores the specified host value in the input file.
+           If both parameter values are not provided, the module attempts to create the new Virtual Machine in the gold VM host.
  
     target_datastore: (Optional) This is the name of the datastore containing the virtual machine. If not provided, the virtual machine is created on the available datastore.
 
@@ -77,7 +77,7 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
     nicspec: This parameter holdsthe following virtual NICs specification parameter values. NIC specification parameters are as follows:
 
         ip: (Optional) This parameter sets the static IP address to the Virtual Machine.
-        If left blank, the RA uses the DHCP to set the IP address. (Optional).
+        If left blank, the module uses the DHCP to set the IP address. (Optional).
 
         subnet: (Required if the IPAddress is specified.) This parameter sets the Default Gateway on the NIC.
 
