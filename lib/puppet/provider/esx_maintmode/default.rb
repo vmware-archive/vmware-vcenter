@@ -7,22 +7,36 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
 
 # Place the system into MM
  def create
-   host.EnterMaintenanceMode_Task(:timeout => resource[:timeout], 
+	begin  
+	host.EnterMaintenanceMode_Task(:timeout => resource[:timeout], 
      :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
- end
-
+	rescue 
+	puts 'Could not find Host system.Either Host is not exist or disconnected'
+	end
+end
  # Exit MM on the system
  def destroy 
-   host.ExitMaintenanceMode_Task(:timeout => resource[:timeout]).wait_for_completion
- end
-
+	begin
+	host.ExitMaintenanceMode_Task(:timeout => resource[:timeout]).wait_for_completion
+	rescue 
+	puts 'Could not find Host system.Either Host is not exist or disconnected'
+	end
+end
  def exists?
+   begin
    host.runtime.inMaintenanceMode
- end
+   rescue 
+   puts 'Host is not available'
+	end
+end
 
  private
 
  def host 
+	begin
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-  end 
+	rescue 
+	puts 'Could not find Host system.Either Host is not exist or disconnected'
+	end 
+end
 end
