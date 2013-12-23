@@ -3,13 +3,14 @@ require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
 Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Manage VM's Network and vNic configuration."
+  @doc = "Manage vNic configuration."
   # Adds the vnic.
   def create
     begin
       spec = RbVmomi::VIM.VirtualMachineConfigSpec({:deviceChange => [{
         :operation => :add,
         :device => device_spec}]})
+	  Puppet.notice "Adding vnic " + resource[:name]
       vm.ReconfigVM_Task(:spec => spec).wait_for_completion
     rescue Exception => exc
       Puppet.err(exc.message)
@@ -25,7 +26,7 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
         :device => vnic
         }]
       })
-      Puppet.notice "Removing vnic."
+      Puppet.notice "Removing vnic " + resource[:name]
       vm.ReconfigVM_Task(:spec => spec).wait_for_completion
     rescue Exception => exc
       Puppet.err(exc.message)
@@ -68,8 +69,8 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
        return RbVmomi::VIM.VirtualE1000({
           :key => 1,
           :deviceInfo => {
-          :label => "Network Adapter #{resource[:name]}",
-          :summary =>  port_group
+          :label => "Network Adapter",
+          :summary => port_group
           },
           :backing => backing
         })
@@ -77,17 +78,16 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
         return RbVmomi::VIM.VirtualVmxnet3({
           :key => 1,
           :deviceInfo => {
-          :label => "Network Adapter #{resource[:name]}",
-          :summary =>  port_group
+          :label => "Network Adapter",
+          :summary => port_group
           },
           :backing => backing
         })
-
       else
         return RbVmomi::VIM.VirtualVmxnet2({
           :key => 1,
           :deviceInfo => {
-          :label => "Network Adapter #{resource[:name]}",
+          :label => "Network Adapter",
           :summary => port_group
           },
           :backing => backing
