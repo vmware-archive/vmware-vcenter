@@ -6,7 +6,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   @doc = "Manages vCenter CIFS/NFS (file) datastores."
 
   def create
-	Puppet.debug "Attaching datastore to the host."
+	Puppet.debug "Creating datastore on the host."
 	begin
 		volume = {}
 		[:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
@@ -70,7 +70,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   end
 
   def destroy
-	Puppet.debug "Detaching datastore from the host."
+	Puppet.debug "Deleting datastore from the host."
 	
 	begin
 		 host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
