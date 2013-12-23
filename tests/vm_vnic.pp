@@ -1,4 +1,4 @@
-import 'data_snapshot.pp'
+import 'data.pp'
 
 transport { 'vcenter':
   username => $vcenter['username'],
@@ -7,12 +7,11 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-# This resource is not ready for testing:
 vm_vnic { 'name'
-   name => my_Test,
+  name => "Network Adaptor 1",
   ensure => present,
-  vm_name => test_dkumar,
-  nic_type => E1000,
-  datacenter => DDCQA,
+  vm_name => "testVm",
+  nic_type => "E1000",
+  datacenter => "DatacenterName",
   transport => Transport['vcenter'],
 }
