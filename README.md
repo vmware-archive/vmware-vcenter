@@ -102,4 +102,7 @@ Following functionality related readme's are kept at docs folder.
 3) vc_host_readme.md: This readme file talks about following host system functionalities.
    a) Adding host to a Datacenter or a Cluster.
    b) Removing host from a Datacenter or a Cluster.
+   
+4) esx_rescanallhba_readme.md: This readme file talks about following host system functionalities.
+   a) Re-scan ESXi HBAs for new storage devices. 
 
