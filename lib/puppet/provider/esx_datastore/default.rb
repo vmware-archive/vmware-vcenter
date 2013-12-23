@@ -6,32 +6,38 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   @doc = "Manages vCenter CIFS/NFS (file) datastores."
 
   def create
-    volume = {}
-    [:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
-      volume[PuppetX::VMware::Util.camelize(prop, :lower).to_sym] = resource[prop]
-    end
+	Puppet.debug "Attaching datastore to the host."
+	begin
+		volume = {}
+		[:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
+		  volume[PuppetX::VMware::Util.camelize(prop, :lower).to_sym] = resource[prop]
+		end
 
-    case resource[:type]
-    when 'NFS'
-      host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
-    when 'CIFS'
-      volume[:type] = 'CIFS'
-      volume[:userName] = resource[:user_name] if resource[:user_name]
-      volume[:password] = resource[:password] if resource[:password]
-      host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
-    when 'VMFS'
-      attempt = 3
-      while ! create_vmfs_lun and ! exists? and attempt > 0
-        Puppet.debug('Rescanning for volume')
-        host.configManager.storageSystem.RescanAllHba() unless find_disk
-        host.configManager.storageSystem.RescanVmfs()
-        # Sleeping because scanning is async:
-        # http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.apiref.doc/vim.host.StorageSystem.html#rescanAllHba
-        sleep 5
+		case resource[:type]
+		when 'NFS'
+		  host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
+		when 'CIFS'
+		  volume[:type] = 'CIFS'
+		  volume[:userName] = resource[:user_name] if resource[:user_name]
+		  volume[:password] = resource[:password] if resource[:password]
+		  host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
+		when 'VMFS'
+		  attempt = 3
+		  while ! create_vmfs_lun and ! exists? and attempt > 0
+			Puppet.debug('Rescanning for volume')
+			host.configManager.storageSystem.RescanAllHba() unless find_disk
+			host.configManager.storageSystem.RescanVmfs()
+			# Sleeping because scanning is async:
+			# http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.apiref.doc/vim.host.StorageSystem.html#rescanAllHba
+			sleep 5
 
-        attempt -= 1
-      end
-      fail("LUN #{resource[:lun]} not detected.") unless exists?
+			attempt -= 1
+		  end
+		  raise("LUN #{resource[:lun]} not detected.") unless exists?
+		end
+	rescue Exception => excep
+		Puppet.err "Unable to perform the operation because the following exception occurred - "
+		Puppet.err excep.message
     end
   end
 
@@ -64,7 +70,14 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   end
 
   def destroy
-    host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
+	Puppet.debug "Detaching datastore from the host."
+	
+	begin
+		 host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
+	rescue Exception => excep
+		Puppet.err "Unable to perform the operation because the following exception occurred - "
+		Puppet.err excep.message
+	end
   end
 
   def type
