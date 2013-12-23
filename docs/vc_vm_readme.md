@@ -11,6 +11,7 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
 
 	- Create
 	- Destroy
+	- power_state
 
 # -------------------------------------------------------------------------
 # Functionality Description
@@ -27,6 +28,8 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
   2. Destroy
      This method removes the Virtual Machine from the vCenter environment. The VM is deleted from the disk.
 
+  3. power_state
+     This method allows user to powerOn, powerOff, reset or suspend the virtual machine.
 
 # -------------------------------------------------------------------------
 # Summary of parameters.
@@ -39,6 +42,9 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
     If the value of ensure parameter is set to absent, the Destroy method is called by the RA.
 
     datacenter: (Required) Name of DataCenter.
+
+    power_state: (Optional) This parameter can be used to powerOn, powerOff, reset or suspend the virtual machine.
+    Possible values: poweredOff, poweredOn, suspended or reset.
 
     goldvm: Name of gold Virtual Machine.
     
