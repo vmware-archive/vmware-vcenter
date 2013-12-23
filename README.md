@@ -105,4 +105,9 @@ Following functionality related readme's are kept at docs folder.
    
 4) esx_rescanallhba_readme.md: This readme file talks about following host system functionalities.
    a) Re-scan ESXi HBAs for new storage devices. 
+   
+5) vm_snapshot_readme.md: This readme file talks about following VMWare functionalities.
+   a) Creates a new snapshot of the Virtual Machine. 
+   b) Reverts the virtual machine to the current snapshot.
+   c) Deletes the snapshot of the virtual machine.
 
