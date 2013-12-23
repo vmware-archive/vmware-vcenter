@@ -8,8 +8,8 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 #  Supported Functionality
 # --------------------------------------------------------------------------
 
-	- Create
-	- Destroy
+            - Create
+            - Destroy
 
 # -------------------------------------------------------------------------
 # Functionality Description
@@ -17,38 +17,34 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 
 
   1. Create
-	 The Create method adds a host to a Datacenter or cluster in a vCenter. The prerequisite for this operation is that host should not already be present in the vCenter. 
+            The Create method adds a host to a datacenter or a cluster in a vCenter. However, it is a pre-requisite that the host must not already be present in the vCenter. 
 
    
   2. Destroy
-     The Destroy method removes the host from Datacenter or cluster in a vCenter. While removing the host from a cluster, the host should be in the maintenance mode. 
+     The Destroy method removes the host from Datacenter or cluster in a vCenter. While removing the host from a cluster, the host must be in the maintenance mode. 
 
 
 # -------------------------------------------------------------------------
-# Summary of parameters.
+# Summary of Parameters.
 # -------------------------------------------------------------------------
-
-	ensure: (Required) This parameter is required to call the Create or Destroy method.
-    Possible values: present/absent
+   ensure: (Required) This parameter is required to call the Create or Destroy method.
+    Possible values: Present/Absent
     If the value of the ensure parameter is set to present, the module calls the Create method.
     If the value of the ensure parameter is set to absent, the module calls the Destroy method.
 
-    name: (Required) This parameter defines the name or IP address of the host that needs to be added or removed from the Datacenter/Cluster in vCenter. If the user does not provide this parameter explicitly in manifest, then the title of the type 'vc_host' will be used instead. 
-    
-    username: (Required) This parameter defines the username as part of the credentials of the host.
-	
-	password: (Required) This parameter defines the password as part of the credentials of the host.
-	
-	path: (Required) This parameter defines the path where the host needs to be added. The path should be an absolute path. If the path is of a Datacenter, then the host will be added to the Datacenter. Or if the path is of a Cluster, then the host will be added to the respective Cluster. 
-	
-	sslthumbprint: (Optional) This parameter defines the SSL thumbprint of the host.
-	
-	secure: (Optional) This parameter defines whether the vCenter Server should require SSL thumbprint verification of host or not. 
-    Possible values: true/false
-	Default: false
-	
+    name: (Required) This parameter defines the name or IP address of the host that needs to be added or removed from the datacenter/cluster in the vCenter. If this parameter is not provided explicitly in the manifest file, then the title of the type 'vc_host' is used.    
+    username: (Required) This parameter defines the username as a part of the credentials of the host.            
+            password: (Required) This parameter defines the password as a part of the credentials of the host.            
+            path: (Required) This parameter defines the path where the host needs to be added. The path should be an absolute path. If it is a datacenter path, then the host is added to the datacenter. If it is a cluster path, then the host is added to the respective Cluster. 
+            
+            sslthumbprint: (Optional) This parameter defines the SSL thumbprint of the host.
+            
+            secure: (Optional) This parameter defines whether or not the vCenter server must require SSL thumbprint verification of host. 
+    Possible values: True/False
+            Default: False
+            
 # -------------------------------------------------------------------------
-# Parameter signature 
+# Parameter Signature 
 # -------------------------------------------------------------------------
 
 
@@ -61,7 +57,7 @@ transport { 'vcenter':
 
 #Provide any host property
 vc_host { $esx1['hostname']:
-  ensure	=> present,
+  ensure           => present,
   username  => $esx1['username'],  
   password  => $esx1['password'],  
   path      => $datacenter1['path'],
@@ -79,4 +75,4 @@ vc_host { $esx1['hostname']:
 
 #-------------------------------------------------------------------------------------------------------------------------
 # End
-#-------------------------------------------------------------------------------------------------------------------------	
+#-------------------------------------------------------------------------------------------------------------------------   
