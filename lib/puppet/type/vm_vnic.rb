@@ -47,7 +47,7 @@ Puppet::Type.newtype(:vm_vnic) do
     end
   end
 
-  newparam(:nic_type ) do
+  newparam(:nic_type) do
     desc "vNIC type to be created."
     newvalues(:"VMXNET 2", :E1000, :"VMXNET 3")
     defaultto(:E1000)
