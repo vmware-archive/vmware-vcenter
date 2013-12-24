@@ -9,9 +9,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     flag = 0
     begin
       dc_name = resource[:datacenter]
+      goldvm_dc_name = resource[:goldvm_datacenter]
       vm_name = resource[:name]
-      dc = vim.serviceInstance.find_datacenter(dc_name)
-      virtualmachine_obj = dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
+      source_dc = vim.serviceInstance.find_datacenter(goldvm_dc_name)
+      virtualmachine_obj = source_dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
       goldvm_adapter = virtualmachine_obj.summary.config.numEthernetCards
       # Calling createrelocate_spec method
       relocate_spec = createrelocate_spec
@@ -40,7 +41,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
         :template => false, :config => config_spec)
       end
 
-      virtualmachine_obj.CloneVM_Task( :folder => virtualmachine_obj.parent, :name => vm_name ,
+      dc = vim.serviceInstance.find_datacenter(dc_name)
+      virtualmachine_obj.CloneVM_Task( :folder => dc.vmFolder, :name => vm_name ,
       :spec => spec).wait_for_completion
     rescue Exception => exc
       flag = 1
@@ -121,7 +123,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     win_timezone = resource[:windowstimezone]
     autologon = resource[:autologon]
-	autologoncount = resource[:autologoncount]
+    autologoncount = resource[:autologoncount]
 
     if windows_adminpassword.strip.length > 0
       admin_password =  RbVmomi::VIM.CustomizationPassword(:plainText=>true, :value=> windows_adminpassword )
@@ -136,16 +138,16 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     :fullName => resource[:windowsguestowner], :orgName => resource[:windowsguestorgnization],
     :productId => product_id)
 
-	customlicensedatamode = resource[:customizationlicensedatamode]
+    customlicensedatamode = resource[:customizationlicensedatamode]
     customlicense_datamode = RbVmomi::VIM.CustomizationLicenseDataMode(customlicensedatamode);
 
-	if customlicensedatamode.eql?('perServer')
-	   autousers = resource[:autousers]
-    licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode,
-       :autoUsers => autousers)	
-	else
-       licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode)
-	end
+    if customlicensedatamode.eql?('perServer')
+      autousers = resource[:autousers]
+      licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode,
+      :autoUsers => autousers)
+    else
+      licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode)
+    end
 
     cust_prep = RbVmomi::VIM.CustomizationSysprep(:guiUnattended => cust_gui_unattended,
     :identification => cust_identification, :licenseFilePrintData => licensefile_printdata,
@@ -378,22 +380,22 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
       # Perform operations if desired power_state=:poweredOff
       if value == :poweredOff
-          if ((vm.guest.toolsStatus != 'toolsNotInstalled') or (vm.guest.toolsStatus != 'toolsNotRunning')) and resource[:graceful_shutdown] == :true
-            vm.ShutdownGuest
-            # Since vm.ShutdownGuest doesn't return a task we need to poll the VM powerstate before returning.
-            attempt = 5  # let's check 5 times (1 min 15 seconds) before we forcibly poweroff the VM.
-            while power_state != "poweredOff" and attempt > 0
-              sleep 15
-              attempt -= 1
-            end
-            vm.PowerOffVM_Task.wait_for_completion if power_state != "poweredOff"
-          else
-              vm.PowerOffVM_Task.wait_for_completion
+        if ((vm.guest.toolsStatus != 'toolsNotInstalled') or (vm.guest.toolsStatus != 'toolsNotRunning')) and resource[:graceful_shutdown] == :true
+          vm.ShutdownGuest
+          # Since vm.ShutdownGuest doesn't return a task we need to poll the VM powerstate before returning.
+          attempt = 5  # let's check 5 times (1 min 15 seconds) before we forcibly poweroff the VM.
+          while power_state != "poweredOff" and attempt > 0
+            sleep 15
+            attempt -= 1
           end
-      # Perform operations if desired power_state=:poweredOn
+          vm.PowerOffVM_Task.wait_for_completion if power_state != "poweredOff"
+        else
+          vm.PowerOffVM_Task.wait_for_completion
+        end
+        # Perform operations if desired power_state=:poweredOn
       elsif value == :poweredOn
-          vm.PowerOnVM_Task.wait_for_completion
-      # Perform operations if desired power_state=:suspend
+        vm.PowerOnVM_Task.wait_for_completion
+        # Perform operations if desired power_state=:suspend
       elsif value == :suspended
         if power_state == "poweredOn"
           vm.SuspendVM_Task.wait_for_completion
@@ -402,7 +404,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
         end
         # Perform operations if desired power_state=:reset
       elsif value == :reset
-        if power_state !~ /poweredOff|suspended/i 
+        if power_state !~ /poweredOff|suspended/i
           vm.ResetVM_Task.wait_for_completion
         else
           raise Puppet::Error, "Unable to reset the virtual machine because the virtual machine is powered Off or suspended. Make sure that the virtual machine is powered On."

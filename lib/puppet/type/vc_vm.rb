@@ -28,7 +28,7 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:goldvm ) do
     desc "The gold virtual machine name."
-	validate do |value|
+    validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid gold vm name."
       end
@@ -43,9 +43,21 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:datacenter) do
     desc "Name of the datacenter."
-	validate do |value|
+    validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid datacenter name."
+      end
+    end
+  end
+
+  newparam(:goldvm_datacenter) do
+    desc "Name of the gold vm datacenter."
+    defaultto('')
+    munge do |value|
+      if value.strip.length == 0
+        value = @resource[:datacenter]
+      else
+        value
       end
     end
   end
@@ -106,8 +118,8 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:guesttype) do
     desc "Name of Guest OS type of Clone VM."
-	newvalues(:windows, :linux)
-	defaultto(:windows)
+    newvalues(:windows, :linux)
+    defaultto(:windows)
   end
 
   newparam(:guesthostname) do
@@ -225,21 +237,21 @@ Puppet::Type.newtype(:vc_vm) do
       end
     end
   end
-  
+
   newparam(:customizationlicensedatamode ) do
     desc "Flag for guest customization license data mode."
     newvalues(:perSeat, :perServer)
     defaultto(:perServer)
   end
-  
+
   newparam(:autologon ) do
     desc "Flag to determine whether or not the machine automatically logs on as Administrator."
     newvalues(:true, :false)
     defaultto(:true)
   end
-  
+
   newparam(:autologoncount ) do
-    desc "If the AutoLogon flag is set,	then 
+    desc "If the AutoLogon flag is set,	then
 	the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator."
     dvalue = '1'
     defaultto(dvalue)
@@ -251,9 +263,9 @@ Puppet::Type.newtype(:vc_vm) do
       end
     end
   end
-  
+
   newparam(:autousers ) do
-    desc "This key is valid only if customizationlicensedatamode = perServer. 
+    desc "This key is valid only if customizationlicensedatamode = perServer.
 	The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. "
     dvalue = '1'
     defaultto(dvalue)
