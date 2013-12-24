@@ -8,7 +8,7 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
     # TODO: Create Port Group Method.
     	Puppet.debug "Entered in Create PortGroup."
 		begin
-    		create_port_group
+    		create_port_group 
 		rescue Exception => excep
 			Puppet.err excep.message
 		end
@@ -33,7 +33,9 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 		Puppet.debug "Retrieving vlan Id associated to the given port group"
 		begin
     		@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    		raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+		if @host.nil?
+    		raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+		end
 		    @networksystem=@host.configManager.networkSystem
     		@pg = @networksystem.networkInfo.portgroup
 	    	for portg in (@pg) do
@@ -52,12 +54,17 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 		Puppet.debug "Updating vlan Id associated to the given port group"
 		begin
 	    	@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-	    	raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+			if @host.nil?
+    			raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+			end
     		@networksystem=@host.configManager.networkSystem
 	    	@pg = @networksystem.networkInfo.portgroup
 	    	for portg in (@pg) do
     	    	availablepgs = portg.spec.name
 	    	    if (availablepgs == resource[:name])
+			if (find_vswitch == false)
+				raise Puppet::Error, "Please provide valid vswitch"
+			end	
 		    	    hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:name], :policy => portg.spec.policy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitchname])
         	    	@networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => hostportgroupspec)
 				end
@@ -90,7 +97,9 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
     	Puppet.debug "Retrieving ip configuration of given port group"
 		begin
         	@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-	        raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+			if @host.nil?
+    			raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+			end
     	    @networksystem=@host.configManager.networkSystem
         	vnics=@networksystem.networkInfo.vnic
 
@@ -129,7 +138,9 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
     	Puppet.debug "Updating ip configuration of given port group"
 		begin
         	@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-	        raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+			if @host.nil?
+    			raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+			end
     	    @networksystem=@host.configManager.networkSystem
         	vnics=@networksystem.networkInfo.vnic
         	@vmotionsystem = @host.configManager.vmotionSystem
@@ -141,6 +152,11 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 					@vmotionsystem.SelectVnic(:device => vnicdevice)
 
 	            	if (resource[:ipconfig] == :manual)
+						if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
+					    	raise Puppet::Error, "Please provide ipaddress and subnet mask"
+						elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
+							raise Puppet::Error, "Please provide valid ipaddress and subnet mask"
+						end
                     	ipconfiguration=RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
 						Puppet.debug "going for manual settings"
 	                    @vmotionsystem.UpdateIpConfig(:ipConfig => ipconfiguration)
@@ -163,7 +179,10 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
     	Puppet.debug "Retrieving the traffic shaping policy of given port group."
 		begin
     		@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-		    raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+			if @host.nil?
+    			raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+			end
+		    #raise Puppet:Error, "No Host in datacenter #{walk_dc}" unless @host
 		    @networksystem=@host.configManager.networkSystem
 		    @pg = @networksystem.networkInfo.portgroup
 		    for portg in (@pg) do
@@ -199,7 +218,9 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 	def walk_dc(path=resource[:path])
 		begin
 	    @datacenter = walk(path, RbVmomi::VIM::Datacenter)
-    		raise Puppet::Error.new( "No datacenter in path: #{path}") unless @datacenter
+			if @datacenter.nil?
+    			raise Puppet::Error, "No datacenter  in path: #{path}" unless @datacenter
+			end
     		@datacenter
 	    rescue Exception => excep
     		Puppet.err excep.message
@@ -210,7 +231,9 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 		Puppet.debug "Entering find_port_group"
 		begin
         	@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-	    	raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+			if @host.nil?
+    			raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+			end
     	    @networksystem=@host.configManager.networkSystem
         	@pg = @networksystem.networkInfo.portgroup
 	        for portg in (@pg) do
@@ -228,7 +251,9 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 
 	def traffic_shaping
         @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    	raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+		if @host.nil?
+    		raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+		end
         @networksystem=@host.configManager.networkSystem
         @pg = @networksystem.networkInfo.portgroup
         for portg in (@pg) do
@@ -244,11 +269,17 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
         		    hostnetworktrafficshapingpolicy =  RbVmomi::VIM.HostNetworkTrafficShapingPolicy(:averageBandwidth => avgbandwidth, :burstSize => burstsize, :enabled => enabled, :peakBandwidth => peakbandwidth)
 
             		hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
+					if (find_vswitch == false)
+						raise Puppet::Error, "Please provide valid vswitch"
+					end	
     	            hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:name], :policy => hostnetworkpolicy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitchname])
         	        @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => hostportgroupspec)
 
 		        elsif ( resource[:traffic_shaping_policy] == :Disabled)
         		    hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy()
+					if (find_vswitch == false)
+						raise Puppet::Error, "Please provide valid vswitch"
+					end	
                 	hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:name], :policy => hostnetworkpolicy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitchname])
 	                @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => hostportgroupspec)
             	end
@@ -257,12 +288,32 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
         return true
 	end
 
+  #find vswitch
+  def find_vswitch
+    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    networksystem=host.configManager.networkSystem
+    vswitches = networksystem.networkInfo.vswitch
+
+    for vswitch in (vswitches) do
+      availablevswitch = vswitch.name
+      if (availablevswitch == resource[:vswitchname])
+        return true
+      end
+    end
+    #return false if vswitch not found
+    return false
+  end
+
 	def create_port_group
 		Puppet.debug "Entering Create Port Group"
-		begin
         	@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-	        raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+			if @host.nil?
+    			raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+			end
         	@networksystem=@host.configManager.networkSystem
+			if (find_vswitch == false)
+				raise Puppet::Error, "Please provide valid vswitch"
+			end	
 	        hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy()
         	hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => name, :policy => hostnetworkpolicy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitchname])
 
@@ -286,17 +337,16 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 				end
 
 				setupvmotion
-			Puppet.info "Port Group Created"
 			end
-	    rescue Exception => excep
-    		Puppet.err excep.message
-	    end
+			Puppet.notice "Port Group Created"
 	end
 
 	def setupvmotion
 		Puppet.debug "Inside setup vmotion"
 		@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    	raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+		if @host.nil?
+    		raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+		end
 		@networksystem=@host.configManager.networkSystem
     	@vmotionsystem = @host.configManager.vmotionSystem
 	    vnics=@networksystem.networkInfo.vnic
@@ -319,11 +369,13 @@ Puppet::Type.type(:vc_portgroup).provide(:vc_portgroup, :parent => Puppet::Provi
 	def remove_port_group
         Puppet.debug "Inside remove_port_group"
         @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    	raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless @host
+		if @host.nil?
+    		raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+		end
         @networksystem=@host.configManager.networkSystem
         @networksystem.RemovePortGroup(:pgName => resource[:name])
 
-        Puppet.info "removed port group"
+        Puppet.notice "removed port group"
 	end
 end
 

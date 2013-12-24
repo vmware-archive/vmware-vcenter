@@ -78,20 +78,20 @@ Puppet::Type.newtype(:vc_portgroup) do
 
   newparam(:ipaddress) do
   desc "ipAddress of kernel port group"  
-  validate do |value|
-  if value.strip.length == 0
-  	raise ArgumentError, "Invalid ipaddress of portgroup."
-  end
-  end
+  #validate do |value|
+  #if value.strip.length == 0
+  #	raise ArgumentError, "Invalid ipaddress of portgroup."
+  #end
+  #end
   end
 
   newparam (:subnetmask) do
   desc "subnet mask of kernel port group"
-  validate do |value|
-  if value.strip.length == 0
-  	raise ArgumentError, "Invalid subnet mask of portgroup."
-  end
-  end
+  #validate do |value|
+  #if value.strip.length == 0
+  #	raise ArgumentError, "Invalid subnet mask of portgroup."
+  #end
+  #end
   end
 
   newparam(:path) do
