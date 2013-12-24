@@ -7,11 +7,12 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-vm_vnic { 'name'
-  name => "Network Adaptor 1",
+vm_vnic { 'name':
+  name => 'Network Adaptor 1',
   ensure => present,
-  vm_name => "testVm",
-  nic_type => "E1000",
+  vm_name => 'testVm',
+  portgroup => 'PortgroupName',
+  nic_type => 'E1000',
   datacenter => "DatacenterName",
   transport => Transport['vcenter'],
 }
