@@ -20,7 +20,7 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
      The Create method adds a host to a datacenter or a cluster in a vCenter. However, it is a pre-requisite that the host must not already be present in the vCenter. 
    
   2. Destroy
-     The Destroy method removes the host from Datacenter or cluster in a vCenter. While removing the host from a cluster, the host must be in the maintenance mode. 
+     The Destroy method removes the host from datacenter or cluster in a vCenter. While removing the host from a cluster, the host must be in the maintenance mode. 
 
 # -------------------------------------------------------------------------
 # Summary of Parameters.
