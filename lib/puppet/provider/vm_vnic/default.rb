@@ -10,7 +10,7 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
       spec = RbVmomi::VIM.VirtualMachineConfigSpec({:deviceChange => [{
         :operation => :add,
         :device => device_spec}]})
-	  Puppet.notice "Adding vnic " + resource[:name]
+	  Puppet.notice "Adding vnic "
       vm.ReconfigVM_Task(:spec => spec).wait_for_completion
     rescue Exception => exc
       Puppet.err(exc.message)
