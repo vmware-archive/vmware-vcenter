@@ -37,8 +37,9 @@
            If the value of the ensure parameter is set to present, the module calls the Create method.
            If the value of the ensure parameter is set to absent, the module calls the Destroy method.
  
-  name: (Required) This parameter defines the name of the virtual NIC. The title of the type 'vm_vnic' is used,
-         for example: Network Adaptor 1, Network Adaptor 2 etc.
+  name:   (Optional, In case of ensure=present, Required, In case of ensure=absent)
+           This parameter defines the name of the virtual NIC. The title of the type 'vm_vnic' is used,
+           for example: Network Adaptor 1, Network Adaptor 2 etc.
 
   portgroup: (Required) This parameter defines the portgroup that is to be attached with the vNIC.
 
