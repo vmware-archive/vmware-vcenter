@@ -18,7 +18,7 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
     
     asTemplate = resource[:astemplate]
     if asTemplate.to_s == 'true'   
-      Puppet.info "Registering virtual machine as a template."	
+      Puppet.notice "Registering virtual machine as a template."	
       @dc.vmFolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
                                         :asTemplate => asTemplate, :host => host_view).wait_for_completion  
     else
