@@ -78,7 +78,7 @@ Puppet::Type.newtype(:esx_portgroup) do
   
   newproperty (:ipsettings) do
     desc "IP settings on the VMkernel port group."
-    newvalues(:automatic, :manual)
+    newvalues(:dhcp, :static)
   end
 
   newparam(:ipaddress) do

@@ -99,7 +99,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
         	for vnic in (vnics)
 	            if (vnic.portgroup && resource[:name] == vnic.portgroup)
-	                if (resource[:ipsettings] == :manual)
+	                if (resource[:ipsettings] == :static)
     	                ipaddressonportgroup = vnic.spec.ip.ipAddress
         	            subnetmaskonportgroup = vnic.spec.ip.subnetMask
             	        Puppet.debug "ipaddressonportgroup=#{ipaddressonportgroup}, subnetMask=#{subnetmaskonportgroup}"
@@ -109,7 +109,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         				    return "manual"
 							#return same as manifest file i.e  manual because the port group has same values hence no need to go into setter
             			end
-                	elsif (resource[:ipsettings] == :automatic)
+                	elsif (resource[:ipsettings] == :dhcp)
 	         			dhcpflagonportgroup = vnic.spec.ip.dhcp
     	       			Puppet.debug "dhcpflagonportgroup=#{dhcpflagonportgroup}"
         	    		if (dhcpflagonportgroup == false)
@@ -142,17 +142,17 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 					vnicdevice=vnic.device
 					@vmotionsystem.SelectVnic(:device => vnicdevice)
 
-	            	if (resource[:ipsettings] == :manual)
+	            	if (resource[:ipsettings] == :static)
 						if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
-					    	raise Puppet::Error, "Please provide ipaddress and subnet mask"
+					    	raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
 						elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
-							raise Puppet::Error, "Please provide valid ipaddress and subnet mask"
+							raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
 						end
                     	ipconfiguration=RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
-						Puppet.debug "going for manual settings"
+						Puppet.debug "Setting static IP on portgroups."
 	                    @vmotionsystem.UpdateIpConfig(:ipConfig => ipconfiguration)
-    	            elsif (resource[:ipsettings] == :automatic)
-   	    	        	Puppet.debug "coming in automatic setting"
+    	            elsif (resource[:ipsettings] == :dhcp)
+   	    	        	Puppet.debug "Setting DHCP on portgroup."
 						ipconfiguration = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
                     	@vmotionsystem.UpdateIpConfig(:ipConfig => ipconfiguration)
 	        		end
@@ -318,11 +318,11 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			traffic_shaping
 			if ( resource[:type] == "VMkernel" )
 				Puppet.debug "Entering type VMkernel"
-				if (resource[:ipsettings] == :manual)
+				if (resource[:ipsettings] == :static)
 					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
 					hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
 					@networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)	
-				elsif (resource[:ipsettings] == :automatic)
+				elsif (resource[:ipsettings] == :dhcp)
 					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
 					hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
 					@networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)	
