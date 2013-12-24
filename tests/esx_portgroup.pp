@@ -13,7 +13,7 @@ esx_portgroup { 'name':
   ensure => present,
   type => "VMkernel",
   vmotion => "Disabled",
-  ipsettings => "manual",
+  ipsettings => "static",
   ipaddress => "172.16.12.16",
   subnetmask => "255.255.0.0",
   traffic_shaping_policy => "Disabled",
