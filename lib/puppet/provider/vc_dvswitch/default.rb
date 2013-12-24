@@ -128,11 +128,12 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     if type == VIM::HostSystem
       case scope
       when :datacenter
-      list = vim.serviceInstance.content.
+        list = vim.serviceInstance.content.
           dvSwitchManager.QueryCompatibleHostForNewDvs(
             :container => datacenter,
             :recursive => true
           )
+        raise 'No ESX hosts compatible for DVS found' if list.size == 0
       else
         fail "#{myfile}: scope \"#{scope}\" unimplemented for #{type}"
       end
@@ -163,7 +164,8 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     end
 
     if list
-      ref = list.find{|obj| obj.name == name}._ref
+      obj = list.find{|o| o.name == name}
+      obj._ref unless obj.nil?
     else
       nil
     end
