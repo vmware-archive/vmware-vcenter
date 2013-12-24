@@ -33,9 +33,9 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 
     name: (Required) This parameter defines the name or IP address of the host to which a datastore needs to be added. It also defines the name of the datastore. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_datastore' is used.        
     
-	host: (Required) This parameter defines name or IP address of the host to which a datastore needs to be added. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_datastore' is used or the 'name' parameter.       
+	host: (Required) This parameter defines name or IP address of the host to which a datastore is to be added. If this parameter is not provided explicitly in the manifest file, then either the title of the type 'esx_datastore' is used or the 'name' parameter is used.       
     
-	datastore: (Required) This parameter defines the name of the datastore. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_datastore' is used or the 'name' parameter.
+    datastore: (Required) This parameter defines the name of the datastore. If this parameter is not provided explicitly in the manifest file, then either the title of the type 'esx_datastore' is used or the 'name' parameter is used.
 
 	type: (Required) This parameter defines the datastore type.
     Possible values: NFS / CIFS / VMFS

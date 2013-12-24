@@ -8,7 +8,7 @@ transport { 'vcenter':
 }
 
 vm_vnic { 'name':
-  name => 'Network Adaptor 1',
+  name => 'Network adapter 1',
   ensure => present,
   vm_name => 'testVm',
   portgroup => 'PortgroupName',
