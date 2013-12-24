@@ -6,24 +6,21 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
   @doc = "Registers and removes vCenter Virtual Machines to/from inventory"
   def create
     Puppet.debug "******Inside create*************."
-    Puppet.debug "Path: '"+resource[:vmpath_ondatastore]+"'."
-    Puppet.debug "host: '"+resource[:hostip]+"'."
-    Puppet.debug "name: '"+resource[:name]+"'."
-    
+        
     begin           
     host_view = vim.searchIndex.FindByIp(:datacenter => @dc , :ip => resource[:hostip], :vmSearch => false)      
     if !host_view
       raise Puppet::Error, "Unable to find the host '"+hostip+"'because the host is either invalid or does not exist."
     end
     
-    asTemplate = resource[:astemplate]
-    if asTemplate.to_s == 'true'   
-      Puppet.notice "Registering virtual machine as a template."	
-      @dc.vmFolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
-                                        :asTemplate => asTemplate, :host => host_view).wait_for_completion  
+    astemplate = resource[:astemplate]
+    if astemplate.to_s == 'true'   
+      Puppet.notice "Registering virtual machine as a template."        
+      @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
+                                        :asTemplate => astemplate, :host => host_view).wait_for_completion  
     else
-	    @dc.vmFolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
-                                        :asTemplate => asTemplate, :host => host_view,
+	    @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
+                                        :asTemplate => astemplate, :host => host_view,
                                         :pool =>host_view.parent.resourcePool ).wait_for_completion
     end       
        
@@ -36,9 +33,7 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
 
   def destroy
     Puppet.debug "******Inside destroy*************."
-    Puppet.debug "datacenter: '"+resource[:datacenter]+"'."
-    Puppet.debug "vmname: '"+resource[:name]+"'."
-	
+    	
     begin    
     if !@vmObj.config.template # check power state only if virtual machine is registered as a vm(not a template)
       vmpower_state = @vmObj.runtime.powerState
@@ -66,6 +61,7 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
   Puppet.debug "******Inside vm*************."
     begin
       @dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+      @vmfolder = @dc.vmFolder
       @vmObj = @dc.find_vm(resource[:name])        
     rescue Exception => excep
       Puppet.err excep.message

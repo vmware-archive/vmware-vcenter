@@ -8,10 +8,10 @@ $vcenter = {
 
 
 $newVM = {
-  'ensure'                         => 'absent',
-  'name'                         => 'test_pankaj',  
-  'hostip'                           => '172.16.100.56',
-  'datacenter'                     => 'DDCQA',  
-  'vmpath_ondatastore' => '[gale-fsr] test_pankaj/test_pankaj.vmtx',
-  'astemplate' => 'false',
+  'ensure'             => 'absent',
+  'name'               => 'test_pankaj',  
+  'hostip'             => '172.16.100.56',
+  'datacenter'         => 'DDCQA',  
+  'vmpath_ondatastore' => '[gale-fsr] testvm_pankaj/testvm_pankaj.vmx',
+  'astemplate'         => 'false',
 }
