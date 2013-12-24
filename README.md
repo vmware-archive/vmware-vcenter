@@ -115,6 +115,10 @@ Following functionality related readme's are kept at docs folder.
    a) Migrating a VMware Virtual Machine host to another host.
    b) Migrating a VMware Virtual Machine's storage to another datastore.
    c) Migrating a VMware Virtual Machine host to another host and moves its storage to another datastore.
+   
+7) vc_vm_register_readme.md: This readme file describes following fucntionality.
+   a) Registering virtual machine to inventory.
+   b) Removing virtual machine from inventory.
 
 
 
