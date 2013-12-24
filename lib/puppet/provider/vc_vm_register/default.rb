@@ -3,7 +3,7 @@ require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
 Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Registers and unregisters vCenter Virtual Machines."
+  @doc = "Registers and removes vCenter Virtual Machines to/from inventory"
   def create
     Puppet.debug "******Inside create*************."
     Puppet.debug "Path: '"+resource[:vmpath_ondatastore]+"'."
@@ -17,11 +17,12 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
     end
     
     asTemplate = resource[:astemplate]
-    if asTemplate.to_s == 'true'        
+    if asTemplate.to_s == 'true'   
+      Puppet.info "Registering virtual machine as a template."	
       @dc.vmFolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
                                         :asTemplate => asTemplate, :host => host_view).wait_for_completion  
     else
-       @dc.vmFolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
+	    @dc.vmFolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
                                         :asTemplate => asTemplate, :host => host_view,
                                         :pool =>host_view.parent.resourcePool ).wait_for_completion
     end       
@@ -37,20 +38,19 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
     Puppet.debug "******Inside destroy*************."
     Puppet.debug "datacenter: '"+resource[:datacenter]+"'."
     Puppet.debug "vmname: '"+resource[:name]+"'."
-    begin
-    puts "vmobj:#{@vmObj}"
-    if !@vmObj.config.template
+	
+    begin    
+    if !@vmObj.config.template # check power state only if virtual machine is registered as a vm(not a template)
       vmpower_state = @vmObj.runtime.powerState
-      puts "vmpower_state: #{@vmpower_state}"
+      Puppet.debug "vmpower_state: #{@vmpower_state}"
       if vmpower_state.eql?('poweredOn')
-        Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
+        Puppet.notice "Virtual Machine is in powered On state, need to power it Off before removing from inventory."
         @vmObj.PowerOffVM_Task.wait_for_completion
       end
-    end
-    
+    end    
     @vmObj.UnregisterVM 
     rescue Exception => excep
-      Puppet.err "Unable to unregister virtual machine because the following exception occurred."
+      Puppet.err "Unable to remove virtual machine from inventory because the following exception occurred."
       Puppet.err excep.message
     end 
    
