@@ -8,9 +8,8 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-# This resource is not ready for testing:
 esx_portgroup { 'name':
-  name => "test25",
+  name => "testVM",
   ensure => present,
   type => "VMkernel",
   vmotion => "Disabled",
