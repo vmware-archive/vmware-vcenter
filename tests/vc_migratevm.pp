@@ -1,14 +1,9 @@
-# Copyright (C) 2013 VMware, Inc.
 import 'data.pp'
 
 $migrate_vm = {
     vmname => 'testVM',
-    #target_datastore => 'gale-fsr' ,
     target_datastore => 'datastore3' ,
-    #target_host => '172.16.100.56' ,
-    #target_host => '172.16.103.189' ,
-    #target_host => '172.16.103.186' ,
-    #target => '172.16.103.186, datastore1',
+    target_host => '172.16.100.56' ,
     target => '172.16.100.56, gale-fsr',
     datacenter => 'DDCQA',
    

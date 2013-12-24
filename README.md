@@ -111,3 +111,10 @@ Following functionality related readme's are kept at docs folder.
    b) Reverts the virtual machine to the current snapshot.
    c) Deletes the snapshot of the virtual machine.
 
+6) vc_migratevm_readme.md: This readme file talks about following migrate vm functionalities.
+   a) Migrating a VMware Virtual Machine host to another host.
+   b) Migrating a VMware Virtual Machine's storage to another datastore.
+   c) Migrating a VMware Virtual Machine host to another host and moves its storage to another datastore.
+
+
+
