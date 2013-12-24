@@ -99,7 +99,7 @@ Following functionality related readme's are kept at docs folder.
    a) Switches the host in to maintenance mode.
    b) Gets the host out of the maintenance mode.
     
-3) vc_host_readme.md: This readme file talks about following host system functionalities.
+3) vc_host_readme.md: This readme file describes following host system functionalities.
    a) Adding host to a Datacenter or a Cluster.
    b) Removing host from a Datacenter or a Cluster.
    
@@ -120,5 +120,7 @@ Following functionality related readme's are kept at docs folder.
    a) Registering virtual machine to inventory.
    b) Removing virtual machine from inventory.
 
-
+8) esx_datastore_readme.md: This readme file describes following host system functionalities.
+   a) Adding datastore to a host.
+   b) Deleting datastore from a host.
 
