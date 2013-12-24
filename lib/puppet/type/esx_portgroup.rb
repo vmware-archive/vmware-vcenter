@@ -13,10 +13,10 @@ Puppet::Type.newtype(:esx_portgroup) do
   end
 
   newparam(:name, :namevar => true) do
-    desc "vSwitch port group name."
+    desc "vSwitch portgroup name."
     validate do |value|
       if value.strip.length == 0
-        raise ArgumentError, "Invalid port group name."
+        raise ArgumentError, "Invalid vSwitch portgroup name."
       end
     end
 
