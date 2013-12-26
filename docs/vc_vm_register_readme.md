@@ -3,7 +3,7 @@
 # Access Mechanism 
 # --------------------------------------------------------------------------
 
-VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with vCenter.
+The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
 
 # --------------------------------------------------------------------------
 #  Supported Functionality
@@ -19,7 +19,7 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
 
 
   1. Create
-     This method registers the virtual machine to the inventory.
+     This method registers the virtual machine with the inventory.
 
    
   2. Destroy
@@ -27,30 +27,30 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
 
   
 # -------------------------------------------------------------------------
-# Summary of parameters.
+# Summary of Parameters.
 # -------------------------------------------------------------------------
 
    
     ensure: (Required) This parameter is required to call the Create or Destroy method.
-    Possible values: present/absent
+    Possible values: Present/Absent
     If the value of ensure parameter is set to present, the Create method is called.
     If the value of ensure parameter is set to absent, the Destroy method is called.
 	
-	name: (Required) While registering virtual machine this indicates name by which virtual machine is to be registered. 
-	      While removing virtual machine from inventory it indicates name of virtual machine which needs to be removed.
+	name: (Required) This parameter indicates the name by which the Virtual Machine is to be registered, while registering the Virtual Machine. However, while removing the Virtual Machine from the inventory, the "name" parameter indicates the name of the Virtual Machine that is to be removed.
 	
-	datacenter:(Required) Name of DataCenter.
+	datacenter:(Required) This parameter defines the name of Data Center.
 	
-	#To register virtual machine 		
-	hostip:(Required) IP address the target host on which the virtual machine will run.
-	astemplate:(Required) Flag to specify whether or not the virtual machine should be marked as a template.
-	vmpath_ondatastore:(Required) A datastore path to the virtual machine.  
+	#To register a Virtual Machine 
+		
+	hostip:(Required) This parameter defines the IP address of the target host on which the Virtual Machine will run.
+	astemplate:(Required) This parameter specifies a flag to specify whether or not the Virtual Machine must be marked as a template.
+	vmpath_ondatastore:(Required) This parameter describes a  datastore path to the Virtual Machine.  
 	
     
 
 
 # -------------------------------------------------------------------------
-# Parameter signature 
+# Parameter Signature 
 # -------------------------------------------------------------------------
 
 transport { 'vcenter':
@@ -74,10 +74,9 @@ vc_vm_register { $newVM['name']:
 # --------------------------------------------------------------------------
 # Usage
 # --------------------------------------------------------------------------
-   Examples can be referred in the test directory.
+   Refer to the examples in the test directory.
    
-   User can provide inputs in data_regsitervm.pp, and apply vc_vm_register.pp to register or remove virtual machine to/from inventory
-   e.g,
+  A user can provide inputs in data_regsitervm.pp, and apply the vc_vm_register.pp to register or remove the Virtual Machine to/from inventory, for example: 
    # puppet apply vc_vm_register.pp
 
 #-------------------------------------------------------------------------------------------------------------------------
