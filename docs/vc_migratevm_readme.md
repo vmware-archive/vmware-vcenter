@@ -33,7 +33,7 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
     
     datacenter: (Required) This parameter defines the name of the dataCenter.
 
-    vmname: (Required) This parameter defines the name of the new Virtual Machine.
+    name: (Required) This parameter defines the name of the new Virtual Machine.
     
     migratevm_host: This parameter calls the 'migratevm_host' functionality to migrate the Virtual Machine host to another specified host.
     Syntax: migratevm_datastore =>  '<target host name>'
