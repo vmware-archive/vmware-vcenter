@@ -29,7 +29,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
     # vlanid property getter method.
 	def vlanid
-		Puppet.debug "Retrieving vlan Id associated to the given portgroup."
+		Puppet.debug "Retrieving vlan Id associated to the specified portgroup."
 		begin
 			find_host
 		    @networksystem=@host.configManager.networkSystem
@@ -37,8 +37,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	    	for portg in (@pg) do
     	    	availablepgs = portg.spec.name
         		if (availablepgs == resource[:name])
-					vlanid=portg.spec.vlanId
-					Puppet.debug "#{vlanid}"
+					vlanid=portg.spec.vlanId					
 					return vlanid
 				end
 			end
@@ -49,7 +48,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	
 	# vlanid property setter method.
 	def vlanid=(value)
-		Puppet.debug "Updating vlan Id associated to the given portgroup."
+		Puppet.debug "Updating vlan Id associated to the specified portgroup."
 		begin
 			find_host
     		@networksystem=@host.configManager.networkSystem
@@ -71,7 +70,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
     # vmotion property getter method.
 	def vmotion
-		Puppet.debug "Retrieving vmotion status flag of given portgroup."
+		Puppet.debug "Retrieving vmotion status flag of specified portgroup."
 		begin
 			return "needtochange"
         rescue Exception => excep
@@ -81,7 +80,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
      # vmotion property setter method.
 	def vmotion=(value)
-		Puppet.debug "Updating vmotion status flag of given portgroup."
+		Puppet.debug "Updating vmotion status flag of specified portgroup."
 		begin
 		setupvmotion	
         rescue Exception => excep
@@ -91,7 +90,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
 	#ipsettings property getter method.
 	def ipsettings
-    	Puppet.debug "Retrieving ip configuration of given portgroup."
+    	Puppet.debug "Retrieving ip configuration of specified portgroup."
 		begin
 			find_host
     	    @networksystem=@host.configManager.networkSystem
@@ -102,7 +101,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	                if (resource[:ipsettings] == :static)
     	                ipaddressonportgroup = vnic.spec.ip.ipAddress
         	            subnetmaskonportgroup = vnic.spec.ip.subnetMask
-            	        Puppet.debug "ipaddressonportgroup=#{ipaddressonportgroup}, subnetMask=#{subnetmaskonportgroup}"
+            	        Puppet.debug "IP address on portgroup=#{ipaddressonportgroup}, subnetMask on port group=#{subnetmaskonportgroup}"
   				        if (ipaddressonportgroup != resource[:ipaddress] || subnetmaskonportgroup != resource[:subnetmask])
           					return "false"
 				        elsif  (ipaddressonportgroup == resource[:ipaddress] && subnetmaskonportgroup == resource[:subnetmask])
@@ -111,7 +110,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
             			end
                 	elsif (resource[:ipsettings] == :dhcp)
 	         			dhcpflagonportgroup = vnic.spec.ip.dhcp
-    	       			Puppet.debug "dhcpflagonportgroup=#{dhcpflagonportgroup}"
+    	       			Puppet.debug "dhcpflag on portgroup=#{dhcpflagonportgroup}"
         	    		if (dhcpflagonportgroup == false)
               				return "false"
             			elsif (dhcpflagonportgroup == true)
@@ -119,8 +118,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
             			end
                 	end
           		end
-      		end
-			Puppet.debug "coming falsely here"
+      		end			
 			return "false"
         rescue Exception => excep
             Puppet.err excep.message
@@ -129,7 +127,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
 	# ipsettings property setter method.
 	def ipsettings=(value)
-    	Puppet.debug "Updating ip configuration of given port group"
+    	Puppet.debug "Updating ip configuration of specified port group"
 		begin
 			find_host
     	    @networksystem=@host.configManager.networkSystem
@@ -167,7 +165,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
 	# Get the traffic shapping policy.
 	def traffic_shaping_policy
-    	Puppet.debug "Retrieving the traffic shaping policy of given port group."
+    	Puppet.debug "Retrieving the traffic shaping policy of specified port group."
 		begin
     		@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
 			find_host
@@ -180,7 +178,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 					avgbw = portg.computedPolicy.shapingPolicy.averageBandwidth
 					pkbw = portg.computedPolicy.shapingPolicy.peakBandwidth
 					burstsize = portg.computedPolicy.shapingPolicy.burstSize
-					Puppet.debug "existing portgroup ts enabled = #{enabled}"
+					Puppet.debug "traffic shaping on existing portgroup= #{enabled}"
 
 					if (resource[:traffic_shaping_policy] == :Enabled)
 					
@@ -206,7 +204,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   # Set the traffic shapping policy
 	def traffic_shaping_policy=(value)
-    	Puppet.debug "Updating the traffic shaping policy of given port group."
+    	Puppet.debug "Updating the traffic shaping policy of specified port group."
 		begin
 			traffic_shaping
     		return true
@@ -261,8 +259,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		            avgbandwidth = resource[:averagebandwidth].to_i * 1000	
         		    peakbandwidth =  resource[:peakbandwidth].to_i * 1000
 		            burstsize = resource[:burstsize].to_i * 1024
-        		    enabled = "true"
-		            Puppet.debug "#{avgbandwidth},#{peakbandwidth},#{burstsize}"
+        		    enabled = "true"		            
 
         		    hostnetworktrafficshapingpolicy =  RbVmomi::VIM.HostNetworkTrafficShapingPolicy(:averageBandwidth => avgbandwidth, :burstSize => burstsize, :enabled => enabled, :peakBandwidth => peakbandwidth)
 
@@ -334,18 +331,17 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
 				setupvmotion
 			end
-			Puppet.notice "Successfully created portGroup " + resource[:name]
+			Puppet.notice "Successfully created portgroup " + resource[:name]
 	end
 
     # Private method to enable/disable the vmotion.
 	def setupvmotion
-		Puppet.debug "Inside setup vmotion method."
+		Puppet.debug "Entering setup vmotion method."
 		find_host
 		@networksystem=@host.configManager.networkSystem
     	@vmotionsystem = @host.configManager.vmotionSystem
 	    vnics=@networksystem.networkInfo.vnic
 	
-		Puppet.debug resource[:vmotion]
 		if (resource[:vmotion] == :Enabled)
 		  	for vnic in (vnics)
         		if (vnic.portgroup && resource[:name] == vnic.portgroup)
