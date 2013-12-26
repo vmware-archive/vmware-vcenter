@@ -316,7 +316,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	        @networksystem.AddPortGroup(:portgrp => hostportgroupspec)
 
 			traffic_shaping
-			if ( resource[:type] == "VMkernel" )
+			if (resource[:type] == :VMkernel)
 				Puppet.debug "Entering type VMkernel"
 				if (resource[:ipsettings] == :static)
 					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
