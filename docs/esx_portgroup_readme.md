@@ -37,6 +37,7 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
 
   5. Set ip configuration of the port group
      This method sets the ip settings (dhcp/static) on the created port group.
+	 Note: To update the ip address it is required to set the vmotion flag to "Enabled".So it enabled it before updating the ipaddress to either dhcp/static.
 
 # -------------------------------------------------------------------------
 # Summary of Parameters.
@@ -53,7 +54,7 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
   host: (Required) Name/IPAddress of the host.
 
   path: (Required) Path to the host. 
-        For example, "/Datacenter-1/cluster-1").
+        For example, "/Datacenter-1/cluster-1".
         
   vswitch:(Required) Name of the vswitch.
         
