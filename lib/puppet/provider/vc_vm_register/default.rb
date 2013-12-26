@@ -15,7 +15,7 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
     
     astemplate = resource[:astemplate]
     if astemplate.to_s == 'true'   
-      Puppet.notice "Registering virtual machine as a template."        
+      Puppet.notice "The Virtual Machine is being registered as a template."        
       @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
                                         :asTemplate => astemplate, :host => host_view).wait_for_completion  
     else
@@ -39,7 +39,7 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
       vmpower_state = @vmObj.runtime.powerState
       Puppet.debug "vmpower_state: #{@vmpower_state}"
       if vmpower_state.eql?('poweredOn')
-        Puppet.notice "Virtual Machine is in powered On state, need to power it Off before removing from inventory."
+        Puppet.notice "The Virtual Machine is in Powered On state. It is required to Power Off the Virtual Machine before removing it from the inventory."
         @vmObj.PowerOffVM_Task.wait_for_completion
       end
     end    
