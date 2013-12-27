@@ -3,7 +3,7 @@
 # Access Mechanism 
 # --------------------------------------------------------------------------
 
-The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
+The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
 
 # --------------------------------------------------------------------------
 #  Supported Functionality
@@ -86,7 +86,7 @@ vc_vm_ovf { $ovf['vmname']:
 # --------------------------------------------------------------------------
   Refer to examples in the tests directory.
    
-   A user can provide the inputs in the data.pp, and apply the vc_migratevm.pp for various operations, for example: 
+   A user can provide the inputs in the data.pp, and apply the vc_vm_ovf.pp for various operations, for example: 
    # puppet apply vc_vm_ovf.pp
 
 #-------------------------------------------------------------------------------------------------------------------------
