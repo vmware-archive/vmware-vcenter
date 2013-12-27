@@ -109,7 +109,7 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
 
   def vm
     begin
-      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+      dc = vim.serviceInstance.find_datacenter(resource[:datacenter]) or  raise Puppet::Error, "Unable to find the datacenter because the dataceneter does not exist."
       @vmObj ||= dc.find_vm(resource[:vm_name]) or raise Puppet::Error, "Unable to find the Virtual Machine because the Virtual Machine does not exist."
     rescue Exception => excep
       Puppet.err excep.message
