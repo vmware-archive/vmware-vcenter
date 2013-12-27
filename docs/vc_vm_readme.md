@@ -38,8 +38,8 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
    
     ensure: (Required) This parameter is required to call the Create or Destroy method.
     Possible values: present/absent
-    If the value of ensure parameter is set to present, the RA calls the Create method.
-    If the value of ensure parameter is set to absent, the RA calls the Destroy method.
+    If the value of ensure parameter is set to present, the module calls the Create method.
+    If the value of ensure parameter is set to absent, the module calls the Destroy method.
 
     datacenter: (Required) This parameter defines the name of the datacenter.
 
