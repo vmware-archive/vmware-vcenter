@@ -3,7 +3,7 @@
 # Access Mechanism 
 # --------------------------------------------------------------------------
 
-VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
+The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
 
 # --------------------------------------------------------------------------
 #  Supported Functionality
@@ -17,10 +17,10 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
 # -------------------------------------------------------------------------
 
 
-  1. create: This method creates a new Virtual Machine by importing a OVF file.
+  1. create: This method creates a new Virtual Machine by importing an OVF file.
    
 
-  2. destroy: This method exports Virtual Machine OVF to the specified location.
+  2. destroy: This method exports Virtual Machine OVF to a  specified location.
 
 
 # -------------------------------------------------------------------------
@@ -29,8 +29,8 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
     
     ensure: (Required) This parameter is required to call the Create or Destroy method.
     Possible values: present/absent
-    If the value of ensure parameter is set to present, the Create method is called by the module.
-    If the value of ensure parameter is set to absent, the Destroy method is called by the module.
+    If the value of the ensure parameter is set to present, the module calls the Create method.
+    If the value of the ensure parameter is set to absent, the module calls the Destroy method.
 
     datacenter: (Required) This parameter defines the name of the dataCenter.
 
@@ -38,11 +38,11 @@ VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to inter
 
     ovffilepath: (Required) This parameter defines the OVF file path.
 
-    target_datastore: (Required, used in case of 'create' (import OVF) method ) This parameter defines the name of the datastore where the new Virtual Machine is to be created.
+    target_datastore: (Required) This parameter is used in case of create (import OVF). This parameter defines the name of the datastore where the new Virtual Machine is to be created.
 
-    host: (Required, used in case of 'create' (import OVF) method ) This parameter defines the host name where the new Virtual Machine is to be created. 
+    host: (Required) This parameter is used in case of the create (import OVF) method. This parameter defines the host name where the new Virtual Machine is to be created. 
 
-    diskformat: (Optional, used in case of 'create' (import OVF) method) This parameter controls the type of disk created during the import OVF operation.
+    diskformat: (Optional) This parameter is used in case of the create (import OVF) method. This parameter controls the type of disk created during the import OVF operation.
     Possible values: thin/thick
     Default: thin
 

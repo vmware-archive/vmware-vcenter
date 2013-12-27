@@ -124,3 +124,8 @@ Following functionality related readme's are kept at docs folder.
    a) Adding datastore to a host.
    b) Deleting datastore from a host.
 
+9) vc_vm_ovf_readme.md: This readme file describes following functionalities.
+   a) Creating a new Virtual Machine by importing a OVF file.
+   b) Exporting a Virtual Machine OVF to the specified location.
+
+

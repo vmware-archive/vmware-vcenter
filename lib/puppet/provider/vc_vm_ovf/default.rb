@@ -18,7 +18,7 @@ Puppet::Type.type(:vc_vm_ovf).provide(:vc_vm_ovf, :parent => Puppet::Provider::V
 	system (cmd)
     if $? != 0 
         flag = 1
-        Puppet.err "Failed to import OVF file '" + ovf_filepath+"'."
+        Puppet.err "Unable to import the OVF file '" + ovf_filepath+"'."
     end
     
     rescue Exception => exc
@@ -26,7 +26,7 @@ Puppet::Type.type(:vc_vm_ovf).provide(:vc_vm_ovf, :parent => Puppet::Provider::V
     end
 
     if flag != 1
-        Puppet.notice "Virtual machine '" + vmname+"' created successfully."
+        Puppet.notice "Successfully created the Virtual Machine '" + vmname+"'."
        
     end
     end
@@ -44,14 +44,14 @@ Puppet::Type.type(:vc_vm_ovf).provide(:vc_vm_ovf, :parent => Puppet::Provider::V
 	output = system (cmd)
    if $? != 0 
         flag = 1
-        Puppet.err "Failed to export Virtual Machine '" + vmname+"' OVF file."
+        Puppet.err "Unable to export the Virtual Machine '" + vmname+"' OVF file."
     end
      rescue Exception => exc
       flag = 1
       Puppet.err(exc.message)
     end
     if flag != 1
-        Puppet.notice "OVF file exported successfully at '" + ovf_filepath+"' location."
+        Puppet.notice "Successfully exported the OVF file at '" + ovf_filepath+"' location."
     end
     
   end
