@@ -10,8 +10,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Entered in create"
     begin
       create_vswitch
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -20,8 +20,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Entered in destroy"
     begin
       remove_vswitch
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
 
   end
@@ -37,8 +37,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retreiving nics associated with vSwitch"
     begin
       retrieve_vswitch_pnic_objects
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -53,8 +53,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
         vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => nil, :numPorts => resource[:num_ports])
       end
       update_vswitch(vswitchspec)
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -63,8 +63,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retreiving num_ports associated with vSwitch"
     begin
       retreive_numports
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -75,8 +75,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec(resource[:name])
       actualspec.numPorts = value
       update_vswitch(actualspec)
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -90,8 +90,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec(resource[:name])
       actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
       update_vswitch(actualspec)
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -102,8 +102,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       existing_activenic = retrieve_vswitch_nicorder_policy.activeNic
       existing_standbynic = retrieve_vswitch_nicorder_policy.standbyNic
       {"activenic" => existing_activenic, "standbynic" => existing_standbynic}
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -114,8 +114,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec(resource[:name])
       actualspec.mtu = value
       update_vswitch(actualspec)
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -124,8 +124,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retrieving MTU associated with vSwitch"
     begin
       retrieve_vswitch_mtu
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -134,8 +134,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retrieving checkbeacon flag associated with vSwitch"
     begin
       retreive_checkbeacon
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -146,8 +146,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec(resource[:name])
       actualspec.policy.nicTeaming.failureCriteria.checkBeacon = value
       update_vswitch(actualspec)
-    rescue Exception => e
-      Puppet.err e.message
+    rescue Exception => excep
+      Puppet.err excep.message
     end
   end
 
@@ -227,7 +227,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     networksystem=host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
 
-    for vswitch in (vswitches) do
+    vswitches.each do |vswitch|
       availablevswitch = vswitch.name
       if (availablevswitch == resource[:name])
         return true
@@ -242,7 +242,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
     networksystem=host.configManager.networkSystem
     vswitches = networksystem.networkConfig.vswitch
-    for vswitch in (vswitches) do
+    vswitches.each do |vswitch|
       availablevswitch = vswitch.name
       if (availablevswitch == resource[:name])
         if vswitch.spec.bridge != nil and vswitch.spec.bridge.nicDevice != nil
@@ -269,7 +269,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     networksystem = host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
     actual = nil
-    for vswitch in (vswitches) do
+    vswitches.each do |vswitch|
       availablevswitch = vswitch.name
       if (availablevswitch == resource[:name])
         return vswitch.spec
