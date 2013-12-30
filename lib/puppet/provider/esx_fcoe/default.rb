@@ -55,6 +55,11 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
   #find host given the host IP or name
   def host
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
+    if @host
+      return @host
+    else
+      fail "Make sure to provide correct name or IP address of the host"
+    end
   end
   
 end
