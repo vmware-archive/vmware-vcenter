@@ -40,11 +40,8 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
 
   private 
   
-  #find hba
+  #find hba given the physical nic
   def hba
-#    @hba ||= host.configManager.storageSystem.storageDeviceInfo.hostBusAdapter.find{|a|
-#      a.device == resource[:hba_name]}
-        
     hba_arr = host.configManager.storageSystem.storageDeviceInfo.hostBusAdapter.grep(RbVmomi::VIM::HostFibreChannelOverEthernetHba)
         hba_arr.each do |hba|
           hba_nic = hba.underlyingNic
@@ -55,7 +52,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
     return nil
   end
   
-  #find host
+  #find host given the host IP or name
   def host
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
   end
