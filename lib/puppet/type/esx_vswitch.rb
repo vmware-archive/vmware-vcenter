@@ -37,15 +37,15 @@ Puppet::Type.newtype(:esx_vswitch) do
     end
   end
 
-  newparam(:num_ports) do
+  newproperty(:num_ports) do
     desc "Num of ports"
-    dvalue = '128'
+    dvalue = '120'
     defaultto(dvalue)
     munge do |value|
       if value.to_i == 0
         dvalue.to_i
       else
-        value.to_i
+        value.to_i + 8
       end
     end
   end
@@ -66,6 +66,29 @@ Puppet::Type.newtype(:esx_vswitch) do
       # otherwise, return false
       false
     end
+  end
+
+  newproperty(:nicorderpolicy) do
+    desc "nic order ploicy to be applied to vSwitch"
+  end
+
+  newproperty(:mtu) do
+    desc "MTU"
+    dvalue = '1500'
+    defaultto(dvalue)
+    munge do |value|
+      if value.to_i == 0
+        dvalue.to_i
+      else
+        value.to_i
+      end
+    end
+  end
+
+  newproperty(:checkbeacon) do
+    newvalues(:true, :false)
+    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+    defaultto(:true)
   end
 
 end

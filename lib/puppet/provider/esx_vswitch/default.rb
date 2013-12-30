@@ -8,7 +8,11 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   #Create vSwitch method.
   def create
     Puppet.debug "Entered in create"
-    create_vswitch
+    begin
+      create_vswitch
+    rescue Exception => e
+      Puppet.err e.message
+    end
   end
 
   #Destroy vSwitch method.
@@ -16,8 +20,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Entered in destroy"
     begin
       remove_vswitch
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      Puppet.err e.message
     end
 
   end
@@ -33,8 +37,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retreiving nics associated with vSwitch"
     begin
       retrieve_vswitch_pnic_objects
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      Puppet.err e.message
     end
   end
 
@@ -42,9 +46,108 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   def nics=(value)
     Puppet.debug "Updating nics associated with vSwitch"
     begin
-      update_vswitch(value)
-    rescue Exception => excep
-      Puppet.err excep.message
+      if value.length > 0
+        hostbridge = RbVmomi::VIM::HostVirtualSwitchBondBridge(:nicDevice => value)
+        vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => hostbridge, :numPorts => resource[:num_ports])
+      else
+        vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => nil, :numPorts => resource[:num_ports])
+      end
+      update_vswitch(vswitchspec)
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Getter method for num_ports property
+  def num_ports
+    Puppet.debug "Retreiving num_ports associated with vSwitch"
+    begin
+      retreive_numports
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Setter method for num_ports property
+  def num_ports=(value)
+    Puppet.debug "Updating num_ports associated with vSwitch"
+    begin
+      actualspec = retrieve_vswitch_spec(resource[:name])
+      actualspec.numPorts = value
+      update_vswitch(actualspec)
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Setter method for nicorderpolicy
+  def nicorderpolicy=(value)
+    Puppet.debug "Updating nicorderpolicy associated with vSwitch"
+    begin
+      activenic = value['activenic']
+      standbynic = value['standbynic']
+      hostnicorderpolicy = RbVmomi::VIM::HostNicOrderPolicy(:activeNic => activenic, :standbyNic => standbynic)
+      actualspec = retrieve_vswitch_spec(resource[:name])
+      actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
+      update_vswitch(actualspec)
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Getter method for nicorderpolicy
+  def nicorderpolicy
+    Puppet.debug "Retreiving nicorderpolicy associated with vSwitch"
+    begin
+      existing_activenic = retrieve_vswitch_nicorder_policy.activeNic
+      existing_standbynic = retrieve_vswitch_nicorder_policy.standbyNic
+      {"activenic" => existing_activenic, "standbynic" => existing_standbynic}
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Setter methid for mtu
+  def mtu=(value)
+    Puppet.debug "Updating MTU associated with vSwitch"
+    begin
+      actualspec = retrieve_vswitch_spec(resource[:name])
+      actualspec.mtu = value
+      update_vswitch(actualspec)
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Getter methid for mtu
+  def mtu
+    Puppet.debug "Retrieving MTU associated with vSwitch"
+    begin
+      retrieve_vswitch_mtu
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Getter methid for checkbeacon in network failover detection
+  def checkbeacon
+    Puppet.debug "Retrieving checkbeacon flag associated with vSwitch"
+    begin
+      retreive_checkbeacon
+    rescue Exception => e
+      Puppet.err e.message
+    end
+  end
+
+  #Setter methid for checkbeacon in network failover detection
+  def checkbeacon=(value)
+    Puppet.debug "Updating checkbeacon flag associated with vSwitch"
+    begin
+      actualspec = retrieve_vswitch_spec(resource[:name])
+      actualspec.policy.nicTeaming.failureCriteria.checkBeacon = value
+      update_vswitch(actualspec)
+    rescue Exception => e
+      Puppet.err e.message
     end
   end
 
@@ -61,34 +164,58 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   def create_vswitch
     Puppet.debug "Creating vSwitch"
     host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless host
+    raise Puppet::Error.new("No Host in datacenter #{walk_dc}") unless host
 
     if(host.configManager.networkSystem != nil)
       networksystem=host.configManager.networkSystem
+    else
+      raise Puppet::Error.new("Error retrieving network configuration of host: #{host}")
     end
 
+    #creating vSwitchspec if there are nic device to be attached with vSwitch
     if resource[:nics].length > 0
       hostbridge = RbVmomi::VIM::HostVirtualSwitchBondBridge(:nicDevice => resource[:nics])
     end
 
-    vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => hostbridge, :numPorts => resource[:num_ports])
+    vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => hostbridge, :mtu => resource[:mtu], :numPorts => resource[:num_ports])
+
+    #add vSwitch to the host
     networksystem.AddVirtualSwitch(:vswitchName => resource[:name], :spec => vswitchspec)
+
+    activenic = nil
+    standbynic = nil
+    if(resource[:nicorderpolicy ] != nil)
+      nicorderpolicy = resource[:nicorderpolicy ]
+      if(nicorderpolicy ['activenic'].length > 0)
+        activenic = nicorderpolicy ['activenic']
+      end
+      if(nicorderpolicy ['standbynic'].length > 0)
+        standbynic = nicorderpolicy ['standbynic']
+      end
+    end
+
+    #create NicOrderPolicy so as to configure nic teaming
+    hostnicorderpolicy = RbVmomi::VIM::HostNicOrderPolicy(:activeNic => activenic, :standbyNic => standbynic)
+    actualspec = retrieve_vswitch_spec(resource[:name])
+    actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
+
+    #create data to configure network failover detection in nic teaming policy
+    if(resource[:checkbeacon] != nil)
+      actualspec.policy.nicTeaming.failureCriteria.checkBeacon = resource[:checkbeacon]
+    end
+
+    #update vSwitch with nic teaming policy spec
+    update_vswitch(actualspec)
+
     Puppet.notice "Created vSwitch: #{resource[:name]}"
   end
 
   #update vSwitch
-  def update_vswitch(value)
+  def update_vswitch(vswitchspec)
     Puppet.debug "Updating vSwitch"
     host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    raise Puppet:Error.new("No Host in datacenter #{walk_dc}") unless host
+    raise Puppet::Error.new("No Host in datacenter #{walk_dc}") unless host
     networksystem=host.configManager.networkSystem
-
-    if value.length > 0
-      hostbridge = RbVmomi::VIM::HostVirtualSwitchBondBridge(:nicDevice => value)
-      vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => hostbridge, :numPorts => resource[:num_ports])
-    else
-      vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => nil, :numPorts => resource[:num_ports])
-    end
 
     networksystem.UpdateVirtualSwitch(:vswitchName => resource[:name], :spec => vswitchspec)
     Puppet.notice "Updated vSwitch: #{resource[:name]}"
@@ -134,6 +261,44 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     networksystem.RemoveVirtualSwitch(:vswitchName => resource[:name])
 
     Puppet.notice "Removed vSwitch: #{resource[:name]}"
+  end
+
+  #retrieve vSwitch specifications
+  def retrieve_vswitch_spec(vswitchname)
+    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    networksystem = host.configManager.networkSystem
+    vswitches = networksystem.networkInfo.vswitch
+    actual = nil
+    for vswitch in (vswitches) do
+      availablevswitch = vswitch.name
+      if (availablevswitch == resource[:name])
+        return vswitch.spec
+      end
+    end
+  end
+
+  #retreive vSwitch nicorder policy
+  def retrieve_vswitch_nicorder_policy
+    vswitchspec = retrieve_vswitch_spec(resource[:name])
+    return vswitchspec.policy.nicTeaming.nicOrder
+  end
+
+  #retreive vSwitch MTU valuel
+  def retrieve_vswitch_mtu
+    vswitchspec = retrieve_vswitch_spec(resource[:name])
+    return vswitchspec.mtu
+  end
+
+  #retreive vSwitch checkbeacon flag value
+  def retreive_checkbeacon
+    vswitchspec = retrieve_vswitch_spec(resource[:name])
+    return vswitchspec.policy.nicTeaming.failureCriteria.checkBeacon.to_s
+  end
+
+  #retreive vSwitch num_ports value
+  def retreive_numports
+    vswitchspec = retrieve_vswitch_spec(resource[:name])
+    return vswitchspec.numPorts
   end
 
 end

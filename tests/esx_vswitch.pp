@@ -9,11 +9,18 @@ transport { 'vcenter':
 }
 
 esx_vswitch { 'name':
-  name      => "vSwitch5",
-  ensure    => present,
-  host      => "172.16.103.95",
-  path      => "/ghetto-vdc/",
-  num_ports => 4,
-  nics      => ["vmnic1", "vmnic2"],
-  transport => Transport['vcenter'],
+  name           => "vSwitch5",
+  ensure         => present,
+  host           => "172.16.103.581",
+  path           => "/DDCDC/",
+  num_ports      => 1024,
+  nics           => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"],
+  nicorderpolicy => {
+    activenic  => ["vmnic1", "vmnic4"],
+    standbynic => ["vmnic3", "vmnic2"]
+  }
+  ,
+  mtu            => 5000,
+  checkbeacon    => false,
+  transport      => Transport['vcenter'],
 }
