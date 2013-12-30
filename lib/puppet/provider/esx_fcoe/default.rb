@@ -58,7 +58,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
     if @host
       return @host
     else
-      fail "Make sure to provide correct name or IP address of the host"
+      fail "Make sure to provide correct name or IP address of the host."
     end
   end
   
