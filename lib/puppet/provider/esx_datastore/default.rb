@@ -104,6 +104,11 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
 
   def host
     @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
+    if @host
+      return @host
+    else
+      fail "Make sure to provide correct name or IP address of the host"
+    end
   end
 
   def scsi_lun(uuid)
