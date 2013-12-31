@@ -107,7 +107,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     if @host
       return @host
     else
-      fail "Make sure to provide correct name or IP address of the host"
+      fail "An invalid host name or IP address is entered. Enter the correct host name and IP address."
     end
   end
 
