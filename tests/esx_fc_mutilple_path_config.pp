@@ -1,4 +1,6 @@
 # Copyright (C) 2013 VMware, Inc.
+import 'data.pp'
+
 transport { 'vcenter':
   username => $vcenter['username'],
   password => $vcenter['password'],
