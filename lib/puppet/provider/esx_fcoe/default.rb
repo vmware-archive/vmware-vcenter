@@ -14,7 +14,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
       # discover fcoe HBA
       host.configManager.storageSystem.DiscoverFcoeHbas(:fcoeSpec => spec)
     rescue Exception => exc
-      Puppet.err "Unable to perform the operation because the following exception occurred. Make sure to provide correct physical nic."
+      Puppet.err "Unable to perform the operation because the following exception occurred. Make sure to provide correct physical nic that will be associated with the FCoE HBA."
       Puppet.err(exc.message)
     end
   end
