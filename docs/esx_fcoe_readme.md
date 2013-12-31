@@ -2,7 +2,7 @@
 # Access Mechanism 
 # --------------------------------------------------------------------------
 
-The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
+The VMware/vCenter module uses the VMware vCenter Ruby SDK (rbvmomi, version 1.6.0) to interact with the VMware vCenter.
 
 # --------------------------------------------------------------------------
 #  Supported Functionality
@@ -17,23 +17,23 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 # -------------------------------------------------------------------------
 
   1. Create
-     The Create method adds FCoE software adapter to a host. 
+     This method adds FCoE software adapter to a host. 
    
   2. Destroy
-     The Destroy method deletes FCoE software adapter from a host.
+     This method deletes FCoE software adapter from a host.
 
 # -------------------------------------------------------------------------
-# Summary of Parameters.
+# Summary of Parameters
 # -------------------------------------------------------------------------
     
-	ensure: (Required) This parameter is required to call the Create or Destroy method.
-    Possible values: Present/Absent
-    If the value of the ensure parameter is set to present, the module calls the Create method.
-    If the value of the ensure parameter is set to absent, the module calls the Destroy method.
+	ensure: (Required) This parameter is required to call the 'Create' or 'Destroy' method.
+    The possible values are: "Present" and "Absent"
+    If the ensure parameter is set to "Present", the module calls the 'Create' method.
+    If the ensure parameter is set to "Absent", the module calls the 'Destroy' method.
 
-	physical_nic: (Required) This parameter defines the name of the underlying physical Nic that will be associated with the FCoE HBA. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_fcoe' is used. 
-		
-    host: (Required) This parameter defines the name or IP address of the host. 
+    host: (Required) This parameter defines the name or IP address of the host.         
+
+    physical_nic: (Required) This parameter defines the name of the underlying physical NIC that will be associated with the FCoE HBA. If this parameter is not defined explicitly in the manifest file, then the title of the type 'esx_fcoe' is used.
 
 # -------------------------------------------------------------------------
 # Parameter Signature 
@@ -47,7 +47,7 @@ transport { 'vcenter':
 }
 
 #Provide FCoE HBA property
-esx_fcoe { 'vmnic1':
+esx_fcoe { 'vmnic0':
   ensure         => present,
   host           => "${esx1['hostname']}",
   transport      => Transport['vcenter'],
@@ -58,7 +58,7 @@ esx_fcoe { 'vmnic1':
 # --------------------------------------------------------------------------
    Refer to the examples in the test directory.
    
-   A user can provide the inputs in the data.pp, and apply esx_fcoe.pp for various operations, for example: 
+   You can provide the inputs in the data.pp, and apply esx_fcoe.pp for various operations, for example: 
    # puppet apply esx_fcoe.pp
    
 #-------------------------------------------------------------------------------------------------------------------------
