@@ -28,7 +28,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
       
       #remove fcoe HBA
       host.configManager.storageSystem.MarkForRemoval(:hbaName => fcoe_hba.device, :remove => true)
-      Puppet.notice("FCoE software adapter has been removed from the host. The host needs to be rebooted for changes to take affect.")
+      Puppet.notice("FCoE software adapter has been removed from the host. The host needs to be rebooted for changes to take effect.")
     rescue Exception => exc
       Puppet.err "Unable to perform the operation because the following exception occurred - "
       Puppet.err(exc.message)
