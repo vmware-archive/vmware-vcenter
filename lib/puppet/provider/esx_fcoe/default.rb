@@ -13,6 +13,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
               
       # discover fcoe HBA
       host.configManager.storageSystem.DiscoverFcoeHbas(:fcoeSpec => spec)
+      Puppet.notice("FCoE software adapter has been added to the host.")
     rescue Exception => exc
       Puppet.err "Unable to perform the operation because the following exception occurred. Make sure to provide correct physical nic that will be associated with the FCoE HBA."
       Puppet.err(exc.message)
@@ -27,6 +28,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
       
       #remove fcoe HBA
       host.configManager.storageSystem.MarkForRemoval(:hbaName => fcoe_hba.device, :remove => true)
+      Puppet.notice("FCoE software adapter has been removed from the host. The host needs to be rebooted for changes to take affect.")
     rescue Exception => exc
       Puppet.err "Unable to perform the operation because the following exception occurred - "
       Puppet.err(exc.message)
@@ -54,7 +56,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
   
   #find host given the host IP or name
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name], :vmSearch => false)
+    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
     if @host
       return @host
     else

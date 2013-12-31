@@ -31,9 +31,9 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
     If the value of the ensure parameter is set to present, the module calls the Create method.
     If the value of the ensure parameter is set to absent, the module calls the Destroy method.
 
-    name: (Required) This parameter defines the name or IP address of the host. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_fcoe' is used.        
-
-    physical_nic: (Required) This parameter defines the name of the underlying physical Nic that will be associated with the FCoE HBA. 
+	physical_nic: (Required) This parameter defines the name of the underlying physical Nic that will be associated with the FCoE HBA. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_fcoe' is used. 
+		
+    host: (Required) This parameter defines the name or IP address of the host. 
 
 # -------------------------------------------------------------------------
 # Parameter Signature 
@@ -47,9 +47,9 @@ transport { 'vcenter':
 }
 
 #Provide FCoE HBA property
-esx_fcoe { "${esx1['hostname']}":
+esx_fcoe { 'vmnic1':
   ensure         => present,
-  physical_nic   => 'vmnic0',
+  host           => "${esx1['hostname']}",
   transport      => Transport['vcenter'],
 }
 
