@@ -128,4 +128,6 @@ Following functionality related readme's are kept at docs folder.
    a) Creating a new Virtual Machine by importing a OVF file.
    b) Exporting a Virtual Machine OVF to the specified location.
 
-
+10) esx_fcoe_readme.md: This readme file describes following host system functionalities.
+   a) Adding FCoE software adapter to a host.
+   b) Deleting FCoE software adapter from a host.
