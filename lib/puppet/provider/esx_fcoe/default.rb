@@ -15,7 +15,7 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
       host.configManager.storageSystem.DiscoverFcoeHbas(:fcoeSpec => spec)
       Puppet.notice("Successfully added the FCoE software adapter to the host.")
     rescue Exception => exc
-      Puppet.err "Unable to add FCoE software adapter. Reason: The specified physical network interface card #{resource[:physical_nic]} that needs to be associated with the FCoE is invalid."
+      Puppet.err "Unable to add FCoE software adapter because an unknown exception occurred.  Make sure the specified physical network interface card (NIC), which needs to be associated with the FCoE, is valid, and then try again the operation. If the issue persists, verify the troubleshooting logs or contact your service provider."
       Puppet.err(exc.message)
     end
   end
