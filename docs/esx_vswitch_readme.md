@@ -2,7 +2,7 @@
 # Access Mechanism 
 # --------------------------------------------------------------------------
 
-The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to interact with the vCenter.
+  The VMware/vCenter module uses the VMware vCenter Ruby SDK (rbvmomi, version 1.6.0) to interact with the VMware vCenter.
 
 # --------------------------------------------------------------------------
 #  Supported Functionality
@@ -20,58 +20,57 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 # -------------------------------------------------------------------------
 
 	1. create
-		The Create method configures a vSwitch on the ESXi host and also attach pnics(if any) with the vSwitch.
+		This method configures a vSwitch on the ESXi host and also attaches the nics(if any) with the vSwitch.
    
 	2. destroy
-		The Destroy method destroys the vSwitch configured on ESXi host.
+		This method destroys the vSwitch configured on ESXi host.
 	 
 	3. nics
-		This method is used to configure physical network adapters on  a virtual switch. 
+		This method is used to configure physical network adapters on a vSwitch 
 		
 	4. nicorderpolicy
-		This method is used to configure Failover order policy for network adapters on this vSwitch.
+		This method is used to configure Failover Order policy for network adapters on this vSwitch.
 		
 	5. mtu
 		This method is used to configure the maximum transmission unit (MTU) of the virtual switch in bytes.
 		
 	6. checkbeacon
-		This method is used to configure the flag to indicate whether or not to enable this property to enable beacon probing as a method to validate the link status of a physical network adapter.
+		This method is used to configure the flag to indicate whether or not to enable this property. If this property is enabled, it enables the beacon probing method to validate the link status of a physical network adapter.
 
 # -------------------------------------------------------------------------
-# Summary of parameters.
+# Summary of Parameters
 # -------------------------------------------------------------------------
 
-	ensure: (Optional) This parameter is required to call the Create or Destroy method.
-    Possible values: present/absent
-    Default value: present
-    If the value of the ensure parameter is set to present, then it calls the create method.
-    If the value of the ensure parameter is set to absent, then it calls the destroy method.
+	ensure: (Optional) This parameter is required to call the 'Create' or 'Destroy' method.
+            Possible values: "present" and "absent"
+            Default value: present
+            If the 'ensure' parameter is set to "present", then it calls the 'create' method.
+            If the 'ensure' parameter is set to "absent", then it calls the 'destroy method.
 
-	name: (Required) This parameter specifies the name of vSwitch to be created.
-	host: (Required) This parameter defines the ESXi host ip/name.
+	name: (Required) This parameter defines the name of vSwitch to be created.
+	host: (Required) This parameter defines the ESXi host IP or host name.
 
-	path: (Required) This parameter defines path to the esxi host.
+	path: (Required) This parameter defines the path to the ESXi host.
 	
-	num_ports: (Optional) This parameter defines the number of ports that this virtual switch is configured to use. Changing this setting does not take effect until the next reboot. The maximum value is 1024, although other constraints, such as memory limits, may establish a lower effective limit. 
-    Default: 128
+	num_ports: (Optional) This parameter defines the number of ports that this vSwitch is configured to use. Changing this setting does not take effect until the next reboot. The maximum value is 1024, although other constraints, such as memory limits, may establish a lower effective limit. 
+               Default value: 128
     
-    nics: (Optional) This parameter specifies array of the physical network adapters to be bridged. If an empty array is specified then any physical network adapters bridged to vSwitch will be deleted/unset.
-	Default: Nics property will remain unchanged if in case nics property is not specified in manifest file.
+    nics: (Optional) This parameter defines the array of the physical network adapters to be bridged. If an empty array is defined, then any physical network adapters bridged to the vSwitch will be deleted or unset.
+	      Default: Nics property will remain unchanged if nics property is not specified in manifest file.
 	
-	nicorderpolicy: (Optional) This parameter specifies the failover order policy for network adapters on this vSwitch. It is map of array which contains activenic and standbynic as key to respective arrays.
-			activenic: This parameter is an array which specifies the order in which active nics are to be configured in accordance with failover order policy.
-			standbynic: This parameter is an array which specifies the order in which standbynic nics are to be configured in accordance with failover order policy.
-			
-	Default: if this policy is not specified all nice will go to unused category.
+	nicorderpolicy: (Optional) This parameter specifies the Failover Order policy for network adapters on this vSwitch. It is a map of array which contains activenic and standbynic as key to respective arrays.
+			activenic: This parameter is an array which specifies the order in which active nics are to be configured based on the Failover Order policy.
+			standbynic: This parameter is an array which specifies the order in which standbynic nics are to be configured based on the Failover Order policy.
+			By default, if this policy is not defined, then all nice will be moved to unused category.
 	
-	mtu: (Optional) This parameter specifies the maximum transmission unit (MTU) of the virtual switch in bytes.
-	Default: 1500
+	mtu: (Optional) This parameter specifies the maximum transmission unit (MTU) of the vSwitch in bytes.
+	     Default value: 1500
 	
-	checkbeacon: (Optional) This parameter is the flag to indicate whether or not to enable this property to enable beacon probing as a method to validate the link status of a physical network adapter.
-	Default: true
+	checkbeacon: (Optional) This method is used to configure the flags to indicate whether or not to enable this property. If this property is  enabled, it enables the beacon probing method to validate the link status of a physical network adapter.
+	              Default value: true
 	
 # -------------------------------------------------------------------------
-# Parameter signature 
+# Parameter Signature 
 # -------------------------------------------------------------------------
 
 transport { 'vcenter':
