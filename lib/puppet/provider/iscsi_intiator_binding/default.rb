@@ -17,8 +17,6 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
 	  for each_vmk_nic in vmk_nik_arr
 		begin
 	    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:name ]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
-
-	    puts cmd 
 	  
         error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
         log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
