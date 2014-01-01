@@ -65,8 +65,8 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
         Puppet.err content
         flag = 1
       else
-        maintenanceStatus = /In Maintenance Mode\s+:\s+(\S+)/.match(content)
-        if (maintenanceStatus[1].downcase.eql?('yes'))
+        maintenance_status = /In Maintenance Mode\s+:\s+(\S+)/.match(content)
+        if (maintenance_status[1].downcase.eql?('yes'))
           flag = 2
         else
           flag = 3
@@ -87,13 +87,13 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     log_filename = "/tmp/log.#{host_ip}_#{operation}.#{Process.pid}"
 
     # Getting current state
-    retVal = get_esx_currentstate
+    ret_val = get_esx_currentstate
 
-    if retVal == 2 and operation.eql?('enter')
+    if ret_val == 2 and operation.eql?('enter')
       Puppet.notice "Host '#{host_ip}' is already in maintenance mode"
-    elsif retVal == 3 and operation.eql?('exit')
+    elsif ret_val == 3 and operation.eql?('exit')
       Puppet.notice "Host '#{host_ip}' is not in maintenance mode. Hence no need to perform 'exit' operation"
-    elsif retVal == 1
+    elsif ret_val == 1
       flag = 1
 
     else
@@ -118,7 +118,6 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     flag = 0
     error_log_filename = "/tmp/configuremem_err_log.#{Process.pid}"
     log_filename = "/tmp/configuremem_log.#{Process.pid}"
-
     script_executable_path = resource[:script_executable_path]
     setup_script_filepath = resource[:setup_script_filepath]
     host_username = resource[:host_username]
@@ -136,24 +135,20 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     if validate_configure_param.eql?(1)
       return 1
     end
-
     begin
       flag = esx_main_enter_exists("enter")
       if flag.eql?(0)
-
-        chapExtension = ""
+        chap_extension = ""
         if !iscsi_chapuser.nil?
-          chapExtension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
+          chap_extension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
         end
-
         if resource[:disable_hw_iscsi].eql?('true')
-          cmd = "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chapExtension} --enableswiscsi --nohwiscsi"
+          cmd = "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
         else
-          cmd =  "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chapExtension}"
+          cmd =  "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
         end
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
       end
-
     rescue Exception => exc
       flag = 1
       Puppet.err(exc.message)
@@ -165,7 +160,6 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     else
       Puppet.err "Unable to configure MEM on server '#{name}'."
     end
-
     return flag
   end
 
