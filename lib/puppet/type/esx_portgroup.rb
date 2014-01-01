@@ -46,6 +46,41 @@ Puppet::Type.newtype(:esx_portgroup) do
     end
   end
 
+  newproperty(:checkbeacon) do
+    newvalues(:true, :false)
+    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+  end
+
+  newproperty(:failback) do
+    newvalues(:Yes, :No)
+    desc "The flag to indicate whether or not to use a rolling policy when restoring links."
+    #defaultto(:false)
+  end
+
+  newproperty(:mtu) do
+    desc "mtu size used for jumbo frames."
+    validate do |value|
+	  raise ArgumentError, "mtu must be in between 1500 and 9000." if (value.to_i<1500 || value.to_i > 9000)
+	if value.strip.length == 0
+    	raise ArgumentError, "Invalid mtu."
+	end
+    end
+  end
+
+
+  newproperty(:overridefailoverorder) do
+  desc "flag to indicate the failover policy is to be overridden or not"
+  newvalues(:Enabled,:Disabled)
+  #defaultto "Disabled"
+  end
+
+
+  newparam(:nicorderpolicy) do
+    desc "nic order ploicy to be applied to vSwitch"
+  end
+
+
+
   newparam(:type) do
     desc "Type of port group."
     newvalues(:VirtualMachine, :VMkernel)
@@ -107,10 +142,10 @@ Puppet::Type.newtype(:esx_portgroup) do
 
   newproperty(:vlanid) do
     desc "VLAN id."
+    defaultto 0
 	validate do |vlanid|
 	  raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<0 || vlanid.to_i > 4095)
 	end
-    defaultto 0
   end
 
 end
