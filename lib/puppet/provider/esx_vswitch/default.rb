@@ -84,8 +84,14 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   def nicorderpolicy=(value)
     Puppet.debug "Updating nicorderpolicy associated with vSwitch"
     begin
-      activenic = value['activenic']
-      standbynic = value['standbynic']
+      activenic = nil
+      standbynic = nil
+      if(value['activenic'] != nil and value['activenic'].length > 0)
+        activenic = value['activenic']
+      end
+      if(value['standbynic'] != nil and value['standbynic'].length > 0)
+        standbynic = value['standbynic']
+      end
       hostnicorderpolicy = RbVmomi::VIM::HostNicOrderPolicy(:activeNic => activenic, :standbyNic => standbynic)
       actualspec = retrieve_vswitch_spec(resource[:name])
       actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
@@ -186,10 +192,10 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     standbynic = nil
     if(resource[:nicorderpolicy ] != nil)
       nicorderpolicy = resource[:nicorderpolicy ]
-      if(nicorderpolicy ['activenic'].length > 0)
+      if(nicorderpolicy ['activenic'] != nil and nicorderpolicy ['activenic'].length > 0)
         activenic = nicorderpolicy ['activenic']
       end
-      if(nicorderpolicy ['standbynic'].length > 0)
+      if(nicorderpolicy ['standbynic'] != nil and nicorderpolicy ['standbynic'].length > 0)
         standbynic = nicorderpolicy ['standbynic']
       end
     end
