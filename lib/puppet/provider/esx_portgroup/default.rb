@@ -24,9 +24,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
 	def exists?
 		Puppet.debug "Entered in exists method."
-		#find_portgroup ? true : false
 		check_portgroup_existance == true
-    	#find_port_group == true
 	end
 
     # vlanid property getter method.
@@ -139,17 +137,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	        mypg=find_portgroup
     	    if (mypg.spec.policy.nicTeaming.rollingOrder != nil)
         	    failbackorderonpg = mypg.spec.policy.nicTeaming.rollingOrder
-            	if ( resource[:failback] == :Yes && failbackorderonpg == false)
-					return resource[:failback]
-				elsif (resource[:failback] == :Yes && failbackorderonpg == true)
-					return "needtochange"
-        	    elsif(resource[:failback] == :No && failbackorderonpg == true)
-            		return resource[:failback]
-	            elsif(resource[:failback] == :No && failbackorderonpg == false)
-					return "needtochange"
-        	    end
+				return failbackorderonpg
 	        else
-        	    return "needtochange"
+        	    return nil
 	        end
         rescue Exception => excep
             Puppet.err excep.message
@@ -177,13 +167,10 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			if ( resource[:overridefailoverorder] == :Enabled)
 					acitvenicsonpg = mypg.spec.policy.nicTeaming.nicOrder.activeNic	
 					standbynicsonpg = mypg.spec.policy.nicTeaming.nicOrder.standbyNic	
-					#return {"activenic" => acitvenicsonpg, "standbynic" => standbynicsonpg}
-
 					nicorderpolicy = resource[:nicorderpolicy ]
 					activenic = nicorderpolicy ['activenic']
 					standbynic = nicorderpolicy ['standbynic']
 					if (acitvenicsonpg != activenic || standbynicsonpg != standbynic)
-						{"activenic" => existing_activenic, "standbynic" => existing_standbynic}
 						return "needtochange"
 					elsif (acitvenicsonpg == activenic && standbynicsonpg == standbynic)
 						return "Enabled"
@@ -482,10 +469,15 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 				set_checkbeacon
 			end
 
-			if (resource[:type] == :VMkernel)
+			if (resource[:portgrouptype] == :VMkernel)
 				Puppet.debug "Entering type VMkernel"
 
 				if (resource[:ipsettings] == :static)
+					if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
+					   	raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
+					elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
+						raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
+					end
 					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
 					hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
 					@networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)	
@@ -520,9 +512,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         @networksystem=@host.configManager.networkSystem
 
 	    if ( resource[:failback] != nil)
-        	if ( resource[:failback] == :Yes )
+        	if ( resource[:failback] == :true )
 				failbk = false
-            elsif (resource[:failback] == :No)
+            elsif (resource[:failback] == :false)
                     failbk = true
             end
             hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => failbk)
@@ -534,8 +526,6 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 				if (actualspec.policy.nicTeaming !=nil)
 					actualspec.policy.nicTeaming.rollingOrder = failbk
 				else
-            		#hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => failbk)
-		            #hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:nicTeaming=> hostnicteamingpolicy)
     	        	actualspec.policy = hostnetworkpolicy
 				end
 			else	
@@ -548,7 +538,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	end
 
 	def set_checkbeacon
-    # Private method to set the failback on the port group.
+    # Private method to set the checkbeacon flag on the port group.
 		Puppet.debug "Entering set_checkbeacon"
         find_host
         mypg=find_portgroup
@@ -576,13 +566,13 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         return true
 	end
 
-    # Private method to enable/disable the vmotion.
+    # Private method to enable/disable the vmotion on vmkernel type port group.
 	def setupvmotion
 		Puppet.debug "Entering setup vmotion method."
 		find_host
 		@networksystem=@host.configManager.networkSystem
 
-		if (resource[:type] == :VMkernel)
+		if (resource[:portgrouptype] == :VMkernel)
     		@vmotionsystem = @host.configManager.vmotionSystem
 		    vnics=@networksystem.networkInfo.vnic
 
@@ -669,7 +659,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		find_host
         @networksystem=@host.configManager.networkSystem
 
-		if (resource[:type] == :VMkernel)
+		if (resource[:portgrouptype] == :VMkernel)
             vnics=@networksystem.networkInfo.vnic
 
             for vnic in (vnics)

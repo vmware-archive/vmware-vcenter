@@ -22,10 +22,6 @@ Puppet::Type.newtype(:esx_portgroup) do
 
   end
 
-  newproperty(:traffic_shaping_policy) do
-    desc "Enable or Disable the traffic shaping policy on the vSwitch portgroup."
-    newvalues(:Enabled, :Disabled)
-  end
 
   newparam(:datacenter) do
     desc "Name of the datacenter."
@@ -46,42 +42,27 @@ Puppet::Type.newtype(:esx_portgroup) do
     end
   end
 
-  newproperty(:checkbeacon) do
-    newvalues(:true, :false)
-    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
-  end
-
-  newproperty(:failback) do
-    newvalues(:Yes, :No)
-    desc "The flag to indicate whether or not to use a rolling policy when restoring links."
-    #defaultto(:false)
-  end
-
-  newproperty(:mtu) do
-    desc "mtu size used for jumbo frames."
-    validate do |value|
-	  raise ArgumentError, "mtu must be in between 1500 and 9000." if (value.to_i<1500 || value.to_i > 9000)
-	if value.strip.length == 0
-    	raise ArgumentError, "Invalid mtu."
-	end
+  newparam(:path) do
+    desc "The path to the host."
+    validate do |path|
+      raise ArgumentError, "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(path)
     end
   end
 
-
-  newproperty(:overridefailoverorder) do
-  desc "flag to indicate the failover policy is to be overridden or not"
-  newvalues(:Enabled,:Disabled)
-  #defaultto "Disabled"
+  newparam(:host) do
+    desc "The Host IP/hostname."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid host name."
+      end
+    end
   end
-
 
   newparam(:nicorderpolicy) do
     desc "nic order ploicy to be applied to vSwitch"
   end
 
-
-
-  newparam(:type) do
+  newparam(:portgrouptype) do
     desc "Type of port group."
     newvalues(:VirtualMachine, :VMkernel)
     dvalue="VirtualMachine"
@@ -106,16 +87,6 @@ Puppet::Type.newtype(:esx_portgroup) do
     defaultto(dvalue)
   end
 
-  newproperty (:vmotion) do
-    desc "Enable or Disable the vmotion on the VMkernel portgroup."
-    newvalues(:Enabled, :Disabled)
-  end
-  
-  newproperty (:ipsettings) do
-    desc "IP settings on the VMkernel port group."
-    newvalues(:dhcp, :static)
-  end
-
   newparam(:ipaddress) do
     desc "IP address of VMkernel port group."
   end
@@ -124,20 +95,45 @@ Puppet::Type.newtype(:esx_portgroup) do
     desc "Subnet mask of VMkernel port group."
   end
 
-  newparam(:path) do
-    desc "The path to the host."
-    validate do |path|
-      raise ArgumentError, "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(path)
+  newproperty(:traffic_shaping_policy) do
+    desc "Enable or Disable the traffic shaping policy on the vSwitch portgroup."
+    newvalues(:Enabled, :Disabled)
+  end
+
+  newproperty(:checkbeacon) do
+    newvalues(:true, :false)
+    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+  end
+
+  newproperty(:failback) do
+    newvalues(:true, :false)
+    desc "The flag to indicate whether or not to use a rolling policy when restoring links."
+    #defaultto(:false)
+  end
+
+  newproperty(:mtu) do
+    desc "mtu size used for jumbo frames."
+    validate do |value|
+          raise ArgumentError, "mtu must be in between 1500 and 9000." if (value.to_i<1500 || value.to_i > 9000)
+        if value.strip.length == 0
+        raise ArgumentError, "Invalid mtu."
+        end
     end
   end
 
-  newparam(:host) do
-    desc "The Host IP."
-    validate do |value|
-      if value.strip.length == 0
-        raise ArgumentError, "Invalid host name."
-      end
-    end
+  newproperty(:overridefailoverorder) do
+  desc "flag to indicate the failover policy is to be overridden or not"
+  newvalues(:Enabled,:Disabled)
+  end
+
+  newproperty (:vmotion) do
+    desc "Enable or Disable the vmotion on the VMkernel portgroup."
+    newvalues(:Enabled, :Disabled)
+  end
+
+  newproperty (:ipsettings) do
+    desc "IP settings on the VMkernel port group."
+    newvalues(:dhcp, :static)
   end
 
   newproperty(:vlanid) do
@@ -147,5 +143,4 @@ Puppet::Type.newtype(:esx_portgroup) do
 	  raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<0 || vlanid.to_i > 4095)
 	end
   end
-
 end
