@@ -230,6 +230,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   #find vSwitch
   def find_vswitch
     host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    raise Puppet::Error.new("No Host in datacenter #{walk_dc}") unless host
+
     networksystem=host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
 
