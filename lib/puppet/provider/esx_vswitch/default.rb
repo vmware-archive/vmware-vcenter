@@ -46,7 +46,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   def nics=(value)
     Puppet.debug "Updating nics associated with vSwitch"
     begin
-      if value.length > 0
+      if value != nil and value.length > 0
         hostbridge = RbVmomi::VIM::HostVirtualSwitchBondBridge(:nicDevice => value)
         vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => hostbridge, :numPorts => resource[:num_ports])
       else
@@ -179,7 +179,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     end
 
     #creating vSwitchspec if there are nic device to be attached with vSwitch
-    if resource[:nics].length > 0
+    if resource[:nics] != nil and resource[:nics].length > 0
       hostbridge = RbVmomi::VIM::HostVirtualSwitchBondBridge(:nicDevice => resource[:nics])
     end
 

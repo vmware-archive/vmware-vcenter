@@ -39,8 +39,11 @@ Puppet::Type.newtype(:esx_vswitch) do
 
   newproperty(:num_ports) do
     desc "Num of ports"
-    dvalue = '120'
+    dvalue = '128'
     defaultto(dvalue)
+    validate do |value|
+      raise ArgumentError, "num_ports must be in range 0 - 1024." if value.to_i > 1024
+    end
     munge do |value|
       if value.to_i == 0
         dvalue.to_i
@@ -76,6 +79,9 @@ Puppet::Type.newtype(:esx_vswitch) do
     desc "MTU"
     dvalue = '1500'
     defaultto(dvalue)
+    validate do |value|
+      raise ArgumentError, "mtu must be in range 1500 - 9000." if (value.to_i<1500 || value.to_i > 9000)
+    end
     munge do |value|
       if value.to_i == 0
         dvalue.to_i
