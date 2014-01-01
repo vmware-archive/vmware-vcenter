@@ -12,9 +12,32 @@ Puppet::Type.newtype(:iscsi_intiator_binding) do
   end
 
   newparam(:name, :namevar => true) do
-    desc "ESX hostname or ip address."
+    desc "ESX host name:hba name."
+
+    munge do |value|
+      @resource[:host_name], @resource[:vmhba] = value.split(':',2)
+      value
+    end
   end
 
+  newparam(:vmhba) do
+    desc "The name of the vm hba."
+	validate do |value|
+    	if value.strip.length == 0
+      		raise ArgumentError, "Invalid name of the HBA."
+    	end
+    end
+  end
+
+  newparam(:host_name) do
+    desc "The ESX host name."
+	validate do |value|
+    	if value.strip.length == 0
+      		raise ArgumentError, "Invalid name or IP of the host."
+    	end
+    end
+  end
+  
   newparam(:host_username) do
     desc "ESX username."
     validate do |value|
@@ -44,9 +67,5 @@ Puppet::Type.newtype(:iscsi_intiator_binding) do
 
   newparam(:vmknics) do
     desc "VMKernal NICs to use for binding with iscsi VM HBA."
-  end
-
-  newparam(:vmhba) do
-    desc "Name of iscsi VM HBA."
   end
 end

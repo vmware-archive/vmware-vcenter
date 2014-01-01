@@ -10,13 +10,14 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
     
       Puppet.notice "Binding the HBA to VMkernel nic."
 
-	  vmk_niks = resource[:vmknics]
+	  vmk_nics = resource[:vmknics]
 	  
-	  vmk_nik_arr = vmk_niks.split(' ')
+	  vmk_nic_arr = vmk_nics.split(' ')
 	  
-	  for each_vmk_nic in vmk_nik_arr
+	  for each_vmk_nic in vmk_nic_arr
+	    puts each_vmk_nic
 		begin
-	    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:name ]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
+	    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
 	  
         error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
         log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
@@ -35,14 +36,93 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
 	  end
   end
 
+  def destroy
+    #Unbind the HBA to VM kernal nic.
+	  Puppet.notice "Unbind the HBA to VMkernel nic."
+
+	  vmk_niks = resource[:vmknics]
+	  
+	  vmk_nik_arr = vmk_niks.split(' ')
+	  
+	  for each_vmk_nic in vmk_nik_arr
+		begin
+		cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal remove --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
+	  
+		error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
+		log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
+
+		flag = execute_system_cmd(cmd , log_filename , error_log_filename)
+		
+		rescue Exception => exc
+		  flag = 1
+		  Puppet.err(exc.message)
+		end
+		if flag.eql?(0)
+		  Puppet.notice "HBA '#{resource[:vmhba]}' is unbind from VMkernel nic '#{each_vmk_nic}'."
+		else
+		  Puppet.err "Unable to unbind HBA '#{resource[:vmhba]}' from VMkernel nic '#{each_vmk_nic}'."
+		end
+	  end
+  end
+  
   # Check whether HBA is mapped to VMkernel nic.
   def exists?
-    false
+    is_binded
   end
+
+  def is_binded
+    flag = 0
+
+    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name ]} iscsi networkportal list -A #{resource[:vmhba]}"
+
+    error_log_filename = "/tmp/bind_rerr_log.#{Process.pid}"
+    log_filename = "/tmp/bind_log.#{Process.pid}"
+
+    system(cmd , :out => [log_filename, 'a'], :err => [error_log_filename, 'a'])
+    if $? != 0
+      flag = 1
+      err_content = File.open(error_log_filename, 'rb') { |file| file.read }
+      Puppet.err err_content
+    else
+      content = File.open(log_filename, 'rb') { |file| file.read }
+      if (/(?i:Vmknic:)/.match(content))		
+		binded_vmk_nics = content[/Vmknic:(?<match>.*)/, "match"]
+		Puppet.notice binded_vmk_nics
+		
+		input_vmk_nics = resource[:vmknics]
+	    Puppet.notice input_vmk_nics
+		
+	    binded_vmk_nics_arr = binded_vmk_nics.split(' ')
+
+		input_vmk_nics_arr = input_vmk_nics.split(' ') # Need to check here the delimeter
+		
+		if ( binded_vmk_nics_arr.uniq.sort == input_vmk_nics_arr.uniq.sort )
+			flag = 0
+		else		
+			flag = 1
+		end
+        Puppet.notice content
+      else
+        flag = 1
+        Puppet.notice content
+      end
+    end
+    
+    remove_files( error_log_filename , log_filename)
+    
+    if flag.eql?(0)
+      Puppet.info "HBA is already bind to VMkernel."
+      return true
+    else
+      Puppet.notice "HBA is not bind to VMKernel"
+      return false
+    end
+  end
+  
+  private
   
   def execute_system_cmd(cmd,log_filename,error_log_filename)
     flag = 0
-    ENV['PERL_LWP_SSL_VERIFY_HOSTNAME']= '0' ;
     system(cmd , :out => [log_filename, 'a'], :err => [error_log_filename, 'a'])
     if $? != 0
       flag = 1
@@ -72,6 +152,4 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
       File.delete(errorfile)
     end
   end
-  
-  private
 end
