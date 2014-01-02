@@ -131,3 +131,6 @@ Following functionality related readme's are kept at docs folder.
 10) esx_fcoe_readme.md: This readme file describes following host system functionalities.
    a) Adding FCoE software adapter to a host.
    b) Deleting FCoE software adapter from a host.
+   
+11) esx_get_iqns_readme.md:This readme file describes following host system functionalty.
+   a)Dsplaying the information about the iSCSI adapter and the ISQN of the given host.
