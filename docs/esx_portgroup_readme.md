@@ -72,50 +72,50 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
         
   vswitch:(Required) This parameter defines the name of the vswitch.
         
-  portgrouptype: This parameter defines the port group to be created by the user. 
+  portgrouptype: (Required) This parameter defines the port group to be created by the user. 
         Valid values : "VirtualMachine" and "VMkernel"
         Default value: "VirtualMachine"
 
-  vmotion: This parameter notifies whether or not a vmotion is required on the VMkernel port group. This parameter is optional in case of the port group of type "virtualMachine".
+  vmotion: (Optional) This parameter notifies whether or not a vmotion is required on the VMkernel port group. This parameter is optional in case of the port group of type "virtualMachine".
            Valid values : "Enabled" and "Disabled"
-  failback: This parameter notifies whether or not failback is required on the port group.This paramter is optional.
+  failback: (Optional) This parameter notifies whether or not failback is required on the port group.
 			Valid values : "true" and "false"
 			
-  checkbeacon : This parameter notifies whether or not a checkbeacon is required on the port group. This parameter is optional.
+  checkbeacon : (Optional) This parameter notifies whether or not a checkbeacon is required on the port group. 
            Valid values : "true" and "false"
 		   
-  mtu :  This paramter is used to specify mtu size for this port group.
+  mtu :  (Optional) This paramter is used to specify mtu size for this port group.
 			Valid value are between 1500 to 9000
 			
-  overridefailoverorder : This parameter gives option to the user to override switch failover order.
+  overridefailoverorder : (Optional) This parameter gives option to the user to override switch failover order.
 			Valid values : "Enabled" and "Disabled"
   
-  nicorderpolicy : This parameter gives option to the user to select active nics and standby nics for this port group.Its value has to be given in the hash format.
+  nicorderpolicy : (Optional) This parameter gives option to the user to select active nics and standby nics for this port group.Its value has to be given in the hash format.
 			for example:
 				nicorderpolicy => {
 					activenic  => ["vmnic1"],
 					standbynic => []
 				},			
-  ipsettings: This parameter defines the IP settings required on the port group. 
+  ipsettings: (Optional) This parameter defines the IP settings required on the port group. 
             Valid values : "dhcp" and "static"
                          
   ipaddress: This parameter defines the IP address to be applied on the created port group. This parameter is required if the "ipsettings" parameter value is "static".
         
   subnetmask: This parameter is the subnetmask to be applied on the created port group. This parameter is required if the "ipsettings" parameter value is "static".
 
-  traffic_shaping_policy: This parameter defines the traffic shaping policy to be applied on the port group.
+  traffic_shaping_policy: (Optional) This parameter defines the traffic shaping policy to be applied on the port group.
    Valid values : "Enabled", "Disabled"
                          
-  averagebandwidth: This parameter defines the average bandwidth to be applied on port group. This parameter is used if the "traffic_shaping_policy" is enabled.
+  averagebandwidth: (Optional) This parameter defines the average bandwidth to be applied on port group. This parameter is used if the "traffic_shaping_policy" is enabled.
                    Default value: 1000 Kbits/sec
         
-  peakbandwidth: This parameter defines the peak bandwidth to be applied on the port group. This parameter is used if the "traffic_shaping_policy"" is enabled.
+  peakbandwidth: (Optional) This parameter defines the peak bandwidth to be applied on the port group. This parameter is used if the "traffic_shaping_policy"" is enabled.
                  Default value: 1000 Kbits/sec
                         
-  burtsize: This parameter ines the burst size to be applied on the port group. This parameter is used if the traffic_shaping_policy"" is enabled.
+  burtsize: (Optional) This parameter ines the burst size to be applied on the port group. This parameter is used if the traffic_shaping_policy"" is enabled.
             Default value: 1024 Kbytes
                         
-  vlanid : This parameter defines the VLAN ID to be set on the portgroup.
+  vlanid : (Optional) This parameter defines the VLAN ID to be set on the portgroup.
            Valid value: 0 to 4095
            Default value: 0 (No VLAN)
 
