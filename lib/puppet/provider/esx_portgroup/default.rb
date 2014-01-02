@@ -106,12 +106,13 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         	if (mypg.spec.policy.nicTeaming.failureCriteria != nil)			
 	           	checkbeaconpg = mypg.spec.policy.nicTeaming.failureCriteria.checkBeacon
 				if (checkbeaconpg != nil)
+					puts checkbeaconpg.to_s
 					return checkbeaconpg.to_s
 				elsif (checkbeaconpg == nil)
 					return nil
 				end
     	    else
-        	    Puppet.debug "failback is nil on pg so need to change"
+        	    Puppet.debug "checkbeacon is nil on pg so need to change"
             	return nil
 	        end
 			return nil
@@ -137,8 +138,12 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	        mypg=find_portgroup
     	    if (mypg.spec.policy.nicTeaming.rollingOrder != nil)
         	    failbackorderonpg = mypg.spec.policy.nicTeaming.rollingOrder
-				return failbackorderonpg
-	        else
+				if (failbackorderonpg == true)
+					return "false"
+				elsif (failbackorderonpg == false)
+					return "true"
+				end
+        else
         	    return nil
 	        end
         rescue Exception => excep
@@ -701,5 +706,3 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		end	
 	end
 end
-
-
