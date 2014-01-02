@@ -142,7 +142,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
         if !iscsi_chapuser.nil?
           chap_extension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
         end
-        if resource[:disable_hw_iscsi].eql?('true')
+        if resource[:disable_hw_iscsi].to_s.eql?('true')
           cmd = "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
         else
           cmd =  "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
