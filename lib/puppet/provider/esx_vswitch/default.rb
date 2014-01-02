@@ -11,6 +11,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     begin
       create_vswitch
     rescue Exception => excep
+      Puppet.err "Unable to create vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
@@ -21,6 +22,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     begin
       remove_vswitch
     rescue Exception => excep
+      Puppet.err "Unable to remove vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
@@ -53,6 +55,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       end
       update_vswitch(vswitchspec)
     rescue Exception => excep
+      Puppet.err "Unable to configure nics on vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
@@ -75,6 +78,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec.numPorts = value
       update_vswitch(actualspec)
     rescue Exception => excep
+      Puppet.err "Unable to configure num_ports on vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
@@ -96,6 +100,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
       update_vswitch(actualspec)
     rescue Exception => excep
+      Puppet.err "Unable to configure nicorderpolicy on vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
@@ -120,6 +125,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec.mtu = value
       update_vswitch(actualspec)
     rescue Exception => excep
+      Puppet.err "Unable to configure mtu on vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
@@ -152,6 +158,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec.policy.nicTeaming.failureCriteria.checkBeacon = value
       update_vswitch(actualspec)
     rescue Exception => excep
+      Puppet.err "Unable to configure checkbeacon on vSwitch because the following exception occurred - "
       Puppet.err excep.message
     end
   end
