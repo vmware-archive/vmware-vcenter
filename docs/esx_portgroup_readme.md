@@ -14,6 +14,10 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
         - Set VLAN Id
         - Set traffic shaping policy
         - Set IP configuration of the port group
+		- Override the failover policy
+		- Set mtu size
+		- Set failback flag
+		- Set checkbeacon flag
 
 # -------------------------------------------------------------------------
 # Functionality Description
@@ -45,7 +49,7 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 	 This method sets the mtu size of created port group.
 	
   8. Set failback
-	 This method sets the failback policy on created  port group.
+	 This method sets the failback flag on created  port group.
 		
   9. Set checkbeacon
 	 This method sets the checkbeacon flag on created port group.
