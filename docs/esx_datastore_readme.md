@@ -40,7 +40,10 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 	type: (Required) This parameter defines the datastore type.
     Possible values: NFS / CIFS / VMFS
 	
-	lun: (Required) This parameter defines the LUN number of storage volume.
+	lun:  This parameter defines the LUN number of storage volume.
+	
+	target_iqn: (Storage IQN) This parameter defines a worldwide unique and valid name for the iSCSI target instances. The name, based on IETF RFC 3270, can be between 1 and 244 characters in length. Sample formats are: iqn.1998-01.com.vmware:INDQAVM01-53b66220.IQNS can be get from esx_get_iqns api. 
+
             
 # -------------------------------------------------------------------------
 # Parameter Signature 
@@ -58,6 +61,7 @@ esx_datastore { "${esx1['hostname']}:vmfs_store":
   ensure    => present,
   lun	    => '0',  
   type      => 'vmfs',
+  target_iqn => 'iqn.1998-01.com.vmware:INDQAVM01-53b66220',
   transport => Transport['vcenter'],
 }
 
