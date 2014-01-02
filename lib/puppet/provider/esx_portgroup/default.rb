@@ -106,7 +106,6 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         	if (mypg.spec.policy.nicTeaming.failureCriteria != nil)			
 	           	checkbeaconpg = mypg.spec.policy.nicTeaming.failureCriteria.checkBeacon
 				if (checkbeaconpg != nil)
-					puts checkbeaconpg.to_s
 					return checkbeaconpg.to_s
 				elsif (checkbeaconpg == nil)
 					return nil
@@ -312,6 +311,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	def traffic_shaping_policy
     	Puppet.debug "Retrieving the traffic shaping policy of specified port group."
 		begin
+    		#@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
 			find_host
 		    @networksystem=@host.configManager.networkSystem
 			portg=find_portgroup
@@ -429,8 +429,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   	# Private method to find the vSwitch
 	def find_vswitch
+		#host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
 		find_host
-	    networksystem=host.configManager.networkSystem
+	    networksystem=@host.configManager.networkSystem
     	vswitches = networksystem.networkInfo.vswitch
 
 	    for vswitch in (vswitches) do
@@ -689,7 +690,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			end
 			@host
 		rescue Exception => excep
-			fail "An invalid host name or IP address is entered. Enter the correct host name and IP address."
+			fail "An invalid host name or IP address or datacenter is entered. Enter the correct host name/IP address and datacenter name."
 			#Puppet.err excep.message
 		end
 	end
@@ -706,3 +707,5 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		end	
 	end
 end
+
+
