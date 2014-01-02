@@ -312,7 +312,6 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	def traffic_shaping_policy
     	Puppet.debug "Retrieving the traffic shaping policy of specified port group."
 		begin
-    		@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
 			find_host
 		    @networksystem=@host.configManager.networkSystem
 			portg=find_portgroup
@@ -430,7 +429,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   	# Private method to find the vSwitch
 	def find_vswitch
-		host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+		find_host
 	    networksystem=host.configManager.networkSystem
     	vswitches = networksystem.networkInfo.vswitch
 
@@ -690,7 +689,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			end
 			@host
 		rescue Exception => excep
-			Puppet.err excep.message
+			fail "An invalid host name or IP address is entered. Enter the correct host name and IP address."
+			#Puppet.err excep.message
 		end
 	end
 
