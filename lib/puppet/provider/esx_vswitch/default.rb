@@ -23,7 +23,6 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     rescue Exception => excep
       Puppet.err excep.message
     end
-
   end
 
   #Check for existence of vSwitch
@@ -169,8 +168,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   #create vSwitch
   def create_vswitch
     Puppet.debug "Creating vSwitch"
-    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    raise Puppet::Error.new("No Host in datacenter #{walk_dc}") unless host
+    host = retrieve_host
 
     if(host.configManager.networkSystem != nil)
       networksystem=host.configManager.networkSystem
@@ -219,8 +217,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   #update vSwitch
   def update_vswitch(vswitchspec)
     Puppet.debug "Updating vSwitch"
-    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    raise Puppet::Error.new("No Host in datacenter #{walk_dc}") unless host
+    host = retrieve_host
     networksystem=host.configManager.networkSystem
 
     networksystem.UpdateVirtualSwitch(:vswitchName => resource[:name], :spec => vswitchspec)
@@ -229,8 +226,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
 
   #find vSwitch
   def find_vswitch
-    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    raise Puppet::Error.new("No Host in datacenter #{walk_dc}") unless host
+    host = retrieve_host
 
     networksystem=host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
@@ -247,7 +243,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
 
   #retrieve pnics associated with vSwitch
   def retrieve_vswitch_pnic_objects
-    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    host = retrieve_host
     networksystem=host.configManager.networkSystem
     vswitches = networksystem.networkConfig.vswitch
     vswitches.each do |vswitch|
@@ -264,7 +260,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   #remove vSwitch
   def remove_vswitch
     Puppet.debug "Destroying vSwitch"
-    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    host = retrieve_host
     networksystem=host.configManager.networkSystem
     networksystem.RemoveVirtualSwitch(:vswitchName => resource[:name])
 
@@ -273,7 +269,7 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
 
   #retrieve vSwitch specifications
   def retrieve_vswitch_spec(vswitchname)
-    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    host = retrieve_host
     networksystem = host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
     actual = nil
@@ -307,6 +303,13 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
   def retreive_numports
     vswitchspec = retrieve_vswitch_spec(resource[:name])
     return vswitchspec.numPorts
+  end
+
+  #retreive host given the host IP or name
+  def retrieve_host
+    host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    raise Puppet::Error.new("An invalid host name or IP address is entered. Enter the correct host name and IP address.") unless host
+    return host
   end
 
 end
