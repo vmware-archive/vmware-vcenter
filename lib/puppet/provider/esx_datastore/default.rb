@@ -6,50 +6,65 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   @doc = "Manages vCenter CIFS/NFS (file) datastores."
 
   def create
-	Puppet.debug "Creating datastore on the host."
-	begin
-		volume = {}
-		[:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
-		  volume[PuppetX::VMware::Util.camelize(prop, :lower).to_sym] = resource[prop]
-		end
+    Puppet.debug "Creating datastore on the host."
+    begin
+      volume = {}
+      [:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
+        volume[PuppetX::VMware::Util.camelize(prop, :lower).to_sym] = resource[prop]
+      end
 
-		case resource[:type]
-		when 'NFS'
-		  host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
-		when 'CIFS'
-		  volume[:type] = 'CIFS'
-		  volume[:userName] = resource[:user_name] if resource[:user_name]
-		  volume[:password] = resource[:password] if resource[:password]
-		  host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
-		when 'VMFS'
-		  attempt = 3
-		  while ! create_vmfs_lun and ! exists? and attempt > 0
-			Puppet.debug('Rescanning for volume')
-			host.configManager.storageSystem.RescanAllHba() unless find_disk
-			host.configManager.storageSystem.RescanVmfs()
-			# Sleeping because scanning is async:
-			# http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.apiref.doc/vim.host.StorageSystem.html#rescanAllHba
-			sleep 5
+      case resource[:type]
+      when 'NFS'
+        host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
+      when 'CIFS'
+        volume[:type] = 'CIFS'
+        volume[:userName] = resource[:user_name] if resource[:user_name]
+        volume[:password] = resource[:password] if resource[:password]
+        host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
+      when 'VMFS'
+        attempt = 3
+        while ! create_vmfs_lun and ! exists? and attempt > 0
+          Puppet.debug('Rescanning for volume')
+          host.configManager.storageSystem.RescanAllHba() unless find_disk
+          host.configManager.storageSystem.RescanVmfs()
+          # Sleeping because scanning is async:
+          # http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.apiref.doc/vim.host.StorageSystem.html#rescanAllHba
+          sleep 5
 
-			attempt -= 1
-		  end
-		  raise("LUN #{resource[:lun]} not detected.") unless exists?
-		end
-	rescue Exception => excep
-		Puppet.err "Unable to perform the operation because the following exception occurred - "
-		Puppet.err excep.message
+          attempt -= 1
+        end
+        target_iqn = resource[:target_iqn]
+        if target_iqn
+          raise("Target IQN '#{target_iqn}' not detected.") unless exists?
+        else
+          raise("LUN '#{resource[:lun]}' not detected.") unless exists?
+        end
+      end
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred - "
+      Puppet.err excep.message
     end
   end
 
   def find_disk
-    @disk ||= host.configManager.datastoreSystem.QueryAvailableDisksForVmfs().
-                find_all{|disk| scsi_lun(disk.uuid) == resource[:lun]}.last
+
+    target_iqn = resource[:target_iqn]
+
+    if target_iqn
+      @disk ||= host.configManager.datastoreSystem.QueryAvailableDisksForVmfs().
+      find_all{|disk| scsi_target_iqn(disk.uuid) == target_iqn }.last
+    else
+      @disk ||= host.configManager.datastoreSystem.QueryAvailableDisksForVmfs().
+      find_all{|disk| scsi_lun(disk.uuid) == resource[:lun]}.last
+    end
+
+    return @disk
   end
 
   def create_vmfs_lun
     if host_scsi_disk = find_disk
       vmfs_ds_options = host.configManager.datastoreSystem.QueryVmfsDatastoreCreateOptions(
-        :devicePath => host_scsi_disk.devicePath)
+      :devicePath => host_scsi_disk.devicePath)
       # Use the 1st (only?) spec provided by the QueryVmfsDatastoreCreateOptions call
       spec = vmfs_ds_options[0].spec
       # set the name of the soon to be created datastore
@@ -61,7 +76,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
       false
     end
   rescue RbVmomi::VIM::DuplicateName, RbVmomi::VIM::HostConfigFault => e
-    if exists? 
+    if exists?
       true
     else
       Puppet.debug("VMFS volume create failure: #{e.message}")
@@ -70,14 +85,14 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   end
 
   def destroy
-	Puppet.debug "Deleting datastore from the host."
-	
-	begin
-		 host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
-	rescue Exception => excep
-		Puppet.err "Unable to perform the operation because the following exception occurred - "
-		Puppet.err excep.message
-	end
+    Puppet.debug "Deleting datastore from the host."
+
+    begin
+      host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred - "
+      Puppet.err excep.message
+    end
   end
 
   def type
@@ -116,4 +131,31 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     result = adapters.collect{|a| a.target.collect{|t| t.lun}}.flatten.find{|lun| lun.key =~ /#{uuid}/}
     result.lun if result
   end
+
+  def scsi_target_iqn(uuid)
+    adapters = host.configManager.storageSystem.storageDeviceInfo.scsiTopology.adapter
+    required_adapter_hash = nil
+    found = 0
+    iscsi_name = nil
+    adapters.collect{|adapter|
+      adapter.target.collect{|target|
+        target.lun.collect{|lun|
+          if lun.key =~ /#{uuid}/
+            iscsi_name = target.transport.iScsiName
+            found = 1
+            break
+          end
+
+        }
+        if found.eql?(1)
+          break
+        end
+      }
+      if found.eql?(1)
+        break
+      end
+    }
+    iscsi_name unless iscsi_name.nil?
+  end
+
 end

@@ -17,19 +17,19 @@ Puppet::Type.newtype(:esx_datastore) do
 
   newparam(:datastore) do
     desc "The name of the datastore."
-	validate do |value|
-    	if value.strip.length == 0
-      		raise ArgumentError, "Invalid name of the datastore."
-    	end
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid name of the datastore."
+      end
     end
   end
 
   newparam(:host) do
     desc "The ESX host the datastore is attached to."
-	validate do |value|
-    	if value.strip.length == 0
-      		raise ArgumentError, "Invalid name or IP of the host."
-    	end
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid name or IP of the host."
+      end
     end
   end
 
@@ -63,7 +63,7 @@ Puppet::Type.newtype(:esx_datastore) do
     desc "Path to volume on remote storage host.  Specify only for file based storage."
   end
 
-  # CIFS only parameters.
+  #CIFS only parameters.
   newparam(:user_name) do
   end
 
@@ -80,6 +80,10 @@ Puppet::Type.newtype(:esx_datastore) do
 
   # Not implemented
   newparam(:uid) do
+  end
+
+  newparam(:target_iqn) do
+    desc "Target IQN "
   end
 
   validate do
