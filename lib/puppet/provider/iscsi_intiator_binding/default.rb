@@ -85,16 +85,23 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
       Puppet.err err_content
     else
       content = File.open(log_filename, 'rb') { |file| file.read }
-      if (/(?i:Vmknic:)/.match(content))		
-		binded_vmk_nics = content[/Vmknic:(?<match>.*)/, "match"]
-		Puppet.notice binded_vmk_nics
+      if (/(?i:Vmknic:\s+)/.match(content))		
+		actual_binded_vmk_nics_arr = content.scan(/Vmknic:\s+(?<match>.*)/) # It will be array of Array. Example: actual_binded_vmk_nics_arr : [["vmk1"], ["vmk2"]]
+		Puppet.notice "Actual binded VMKernel nic : #{actual_binded_vmk_nics_arr}"
+		
+		binded_vmk_nics_arr = [] 
+		for item in actual_binded_vmk_nics_arr
+		   binded_vmk_nics_arr.push(item[0])
+		end
+		
+		Puppet.notice "Binded VMKernel nic : #{binded_vmk_nics_arr}" # Binded VMKernel nic : [["vmk1"], ["vmk2"]]
 		
 		input_vmk_nics = resource[:vmknics]
-	    Puppet.notice input_vmk_nics
+	    Puppet.notice "Input VMKernel nic : #{input_vmk_nics}"
 		
-	    binded_vmk_nics_arr = binded_vmk_nics.split(' ')
-
-		input_vmk_nics_arr = input_vmk_nics.split(' ') # Need to check here the delimeter
+		input_vmk_nics_arr = input_vmk_nics.split(' ')
+		Puppet.notice "input_vmk_nics_arr : #{input_vmk_nics_arr}"
+		Puppet.notice "binded_vmk_nics_arr : #{binded_vmk_nics_arr}"
 		
 		if ( binded_vmk_nics_arr.uniq.sort == input_vmk_nics_arr.uniq.sort )
 			flag = 0
