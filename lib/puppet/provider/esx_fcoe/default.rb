@@ -56,12 +56,19 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
   
   #find host given the host IP or name
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
+    @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
     if @host
       return @host
     else
       fail "An invalid host name or IP address is entered. Enter the correct host name and IP address."
     end
+  end
+  
+  #traverse datacenter
+  def walk_dc(path=resource[:path])
+    datacenter = walk(path, RbVmomi::VIM::Datacenter)
+    raise Puppet::Error.new( "No datacenter in path: #{path}") unless datacenter
+    datacenter
   end
   
 end

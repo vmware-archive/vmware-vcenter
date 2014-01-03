@@ -32,4 +32,11 @@ Puppet::Type.newtype(:esx_fcoe) do
       end
    end
 
+  newparam(:path) do
+    desc "Datacenter path where host resides"
+    validate do |path|
+      raise ArgumentError, "Absolute path is required: #{path}" unless Puppet::Util.absolute_path?(path)
+    end
+  end
+  
 end
