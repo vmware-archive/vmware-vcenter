@@ -137,11 +137,31 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     required_adapter_hash = nil
     found = 0
     iscsi_name = nil
+	
+	target_iqn = resource[:target_iqn]
+	luntype = 'iscsi'
+	if target_iqn =~ /fc/
+		luntype = 'fc'
+	end
+	luntype = luntype.to_s
+	Puppet.notice "luntype : #{luntype}"
     adapters.collect{|adapter|
       adapter.target.collect{|target|
         target.lun.collect{|lun|
           if lun.key =~ /#{uuid}/
+
+			# fc.5000d310005ec401:5000d310005ec437
+			if luntype.eql?('iscsi')
             iscsi_name = target.transport.iScsiName
+			else
+			  nwwn_decimal = target.transport.nodeWorldWideName  #nwwn in decimal format
+			  nwwn_hexadecimal = nwwn_decimal.to_s(16) #nwwn in decimal hexadecimal format
+
+			  pwwn_decimal = target.transport.portWorldWideName #pwwn in decimal format
+			  pwwn_hexadecimal = pwwn_decimal.to_s(16) #pwwn in decimal hexadecimal format
+			  iscsi_name = "fc.#{nwwn_hexadecimal}:#{pwwn_hexadecimal}"				
+			end
+
             found = 1
             break
           end
