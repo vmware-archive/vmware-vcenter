@@ -26,33 +26,33 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 
   1. Create
      This method creates a port group instance based on the specified input parameters.
-     As the port group gets created on a the given vswitch, the specific vswitch must exist on the specified host.
+     As the port group gets created on a given vSwitch, the specific vSwitch must exist on the specified host.
      A user can set the port group type to either VirtualMachine or VMkernel (Used for vmotion and NIC teaming. Also, the IP address, the traffic shaping policy and the VLAN ID of the port group can be set by the user.
    
   2. Destroy
-     This method removes the port group from the specified vswitch.
+     This method removes the port group from the specified vSwitch.
 
   3. Set VLAN ID
-     This method sets the VLAN ID of the created port group.
+     This method sets the VLAN Id of the created port group.
          
   4. Set traffic shaping policy
      This method sets the traffic shaping parameters in terms of average bandwidth, peak bandwidth and the burst size on the created port group.
 
   5. Set the IP configuration of the port group
      This method sets the IP settings (dhcp/static) on the created port group.
-	 Note: To update the IP address, it is required to set the vmotion flag to "Enabled", so that it gets enabled before updating the IP address to either dhcp/static.
+	 Note: To update the IP address, it is required to set the vMotion flag to "Enabled", so that it gets enabled before updating the IP address to either dhcp/static.
 	 
   6. override failover policy
-	 This method overrides the failover order of vswitch and sets it as per the input given by user.
+	 This method overrides the failover order of vSwitch and sets it as per the input given by the user.
 	 
   7. Set mtu size
-	 This method sets the mtu size of created port group.
+	 This method sets the MTU size of the created port group.
 	
   8. Set failback
-	 This method sets the failback flag on created  port group.
+	 This method sets the failback flag on the created  port group.
 		
   9. Set checkbeacon
-	 This method sets the checkbeacon flag on created port group.
+	 This method sets the checkbeacon flag on the created port group.
 	 
 # -------------------------------------------------------------------------
 # Summary of Parameters.
@@ -70,28 +70,26 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 
   path: (Required) This parameter defines the path to the host, for example: /Datacenter-1/cluster-1.
         
-  vswitch:(Required) This parameter defines the name of the vswitch.
+  vswitch:(Required) This parameter defines the name of the vSwitch.
         
   portgrouptype: (Required) This parameter defines the port group to be created by the user. 
         Valid values : "VirtualMachine" and "VMkernel"
         Default value: "VirtualMachine"
 
-  vmotion: (Optional) This parameter notifies whether or not a vmotion is required on the VMkernel port group. This parameter is optional in case of the port group of type "virtualMachine".
+  vmotion: (Optional) This parameter notifies whether or not a vMotion is required on the VMkernel port group. This parameter is optional in case of the port group of the type "virtualMachine".
            Valid values : "Enabled" and "Disabled"
-  failback: (Optional) This parameter notifies whether or not failback is required on the port group.
-			Valid values : "true" and "false"
+  failback: (Optional) This parameter notifies whether or not a  failback is required on the port group.
+			Valid values : "True" and "False"
 			
   checkbeacon : (Optional) This parameter notifies whether or not a checkbeacon is required on the port group. 
-           Valid values : "true" and "false"
+           Valid values : "True" and "False"
 		   
-  mtu :  (Optional) This paramter is used to specify mtu size for this port group.
-			Valid value are between 1500 to 9000
+  mtu :  (Optional) This paramter is used to specify the MTU size for this port group. A valid MTU value must not be less than 1500 and must not exceed 9000.
 			
-  overridefailoverorder : (Optional) This parameter gives option to the user to override switch failover order.
+  overridefailoverorder : (Optional) This parameter facilitates the user to override switch failover order.
 			Valid values : "Enabled" and "Disabled"
   
-  nicorderpolicy : (Optional) This parameter gives option to the user to select active nics and standby nics for this port group.Its value has to be given in the hash format.
-			for example:
+  nicorderpolicy : (Optional) This parameter gives option to the user to select active NICs and standby NICs for this port group. The value of this parameter must be in a hash format, for example: 
 				nicorderpolicy => {
 					activenic  => ["vmnic1"],
 					standbynic => []
@@ -106,16 +104,16 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
   traffic_shaping_policy: (Optional) This parameter defines the traffic shaping policy to be applied on the port group.
    Valid values : "Enabled", "Disabled"
                          
-  averagebandwidth: (Optional) This parameter defines the average bandwidth to be applied on port group. This parameter is used if the "traffic_shaping_policy" is enabled.
+  averagebandwidth: (Optional) This parameter defines the average bandwidth to be applied on the port group. This parameter is used if the "traffic_shaping_policy" is enabled.
                    Default value: 1000 Kbits/sec
         
   peakbandwidth: (Optional) This parameter defines the peak bandwidth to be applied on the port group. This parameter is used if the "traffic_shaping_policy"" is enabled.
                  Default value: 1000 Kbits/sec
                         
-  burtsize: (Optional) This parameter ines the burst size to be applied on the port group. This parameter is used if the traffic_shaping_policy"" is enabled.
+  burtsize: (Optional) This parameter defines the burst size to be applied on the port group. This parameter is used if the traffic_shaping_policy"" is enabled.
             Default value: 1024 Kbytes
                         
-  vlanid : (Optional) This parameter defines the VLAN ID to be set on the portgroup.
+  vlanid : (Optional) This parameter defines the VLAN Id to be set on the portgroup.
            Valid value: 0 to 4095
            Default value: 0 (No VLAN)
 
@@ -131,6 +129,7 @@ transport { 'vcenter':
 }
 
 # The following resource is not ready for testing:
+
   esx_portgroup { 'name':
     name => "test25",
     ensure => present,
