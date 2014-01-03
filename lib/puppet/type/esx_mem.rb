@@ -1,21 +1,17 @@
 Puppet::Type.newtype(:esx_mem) do
   @doc = "Install and configure MEM on ESX Host."
 
-  ensurable do
-    newvalue(:present) do
-      provider.create
-    end
-    newvalue(:absent) do
-      provider.destroy
-    end
-    defaultto(:present)
-  end
 
   newproperty(:configure_mem) do
     desc "Confgure MEM  on host."
     newvalues(:'true')
-    defaultto('true')
   end
+
+  newproperty(:install_mem) do
+    desc "Install MEM  on host."
+    newvalues(:'true')
+  end
+
 
   newparam(:name, :namevar => true) do
     desc "ESX hostname or ip address."

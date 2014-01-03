@@ -3,114 +3,10 @@ require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
 Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Export Import OVF"
-  def create
-    #Install MEM
+  @doc = "Configure and install MEM on ESX server"
 
-    begin
 
-      Puppet.notice "Installing MEM on server"
-
-      flag = install_mem
-    rescue Exception => exc
-      flag = 1
-      Puppet.err(exc.message)
-    end
-
-    if flag.eql?(0)
-      Puppet.notice "Successfully installed MEM on server '#{name}'."
-    else
-      Puppet.err "Unable to install MEM on server '#{name}'."
-    end
-
-  end
-
-  # Intalling MEM
-  def install_mem
-    flag = esx_main_enter_exists("enter")
-    if flag.eql?(0)
-      cmd = "#{resource[:script_executable_path]} #{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:name ]} --reboot"
-
-      error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
-      log_filename = "/tmp/installmem_log.#{Process.pid}"
-
-      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
-
-      if flag.eql?(0)
-        # Exiting from maintenance mode
-        esx_main_enter_exists("exit")
-      end
-    end
-    return flag
-  end
-
-  def get_esx_currentstate
-
-    flag = 0
-    host_ip = resource[:name]
-
-    error_log_filename = "/tmp/err_#{host_ip}_state.#{Process.pid}"
-    log_filename = "/tmp/log.#{host_ip}_state.#{Process.pid}"
-
-    cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation info"
-    system(cmd , :out => [log_filename, 'a'], :err => [error_log_filename, 'a'])
-    if $? != 0
-      flag = 1
-      err_content = File.open(error_log_filename, 'rb') { |file| file.read }
-      Puppet.err err_content
-    else
-      content = File.open(log_filename, 'rb') { |file| file.read }
-      if (/SOAP|Error|operation is not allowed/.match(content))
-        # got some error
-        Puppet.err content
-        flag = 1
-      else
-        maintenance_status = /In Maintenance Mode\s+:\s+(\S+)/.match(content)
-        if (maintenance_status[1].downcase.eql?('yes'))
-          flag = 2
-        else
-          flag = 3
-        end
-      end
-
-    end
-    remove_files(log_filename, error_log_filename)
-    return flag
-  end
-
-  # Enter and exit ESX host in maintenance mode
-  def esx_main_enter_exists(operation)
-    flag = 0
-
-    host_ip = resource[:name]
-    error_log_filename = "/tmp/err_#{host_ip}_#{operation}.#{Process.pid}"
-    log_filename = "/tmp/log.#{host_ip}_#{operation}.#{Process.pid}"
-
-    # Getting current state
-    ret_val = get_esx_currentstate
-
-    if ret_val == 2 and operation.eql?('enter')
-      Puppet.notice "Host '#{host_ip}' is already in maintenance mode"
-    elsif ret_val == 3 and operation.eql?('exit')
-      Puppet.notice "Host '#{host_ip}' is not in maintenance mode. Hence no need to perform 'exit' operation"
-    elsif ret_val == 1
-      flag = 1
-
-    else
-
-      if operation.eql?('enter')
-        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation enter"
-      else
-        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation exit"
-      end
-
-      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
-    end
-
-    return flag
-  end
-
-  def configure_mem
+   def configure_mem
     return false
   end
 
@@ -156,16 +52,100 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     esx_main_enter_exists("exit")
 
     if flag.eql?(0)
-      Puppet.notice "Successfully configured MEM on server '#{name}'."
+      Puppet.notice "Successfully configured MEM on the server '#{name}'."
     else
-      Puppet.err "Unable to configure MEM on server '#{name}'."
+      Puppet.err "Unable to configure MEM on the server '#{name}'."
     end
     return flag
   end
 
-  # Check whether MEM is installed
-  def exists?
-    mem
+  def install_mem
+      mem
+  end
+
+  # Intalling MEM
+  def install_mem=(value)
+    flag = esx_main_enter_exists("enter")
+    if flag.eql?(0)
+      cmd = "#{resource[:script_executable_path]} #{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:name ]} --reboot"
+
+      error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
+      log_filename = "/tmp/installmem_log.#{Process.pid}"
+
+      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
+
+      if flag.eql?(0)
+        # Exiting from maintenance mode
+        esx_main_enter_exists("exit")
+      end
+    end
+    return flag
+  end
+
+  def get_esx_currentstate
+
+    flag = 0
+    host_ip = resource[:name]
+
+    error_log_filename = "/tmp/err_#{host_ip}_state.#{Process.pid}"
+    log_filename = "/tmp/log.#{host_ip}_state.#{Process.pid}"
+    ENV['PERL_LWP_SSL_VERIFY_HOSTNAME']= '0' ;
+    cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation info"
+    system(cmd , :out => [log_filename, 'a'], :err => [error_log_filename, 'a'])
+    if $? != 0
+      flag = 1
+      err_content = File.open(error_log_filename, 'rb') { |file| file.read }
+      Puppet.err err_content
+    else
+      content = File.open(log_filename, 'rb') { |file| file.read }
+      if (/SOAP|Error|operation is not allowed/.match(content))
+        # got some error
+        Puppet.err content
+        flag = 1
+      else
+        maintenance_status = /In Maintenance Mode\s+:\s+(\S+)/.match(content)
+        if (maintenance_status[1].downcase.eql?('yes'))
+          flag = 2
+        else
+          flag = 3
+        end
+      end
+
+    end
+    remove_files(log_filename, error_log_filename)
+    return flag
+  end
+
+  # Enter and exit ESX host in maintenance mode
+  def esx_main_enter_exists(operation)
+    flag = 0
+
+    host_ip = resource[:name]
+    error_log_filename = "/tmp/err_#{host_ip}_#{operation}.#{Process.pid}"
+    log_filename = "/tmp/log.#{host_ip}_#{operation}.#{Process.pid}"
+
+    # Getting current state
+    ret_val = get_esx_currentstate
+
+    if ret_val == 2 and operation.eql?('enter')
+      Puppet.notice "The host '#{host_ip}' is already in maintenance mode."
+    elsif ret_val == 3 and operation.eql?('exit')
+      Puppet.notice "Exit operation is not to be performed because the host '#{host_ip}' is not in the maintenance mode." 
+    elsif ret_val == 1
+      flag = 1
+
+    else
+
+      if operation.eql?('enter')
+        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation enter"
+      else
+        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation exit"
+      end
+
+      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
+    end
+
+    return flag
   end
 
   private
@@ -208,12 +188,12 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     remove_files( error_log_filename , log_filename)
 
     if flag.eql?(0)
-      Puppet.info "MEM is already installed on server"
-      return true
+      Puppet.info "MEM is already installed on the server."
+      return "true"
 
     else
-      Puppet.notice "MEM is not installed on server"
-      return false
+      Puppet.notice "MEM is not installed on the server."
+      return "false"
 
     end
   end
@@ -245,21 +225,21 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
   def validate_configure_param
     flag = 1
     if resource[:storage_groupip].nil?
-      Puppet.err "Unable to configure MEM, because 'storage_groupip' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'storage_groupip' value is not provided."
     elsif resource[:mtu].nil?
-      Puppet.err "Unable to configure MEM, because 'mtu' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'mtu' value is not provided."
     elsif resource[:iscsi_vmkernal_prefix].nil?
-      Puppet.err "Unable to configure MEM, because 'iscsi_vmkernal_prefix' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'iscsi_vmkernal_prefix' value is not provided."
     elsif resource[:iscsi_netmask].nil?
-      Puppet.err "Unable to configure MEM, because 'iscsi_netmask' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'iscsi_netmask' value is not provided."
     elsif resource[:iscsi_vswitch].nil?
-      Puppet.err "Unable to configure MEM, because 'iscsi_vswitch' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'iscsi_vswitch' value is not provided."
     elsif resource[:vnics_ipaddress].nil?
-      Puppet.err "Unable to configure MEM, because 'vnics_ipaddress' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'vnics_ipaddress' value is not provided."
     elsif resource[:vnics].nil?
-      Puppet.err "Unable to configure MEM, because 'vnics' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'vnics' value is not provided."
     elsif !resource[:iscsi_chapuser].nil? and resource[:iscsi_chapsecret].nil?
-        Puppet.err "Unable to configure MEM, because 'iscsi_chapsecret' value is not provided."
+        Puppet.err "Unable to configure MEM, because the 'iscsi_chapsecret' value is not provided."
     else
       flag = 0
 
