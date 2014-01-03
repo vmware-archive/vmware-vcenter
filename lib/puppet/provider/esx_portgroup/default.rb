@@ -9,6 +9,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
     		create_port_group 
 		rescue Exception => excep
+			Puppet.err "Unable to create a port group because the following exception occurred: - "	
 			Puppet.err excep.message
 		end
   	end
@@ -18,6 +19,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			remove_port_group
 		rescue Exception => excep
+			Puppet.err "Unable to remove a port group because the following exception occurred: - "	
     		Puppet.err excep.message
 		end
   	end
@@ -58,6 +60,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     	    hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:name], :policy => portg.spec.policy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
     	    @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => hostportgroupspec)
     	rescue Exception => excep
+			Puppet.err "Unable to configure vlanid on a port group because the following exception occurred: - "	
 			Puppet.err excep.message
 		end
 	end
@@ -70,7 +73,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		@networksystem=@host.configManager.networkSystem
         vnics=@networksystem.networkInfo.vnic
 
-        for vnic in (vnics)
+		vnics.each do |vnic|
  	       if (vnic.portgroup && resource[:name] == vnic.portgroup)
 			mtuonportgroup = vnic.spec.mtu
 			if (mtuonportgroup != resource[:mtu].to_i)
@@ -93,6 +96,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			setupmtu
 	    rescue Exception => excep
+			Puppet.err "Unable to configure mtu on a port group because the following exception occurred: - "	
             Puppet.err excep.message
         end
 	end
@@ -125,6 +129,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			set_checkbeacon
         rescue Exception => excep
+			Puppet.err "Unable to configure checkbeacon on a port group because the following exception occurred: - "	
             Puppet.err excep.message
         end
 	end
@@ -156,6 +161,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 		set_failback
         rescue Exception => excep
+			Puppet.err "Unable to configure failback on a port group because the following exception occurred: - "	
             Puppet.err excep.message
         end
 	end
@@ -175,7 +181,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 					activenic = nicorderpolicy ['activenic']
 					standbynic = nicorderpolicy ['standbynic']
 					if (acitvenicsonpg != activenic || standbynicsonpg != standbynic)
-						return "needtochange"
+						return "currentstatus"
 					elsif (acitvenicsonpg == activenic && standbynicsonpg == standbynic)
 						return "Enabled"
 					end
@@ -183,7 +189,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 					return "Enabled"
 			end
 		else
-			return "needtochange"
+			return "currentstatus"
 		end
         rescue Exception => excep
             Puppet.err excep.message
@@ -196,6 +202,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			setoverridepolicy
         rescue Exception => excep
+			Puppet.err "Unable to configure override failover order on a port group because the following exception occurred: - "	
             Puppet.err excep.message
         end
 	end
@@ -211,7 +218,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 					type=myportgroup.port[0].type
 					if (type == "host")
 						#if it is a VMkernel port group then need to change the vmotion flag as per given by user
-						return "needtochange"
+						return "currentstatus"
 					else
 						#return the same value as given by user
 						return resource[:vmotion]
@@ -232,6 +239,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 		setupvmotion	
         rescue Exception => excep
+			Puppet.err "Unable to configure vmotion on a port group because the following exception occurred: - "	
             Puppet.err excep.message
 		end
 	end
@@ -244,7 +252,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     	    @networksystem=@host.configManager.networkSystem
         	vnics=@networksystem.networkInfo.vnic
 
-        	for vnic in (vnics)
+			vnics.each do |vnic|
 	            if (vnic.portgroup && resource[:name] == vnic.portgroup)
 	                if (resource[:ipsettings] == :static)
     	                ipaddressonportgroup = vnic.spec.ip.ipAddress
@@ -280,7 +288,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         	vnics=@networksystem.networkInfo.vnic
         	@vmotionsystem = @host.configManager.vmotionSystem
 
-        	for vnic in (vnics)
+			vnics.each do |vnic|
 	        	if (vnic.portgroup && resource[:name] == vnic.portgroup)
 					# Select vnic for vmotion first to update ip configuration
 					vnicdevice=vnic.device
@@ -302,6 +310,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			end
 			return "true"
        rescue Exception => excep
+			Puppet.err "Unable to configure ip settings on a port group because the following exception occurred: - "	
             Puppet.err excep.message
        end
 	end
@@ -326,7 +335,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 						return "Enabled"
 							
 					elsif (enabled == false || avgbw/1000 != resource[:averagebandwidth].to_i || pkbw/1000 != resource[:peakbandwidth].to_i || burstsize/1024 != resource[:burstsize].to_i)
-						return "needtochange"
+						return "currentstatus"
 					end
 				elsif (resource[:traffic_shaping_policy] == :Disabled)
 					if (enabled == false)
@@ -347,6 +356,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			traffic_shaping
     		return true
     	rescue Exception => excep
+			Puppet.err "Unable to configure traffic shaping policy on a port group because the following exception occurred: - "	
             Puppet.err excep.message
     	end
   end
@@ -372,7 +382,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			find_host
     	    @networksystem=@host.configManager.networkSystem
         	@pg = @networksystem.networkInfo.portgroup
-	        for portg in (@pg) do
+		
+			@pg.each do |portg|
                 availablepgs = portg.spec.name
                 if (availablepgs == resource[:name])
                 	return true
@@ -390,11 +401,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		Puppet.debug "Entering traffic_shaping"
 		find_host
         @networksystem=@host.configManager.networkSystem
-        @pg = @networksystem.networkInfo.portgroup
-        for portg in (@pg) do
-            availablepgs = portg.spec.name
-            if (availablepgs == resource[:name])
-        		if ( resource[:traffic_shaping_policy] == :Enabled )
+		portg=find_portgroup
+        	if ( resource[:traffic_shaping_policy] == :Enabled )
 		            avgbandwidth = resource[:averagebandwidth].to_i * 1000	
         		    peakbandwidth =  resource[:peakbandwidth].to_i * 1000
 		            burstsize = resource[:burstsize].to_i * 1024
@@ -413,16 +421,14 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
         	        @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
 
-		        elsif ( resource[:traffic_shaping_policy] == :Disabled)
+			elsif ( resource[:traffic_shaping_policy] == :Disabled)
 					enabled = 0
         		    hostnetworktrafficshapingpolicy =  RbVmomi::VIM.HostNetworkTrafficShapingPolicy(:enabled => enabled)
         		    hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
 					actualspec = portg.spec
 					actualspec.policy = hostnetworkpolicy
 	                @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
-            	end
-        	end
-        end
+           	end
         return true
 	end
 
@@ -434,7 +440,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	    networksystem=@host.configManager.networkSystem
     	vswitches = networksystem.networkInfo.vswitch
 
-	    for vswitch in (vswitches) do
+		vswitches.each do |vswitch|
     	  availablevswitch = vswitch.name
 	      if (availablevswitch == resource[:vswitch])
     	    return true
@@ -452,51 +458,26 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			if (find_vswitch == false)
 				raise Puppet::Error, "Unable to find the vSwitch " + resource[:vswitch]
 			end	
-			
 			hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy()
         	hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => name, :policy => hostnetworkpolicy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
-
 	        @networksystem.AddPortGroup(:portgrp => hostportgroupspec)
-
 
 			if (resource[:traffic_shaping_policy] !=nil )
 				traffic_shaping
 			end
-	
 			if (resource[:failback] !=nil )
 				set_failback
 			end
-
 			if (resource[:overridefailoverorder] !=nil )
 				setoverridepolicy
 			end
 			if (resource[:checkbeacon]!= nil)
 				set_checkbeacon
 			end
-
 			if (resource[:portgrouptype] == :VMkernel)
 				Puppet.debug "Entering type VMkernel"
+				add_virtual_nic
 
-				if (resource[:ipsettings] == :static)
-					if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
-					   	raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
-					elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
-						raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
-					end
-					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
-					hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
-					@networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)	
-				elsif (resource[:ipsettings] == :dhcp)
-					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
-					hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
-					@networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)	
-				else
-					upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
-					hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
-					@networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)	
-				end
-
-	
 				if (resource[:vmotion] !=nil )
 					setupvmotion
 				end
@@ -504,9 +485,34 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 				if (resource[:mtu] !=nil )
 					setupmtu
 				end
-
 			end
 			Puppet.notice "Successfully created a portgroup {" + resource[:name] + "}"
+	end
+
+	def add_virtual_nic
+		begin
+	        if (resource[:ipsettings] == :static)
+    	        if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
+        	        raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
+                elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
+            	    raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
+                end
+           		upip = RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
+                hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
+                @networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)
+            elsif (resource[:ipsettings] == :dhcp)
+            	upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
+                hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
+                @networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)
+            else
+                upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
+                hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
+                @networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)
+            end
+		rescue Exception => excep
+			@networksystem.RemovePortGroup(:pgName => resource[:name])
+        	Puppet.err excep.message
+        end
 	end
 
 	def set_failback
@@ -576,6 +582,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		Puppet.debug "Entering setup vmotion method."
 		find_host
 		@networksystem=@host.configManager.networkSystem
+		vnicdevice = nil
 
 		if (resource[:portgrouptype] == :VMkernel)
     		@vmotionsystem = @host.configManager.vmotionSystem
@@ -583,12 +590,12 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
 			#enabling vmotion	
 			if (resource[:vmotion] == :Enabled)
-			  	for vnic in (vnics)
+				vnics.each do |vnic|
         			if (vnic.portgroup && resource[:name] == vnic.portgroup)
             			vnicdevice=vnic.device
 	        		end
     			end
-      			@vmotionsystem.SelectVnic(:device => vnicdevice)
+      			@vmotionsystem.SelectVnic(:device =>  vnicdevice)
 			end
 			#disabling vmotion
 			if (resource[:vmotion] == :Disabled)
@@ -606,7 +613,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
         #enabling mtu
         if (resource[:mtu] && resource[:mtu].to_i > 1500 && resource[:mtu].to_i<=9000)
-            for vnic in (vnics)
+			vnics.each do |vnic|
                 if (vnic.portgroup && resource[:name] == vnic.portgroup)
                     vnicdevice=vnic.device
                     hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:mtu => resource[:mtu])
@@ -667,7 +674,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		if (resource[:portgrouptype] == :VMkernel)
             vnics=@networksystem.networkInfo.vnic
 
-            for vnic in (vnics)
+			vnics.each do |vnic|
             	if (vnic.portgroup && resource[:name] == vnic.portgroup)
                 	vnicdevice=vnic.device
                 end
@@ -699,7 +706,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 	    find_host
         @networksystem=@host.configManager.networkSystem
         @pg = @networksystem.networkInfo.portgroup
-        for portg in (@pg) do
+		@pg.each do |portg|
 	        availablepgs = portg.spec.name
     	    if (availablepgs == resource[:name])
 				return portg	
