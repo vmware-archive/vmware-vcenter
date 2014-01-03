@@ -44,6 +44,8 @@ The VMware/vCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 	
 	target_iqn: (Storage IQN) This parameter defines a worldwide unique and valid name for the iSCSI target instances. The name, based on IETF RFC 3270, can be between 1 and 244 characters in length. Sample formats are: 'iqn.2006-01.com.openfiler:tsn.5f393ceedf4c' can be get from esx_get_iqns api. 
 
+	path: (Required) This parameter defines the path to the ESXi host.
+
             
 # -------------------------------------------------------------------------
 # Parameter Signature 

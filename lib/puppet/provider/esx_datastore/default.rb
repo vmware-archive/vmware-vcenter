@@ -118,7 +118,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   private
 
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
+    @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
     if @host
       return @host
     else
@@ -157,5 +157,12 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     }
     iscsi_name unless iscsi_name.nil?
   end
+  
+#traverse datacenter
+def walk_dc(path=resource[:path])
+  datacenter = walk(path, RbVmomi::VIM::Datacenter)
+  raise Puppet::Error.new( "No datacenter in path: #{path}") unless datacenter
+  datacenter
+end
 
 end

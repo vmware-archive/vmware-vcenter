@@ -86,6 +86,13 @@ Puppet::Type.newtype(:esx_datastore) do
     desc "Target IQN "
   end
 
+  newparam(:path) do
+    desc "Datacenter path where host resides"
+    validate do |path|
+      raise ArgumentError, "Absolute path is required: #{path}" unless Puppet::Util.absolute_path?(path)
+    end
+  end
+  
   validate do
     raise Puppet::Error, "Must supply a value for type" if self[:type].nil?
     if ["NFS", "CIFS"].include? self[:type]
