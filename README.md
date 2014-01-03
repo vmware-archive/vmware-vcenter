@@ -133,4 +133,10 @@ Following functionality related readme's are kept at docs folder.
    b) Deleting FCoE software adapter from a host.
    
 11) esx_get_iqns_readme.md:This readme file describes following host system functionalty.
-   a)Dsplaying the information about the iSCSI adapter and the ISQN of the given host.
+   a)Displaying the information about the iSCSI adapter and the ISQN of the given host.
+
+12) esx_mem_readme.md:This readme file describes following host system functionalty.
+   a)Installing and configuring MEM on ESX server.
+   
+13) iscsi_intiator_binding_readme.md:This readme file describes following host system functionalty.
+   a)Binding and Unbinding of VMKernel nic to VM HBA.
