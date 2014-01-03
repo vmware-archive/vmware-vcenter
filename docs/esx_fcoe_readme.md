@@ -35,6 +35,8 @@ The VMware/vCenter module uses the VMware vCenter Ruby SDK (rbvmomi, version 1.6
 
     physical_nic: (Required) This parameter defines the name of the underlying physical NIC that will be associated with the FCoE HBA. If this parameter is not defined explicitly in the manifest file, then the title of the type 'esx_fcoe' is used.
 
+	path: (Required) This parameter defines the path to the ESXi host.
+	
 # -------------------------------------------------------------------------
 # Parameter Signature 
 # -------------------------------------------------------------------------
