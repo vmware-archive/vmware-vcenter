@@ -30,8 +30,8 @@ $configure_mem = {
 
 
 esx_mem { $mem['host']:
-  ensure                    => present,
-  configure_mem		    => "true",
+  configure_mem		        => "true",
+  install_mem               => "true",
   script_executable_path    => $mem['script_executable_path'],
   setup_script_filepath     => $mem['setup_script_filepath'],
   host_username             => $mem['host_username'],
