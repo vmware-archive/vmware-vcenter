@@ -2,13 +2,13 @@ Puppet::Type.newtype(:vc_vm_ovf) do
   @doc = "Export and Import OVF."
 
   ensurable do
-    newvalue(:present) do
+    newvalue(:import) do
         provider.create
     end
-    newvalue(:absent) do
+    newvalue(:export) do
         provider.destroy
     end
-    defaultto(:present)
+    defaultto(:import)
   end
 
   newparam(:ovffilepath) do

@@ -10,7 +10,7 @@ transport { 'vcenter':
 
 $ovf = {
     'vmname'                    => 'testVM_1',
-    'ovffilepath'               => '/root/OVF/test.ovf',
+    'ovffilepath'               => '/root/OVF/test_123.ovf',
     'datacenter'                => 'DDCQA',
     # For Import ovf
     'target_datastore'          => 'datastore3',
@@ -19,7 +19,7 @@ $ovf = {
 
 
 vc_vm_ovf { $ovf['vmname']:
-  ensure                    => present,
+  ensure                    => 'import',
   datacenter                => $ovf['datacenter'],
   ovffilepath               => $ovf['ovffilepath'],
   target_datastore          => $ovf['target_datastore'],
