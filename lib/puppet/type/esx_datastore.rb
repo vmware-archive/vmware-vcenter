@@ -100,7 +100,11 @@ Puppet::Type.newtype(:esx_datastore) do
       raise Puppet::Error, "Missing remote_path property" unless self[:remote_path]
       raise Puppet::Error, "lun property should only be included if type is 'vmfs'" if self[:lun]
     elsif self[:type] == "VMFS"
-      raise Puppet::Error, "Missing lun property" unless self[:lun]
+	  if self[:target_iqn]
+	  else
+	    raise Puppet::Error, "Missing lun or target_iqn property" unless self[:lun]
+	  end	  
+	  raise Puppet::Error, "path is missing." unless self[:path]
       raise Puppet::Error, "remote_host property should only be included if type is 'nfs' or 'cifs'" if self[:remote_host]
       raise Puppet::Error, "remote_path property should only be included if type is 'nfs' or 'cifs'" if self[:remote_path]
     end
