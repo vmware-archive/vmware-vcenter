@@ -9,7 +9,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
     		create_port_group 
 		rescue Exception => excep
-			Puppet.err "Unable to create a port group because the following exception occurred: - "	
+			Puppet.err "Unable to create a port group because the following exception occurred: -"	
 			Puppet.err excep.message
 		end
   	end
@@ -19,7 +19,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			remove_port_group
 		rescue Exception => excep
-			Puppet.err "Unable to remove a port group because the following exception occurred: - "	
+			Puppet.err "Unable to remove a port group because the following exception occurred: -"	
     		Puppet.err excep.message
 		end
   	end
@@ -60,7 +60,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     	    hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:name], :policy => portg.spec.policy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
     	    @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => hostportgroupspec)
     	rescue Exception => excep
-			Puppet.err "Unable to configure vlanid on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure a VLAN Id on a port group because the following exception occurred: -"	
 			Puppet.err excep.message
 		end
 	end
@@ -96,7 +96,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			setupmtu
 	    rescue Exception => excep
-			Puppet.err "Unable to configure mtu on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure an MTU on a port group because the following exception occurred: -"	
             Puppet.err excep.message
         end
 	end
@@ -129,7 +129,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			set_checkbeacon
         rescue Exception => excep
-			Puppet.err "Unable to configure checkbeacon on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure a checkbeacon on a port group because the following exception occurred: -"	
             Puppet.err excep.message
         end
 	end
@@ -161,7 +161,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 		set_failback
         rescue Exception => excep
-			Puppet.err "Unable to configure failback on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure failback on a port group because the following exception occurred: -"	
             Puppet.err excep.message
         end
 	end
@@ -202,7 +202,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 			setoverridepolicy
         rescue Exception => excep
-			Puppet.err "Unable to configure override failover order on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure the override failover order on a port group because the following exception occurred:-"	
             Puppet.err excep.message
         end
 	end
@@ -239,7 +239,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		begin
 		setupvmotion	
         rescue Exception => excep
-			Puppet.err "Unable to configure vmotion on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure the  vMotion on a port group because the following exception occurred: -"	
             Puppet.err excep.message
 		end
 	end
@@ -310,7 +310,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			end
 			return "true"
        rescue Exception => excep
-			Puppet.err "Unable to configure ip settings on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure the IP settings on a port group because the following exception occurred: -"
             Puppet.err excep.message
        end
 	end
@@ -356,7 +356,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			traffic_shaping
     		return true
     	rescue Exception => excep
-			Puppet.err "Unable to configure traffic shaping policy on a port group because the following exception occurred: - "	
+			Puppet.err "Unable to configure the traffic shaping policy on a port group because the following exception occurred: -"	
             Puppet.err excep.message
     	end
   end
@@ -697,7 +697,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 			end
 			@host
 		rescue Exception => excep
-			fail "An invalid host name or IP address or datacenter is entered. Enter the correct host name/IP address and datacenter name."
+			fail "An invalid host name, IP address or datacenter is entered. Enter a correct host name/IP address and datacenter name and retry the operation."
 			#Puppet.err excep.message
 		end
 	end
