@@ -268,7 +268,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         	    		if (dhcpflagonportgroup == false)
               				return "false"
             			elsif (dhcpflagonportgroup == true)
-              				return "automatic"
+              				return "dhcp"
             			end
                 	end
           		end
