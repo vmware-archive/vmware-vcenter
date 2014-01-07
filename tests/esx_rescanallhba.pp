@@ -8,8 +8,9 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-esx_rescanallhba {'host':
-  host => '172.16.103.95',
-  ensure  => present,  
-  transport   => Transport['vcenter'],
+esx_rescanallhba { 'host':
+  host      => '172.16.103.95',
+  ensure    => present,
+  path      => "/AS1000DCTest123/asmcluster",
+  transport => Transport['vcenter'],
 }
