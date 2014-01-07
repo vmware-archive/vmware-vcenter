@@ -37,11 +37,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		    @networksystem=@host.configManager.networkSystem
 			portg=find_portgroup
 			vlanid=portg.spec.vlanId					
-			if (vlanid != resource[:vlanid].to_i)
-				return "false"
-			elsif (vlanid == resource[:vlanid].to_i)
-				return resource[:vlanid]
-			end
+			return vlanid.to_s
 		rescue Exception => excep
 			Puppet.err excep.message
 		end
@@ -76,11 +72,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 		vnics.each do |vnic|
  	       if (vnic.portgroup && resource[:name] == vnic.portgroup)
 			mtuonportgroup = vnic.spec.mtu
-			if (mtuonportgroup != resource[:mtu].to_i)
-				return "false"
-			else
-				return resource[:mtu]
-			end
+				return mtuonportgroup.to_s
 			end	
 		end
 			return resource[:mtu]
@@ -273,7 +265,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
                 	end
           		end
       		end			
-			return "false"
+			return resource[:ipsettings]
         rescue Exception => excep
             Puppet.err excep.message
 		end
@@ -287,12 +279,15 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     	    @networksystem=@host.configManager.networkSystem
         	vnics=@networksystem.networkInfo.vnic
         	@vmotionsystem = @host.configManager.vmotionSystem
+			vnicdevice = nil
 
 			vnics.each do |vnic|
 	        	if (vnic.portgroup && resource[:name] == vnic.portgroup)
 					# Select vnic for vmotion first to update ip configuration
 					vnicdevice=vnic.device
-					@vmotionsystem.SelectVnic(:device => vnicdevice)
+					if (vnicdevice != nil)
+						@vmotionsystem.SelectVnic(:device => vnicdevice)
+					end	
 
 	            	if (resource[:ipsettings] == :static)
 						if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
@@ -595,7 +590,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
             			vnicdevice=vnic.device
 	        		end
     			end
+				if (vnicdevice != nil)
       			@vmotionsystem.SelectVnic(:device =>  vnicdevice)
+			end
 			end
 			#disabling vmotion
 			if (resource[:vmotion] == :Disabled)
@@ -610,6 +607,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         find_host
         @networksystem=@host.configManager.networkSystem
         vnics=@networksystem.networkInfo.vnic
+		vnicdevice = nil
 
         #enabling mtu
         if (resource[:mtu] && resource[:mtu].to_i > 1500 && resource[:mtu].to_i<=9000)
@@ -617,7 +615,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
                 if (vnic.portgroup && resource[:name] == vnic.portgroup)
                     vnicdevice=vnic.device
                     hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:mtu => resource[:mtu])
-                    @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
+					if (vnicdevice != nil)
+						@networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
+					end	
                 end
             end
         end
@@ -670,6 +670,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         Puppet.debug "Entering remove_port_group"
 		find_host
         @networksystem=@host.configManager.networkSystem
+		vnicdevice = nil
 
 		if (resource[:portgrouptype] == :VMkernel)
             vnics=@networksystem.networkInfo.vnic
@@ -680,7 +681,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
                 end
             end
 
+			if (vnicdevice != nil)
 		@networksystem.RemoveVirtualNic(:device => vnicdevice)
+		end
 		end
 
         @networksystem.RemovePortGroup(:pgName => resource[:name])
