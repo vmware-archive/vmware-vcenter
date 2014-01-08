@@ -8,8 +8,8 @@ transport { 'vcenter':
 }
 
 esx_get_iqns { "get_iqns":
-  host	       => '172.16.103.189',
+  host         => '172.16.103.189',
   hostusername => 'root',
-  hostpassword => 'iforgot@123', 
-  transport    => Transport['vcenter'], 
+  hostpassword => 'iforgot@123',
+  transport    => Transport['vcenter'],
 }
