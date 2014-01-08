@@ -142,10 +142,7 @@ Puppet::Type.newtype(:esx_portgroup) do
     dvalue = 0
     defaultto(dvalue)
 	validate do |vlanid|
-	  raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<0 || vlanid.to_i > 4095)
-	  if vlanid.to_i == 0
-		raise ArgumentError, "VLAN id must be in between 0 and 4095."
-	  end		
+	  raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<=0 || vlanid.to_i > 4095)	
 	end
   end
 end
