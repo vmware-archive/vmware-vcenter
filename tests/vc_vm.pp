@@ -10,7 +10,7 @@ transport { 'vcenter':
 
 vc_vm { $newVM['vmName']:
     ensure                         => $newVM['ensure'],
-    datacenter                     => $newVM['datacenter'],
+    datacenter_name                => $newVM['datacenter'],
     goldvm                         => $goldVMName['name'],
     memorymb                       => $newVM['memoryMB'],
     dnsdomain                      => $newVM['dnsDomain'],

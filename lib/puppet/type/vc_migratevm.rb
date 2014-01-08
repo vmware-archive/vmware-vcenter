@@ -2,21 +2,21 @@ Puppet::Type.newtype(:vc_migratevm) do
   @doc = "Migrate vCenter VMs."
 
   newproperty(:migratevm_host) do
-    desc "Migrate VM Host."
+    desc "Migrates a VMware Virtual Machine host to another host."
     munge do |value|
       value.to_s
     end
   end
 
   newproperty(:migratevm_datastore) do
-    desc "Migrate VM Datastore."
+    desc "Migrates a VMware Virtual Machine's storage to another datastore."
     munge do |value|
       value.to_s
     end
   end
 
   newproperty(:migratevm_host_datastore) do
-    desc "Migrate VM Host and Datastore."
+    desc "Migrates a VMware Virtual Machine host to another host and moves its storage to another datastore."
     validate do |value|
       if value.split(",").first.strip.length == 0
         raise ArgumentError, "A valid format for specifying the argument is '<target_host>,<target_datastore>'."
@@ -34,7 +34,7 @@ Puppet::Type.newtype(:vc_migratevm) do
     desc "The virtual machine name."
     validate do |value|
       if value.strip.length == 0
-        raise ArgumentError, "Invalid vm name."
+        raise ArgumentError, "Invalid virtual machine name."
       end
     end
   end
@@ -49,7 +49,7 @@ Puppet::Type.newtype(:vc_migratevm) do
   end
 
   newparam(:disk_format) do
-    desc "Name of the target datastore."
+    desc "Type of virtual disk format"
     newvalues(:thin, :thick , :same_as_source)
     defaultto(:same_as_source)
     munge do |value|

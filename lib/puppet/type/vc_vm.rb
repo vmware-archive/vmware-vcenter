@@ -1,4 +1,9 @@
 # Copyright (C) 2013 VMware, Inc.
+require 'pathname'
+
+vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
+require File.join vmware_module.path, 'lib/puppet/property/vmware'
+
 Puppet::Type.newtype(:vc_vm) do
   @doc = "Manage vCenter VMs."
 
@@ -12,16 +17,11 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto(:present)
   end
 
-  newproperty(:power_state) do
-    desc "Power state of the vm."
-    newvalues(:poweredOn, :poweredOff, :reset, :suspended)
-  end
-
   newparam(:name, :namevar => true) do
     desc "The virtual machine name."
     validate do |value|
       if value.strip.length == 0
-        raise ArgumentError, "Invalid vm name."
+        raise ArgumentError, "Invalid Virtual Machine name."
       end
     end
   end
@@ -30,18 +30,12 @@ Puppet::Type.newtype(:vc_vm) do
     desc "The gold virtual machine name."
     validate do |value|
       if value.strip.length == 0
-        raise ArgumentError, "Invalid gold vm name."
+        raise ArgumentError, "Invalid gold Virtual Machine name."
       end
     end
   end
 
-  newparam(:graceful_shutdown) do
-    desc "Do the gracefull shut down of vm."
-    newvalues(:true, :false)
-    defaultto(:true)
-  end
-
-  newparam(:datacenter) do
+  newparam(:datacenter_name) do
     desc "Name of the datacenter."
     validate do |value|
       if value.strip.length == 0
@@ -55,7 +49,7 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto('')
     munge do |value|
       if value.strip.length == 0
-        value = @resource[:datacenter]
+        value = @resource[:datacenter_name]
       else
         value
       end
@@ -80,7 +74,7 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:numcpu) do
-    desc "Number of CPU."
+    desc "Number of CPU's assigned to the new Virtual Machine."
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
@@ -127,7 +121,11 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:nicspec) do
-    desc "Number of CPU."
+    desc "This parameter holds follwoing virtual NICs specification parameter values.+
+          ip: Static IP address to the Virtual Machine. If left blank, the module uses the DHCP to set the IP address.+
+          subnet: Default subnet mask on the NICs.+
+          gateway: Default Gateway on the NIC.+
+          dnsserver: DNS servers on the NICs."
   end
 
   newparam(:linuxtimezone) do
@@ -251,8 +249,7 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:autologoncount ) do
-    desc "If the AutoLogon flag is set,	then
-	the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator."
+    desc "If the AutoLogon flag is set, then the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator."
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
@@ -265,8 +262,7 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:autousers ) do
-    desc "This key is valid only if customizationlicensedatamode = perServer.
-	The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. "
+    desc "This key is valid only if customizationlicensedatamode = perServer. The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. "
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
@@ -277,4 +273,19 @@ Puppet::Type.newtype(:vc_vm) do
       end
     end
   end
+
+  newparam(:graceful_shutdown) do
+    desc 'Perform a graceful shutdown if possible.  This parameter has no effect unless :power_state is set to :poweredOff'
+    newvalues(:true, :false)
+    defaultto(:true)
+  end
+
+  newproperty(:power_state) do
+    desc 'set the powerstate for the vm to either poweredOn/poweredOff/reset/suspended, for poweredOff, if tools is running a shutdownGuest will be issued, otherwise powerOffVM_TASK'
+    newvalues(:poweredOn, :poweredOff, :reset, :suspended)
+  end
+
+  #autorequire(:vc_folder) do
+  #  Pathname.new(self[:path]).parent.to_s
+  #end
 end

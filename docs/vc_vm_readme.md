@@ -41,7 +41,7 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
     If the value of ensure parameter is set to present, the module calls the Create method.
     If the value of ensure parameter is set to absent, the module calls the Destroy method.
 
-    datacenter: (Required) This parameter defines the name of the datacenter.
+    datacenter_name: (Required) This parameter defines the name of the datacenter.
 
     power_state: (Optional) This parameter can be used to powerOn, powerOff, reset or suspend the Virtual Machine.
     Possible values: poweredOff, poweredOn, suspended or reset.
