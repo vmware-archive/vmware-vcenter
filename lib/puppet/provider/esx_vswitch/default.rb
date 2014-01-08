@@ -5,6 +5,7 @@ require 'rbvmomi'
 
 Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter vSwitch"
+
   #Create vSwitch method.
   def create
     Puppet.debug "Entered in create"

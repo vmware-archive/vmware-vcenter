@@ -55,6 +55,7 @@ Puppet::Type.newtype(:esx_vswitch) do
 
   newproperty(:nics, :array_matching => :all) do
     desc "nics to be attached to vSwitch"
+
     def insync?(is)
       self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 

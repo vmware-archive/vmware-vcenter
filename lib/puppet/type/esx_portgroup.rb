@@ -22,16 +22,14 @@ Puppet::Type.newtype(:esx_portgroup) do
 
   end
 
-
   newparam(:datacenter) do
     desc "Name of the datacenter."
-        validate do |value|
+    validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid datacenter name."
       end
     end
   end
-
 
   newparam(:vswitch) do
     desc "Name of the vSwitch."
@@ -114,17 +112,17 @@ Puppet::Type.newtype(:esx_portgroup) do
   newproperty(:mtu) do
     desc "mtu size used for jumbo frames."
     validate do |value|
-          raise ArgumentError, "mtu must be in between 1500 and 9000." if (value.to_i<1500 || value.to_i > 9000)
-        if value.strip.length == 0
+      raise ArgumentError, "mtu must be in between 1500 and 9000." if (value.to_i<1500 || value.to_i > 9000)
+      if value.strip.length == 0
         raise ArgumentError, "Invalid mtu."
-        end
+      end
 
     end
   end
 
   newproperty(:overridefailoverorder) do
-  desc "flag to indicate the failover policy is to be overridden or not"
-  newvalues(:Enabled,:Disabled)
+    desc "flag to indicate the failover policy is to be overridden or not"
+    newvalues(:Enabled,:Disabled)
   end
 
   newproperty (:vmotion) do
@@ -141,8 +139,8 @@ Puppet::Type.newtype(:esx_portgroup) do
     desc "VLAN id."
     dvalue = 0
     defaultto(dvalue)
-	validate do |vlanid|
-	  raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<=0 || vlanid.to_i > 4095)	
-	end
+    validate do |vlanid|
+      raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<=0 || vlanid.to_i > 4095)
+    end
   end
 end
