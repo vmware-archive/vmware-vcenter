@@ -6,7 +6,6 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   @doc = "Manages vCenter CIFS/NFS (file) datastores."
 
   def create
-    Puppet.debug "Creating datastore on the host."
     begin
       volume = {}
       [:remote_host, :remote_path, :local_path, :access_mode].each do |prop|
@@ -85,8 +84,6 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   end
 
   def destroy
-    Puppet.debug "Deleting datastore from the host."
-
     begin
       host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
     rescue Exception => excep
@@ -118,7 +115,12 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
   private
 
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    if resource[:path]
+      @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    else
+      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
+    end
+
     if @host
       return @host
     else
@@ -132,35 +134,36 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     result.lun if result
   end
 
+  # Getting the target iqn for lun created on storage.
   def scsi_target_iqn(uuid)
     adapters = host.configManager.storageSystem.storageDeviceInfo.scsiTopology.adapter
     required_adapter_hash = nil
     found = 0
     iscsi_name = nil
-	
-	target_iqn = resource[:target_iqn]
-	luntype = 'iscsi'
-	if target_iqn =~ /fc/
-		luntype = 'fc'
-	end
-	luntype = luntype.to_s
-	Puppet.notice "luntype : #{luntype}"
+
+    target_iqn = resource[:target_iqn]
+    luntype = 'iscsi'
+    if target_iqn =~ /fc/
+      luntype = 'fc'
+    end
+    luntype = luntype.to_s
+    Puppet.notice "luntype : #{luntype}"
     adapters.collect{|adapter|
       adapter.target.collect{|target|
         target.lun.collect{|lun|
           if lun.key =~ /#{uuid}/
 
-			# fc.5000d310005ec401:5000d310005ec437
-			if luntype.eql?('iscsi')
-            iscsi_name = target.transport.iScsiName
-			else
-			  nwwn_decimal = target.transport.nodeWorldWideName  #nwwn in decimal format
-			  nwwn_hexadecimal = nwwn_decimal.to_s(16) #nwwn in decimal hexadecimal format
+            # fc.5000d310005ec401:5000d310005ec437
+            if luntype.eql?('iscsi')
+              iscsi_name = target.transport.iScsiName
+            else
+              nwwn_decimal = target.transport.nodeWorldWideName  #nwwn in decimal format
+              nwwn_hexadecimal = nwwn_decimal.to_s(16) #nwwn in decimal hexadecimal format
 
-			  pwwn_decimal = target.transport.portWorldWideName #pwwn in decimal format
-			  pwwn_hexadecimal = pwwn_decimal.to_s(16) #pwwn in decimal hexadecimal format
-			  iscsi_name = "fc.#{nwwn_hexadecimal}:#{pwwn_hexadecimal}"				
-			end
+              pwwn_decimal = target.transport.portWorldWideName #pwwn in decimal format
+              pwwn_hexadecimal = pwwn_decimal.to_s(16) #pwwn in decimal hexadecimal format
+              iscsi_name = "fc.#{nwwn_hexadecimal}:#{pwwn_hexadecimal}"
+            end
 
             found = 1
             break
@@ -177,12 +180,12 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     }
     iscsi_name unless iscsi_name.nil?
   end
-  
-#traverse datacenter
-def walk_dc(path=resource[:path])
-  datacenter = walk(path, RbVmomi::VIM::Datacenter)
-  raise Puppet::Error.new( "No datacenter in path: #{path}") unless datacenter
-  datacenter
-end
+
+  # To support the multiple datacenter in same vCenter.
+  def walk_dc(path=resource[:path])
+    datacenter = walk(path, RbVmomi::VIM::Datacenter)
+    raise Puppet::Error.new( "Unable to find datacenter path: #{path}") unless datacenter
+    datacenter
+  end
 
 end

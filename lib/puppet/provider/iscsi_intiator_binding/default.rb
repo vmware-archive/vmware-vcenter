@@ -4,67 +4,65 @@ require 'rbvmomi'
 
 Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :parent => Puppet::Provider::Vcenter) do
   @doc = "Binding the HBA to VMkernel nic."
-  
   def create
     #Binding the HBA to VMkernel nic.
-    
-      Puppet.notice "Binding the HBA to VMkernel nic."
 
-	  vmk_nics = resource[:vmknics]
-	  
-	  vmk_nic_arr = vmk_nics.split(' ')
-	  
-	  for each_vmk_nic in vmk_nic_arr
-	    puts each_vmk_nic
-		begin
-	    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
-	  
+    Puppet.notice "Binding the HBA to VMkernel nic."
+
+    vmk_nics = resource[:vmknics]
+
+    vmk_nic_arr = vmk_nics.split(' ')
+
+    for each_vmk_nic in vmk_nic_arr
+      begin
+        cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
+
         error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
         log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
 
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
-		
-		rescue Exception => exc
-		  flag = 1
-		  Puppet.err(exc.message)
-		end
-	    if flag.eql?(0)
-		  Puppet.notice "HBA '#{resource[:vmhba]}' is bind to VMkernel nic '#{each_vmk_nic}'."
-		else
-		  Puppet.err "Unable to bind HBA '#{resource[:vmhba]}' to VMkernel nic '#{each_vmk_nic}'."
-		end
-	  end
+
+      rescue Exception => exc
+        flag = 1
+        Puppet.err(exc.message)
+      end
+      if flag.eql?(0)
+        Puppet.notice "HBA '#{resource[:vmhba]}' is bind to VMkernel nic '#{each_vmk_nic}'."
+      else
+        Puppet.err "Unable to bind HBA '#{resource[:vmhba]}' to VMkernel nic '#{each_vmk_nic}'."
+      end
+    end
   end
 
   def destroy
     #Unbind the HBA to VM kernal nic.
-	  Puppet.notice "Unbind the HBA to VMkernel nic."
+    Puppet.notice "Unbind the HBA to VMkernel nic."
 
-	  vmk_niks = resource[:vmknics]
-	  
-	  vmk_nik_arr = vmk_niks.split(' ')
-	  
-	  for each_vmk_nic in vmk_nik_arr
-		begin
-		cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal remove --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
-	  
-		error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
-		log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
+    vmk_niks = resource[:vmknics]
 
-		flag = execute_system_cmd(cmd , log_filename , error_log_filename)
-		
-		rescue Exception => exc
-		  flag = 1
-		  Puppet.err(exc.message)
-		end
-		if flag.eql?(0)
-		  Puppet.notice "HBA '#{resource[:vmhba]}' is unbind from VMkernel nic '#{each_vmk_nic}'."
-		else
-		  Puppet.err "Unable to unbind HBA '#{resource[:vmhba]}' from VMkernel nic '#{each_vmk_nic}'."
-		end
-	  end
+    vmk_nik_arr = vmk_niks.split(' ')
+
+    for each_vmk_nic in vmk_nik_arr
+      begin
+        cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal remove --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
+
+        error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
+        log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
+
+        flag = execute_system_cmd(cmd , log_filename , error_log_filename)
+
+      rescue Exception => exc
+        flag = 1
+        Puppet.err(exc.message)
+      end
+      if flag.eql?(0)
+        Puppet.notice "HBA '#{resource[:vmhba]}' is unbind from VMkernel nic '#{each_vmk_nic}'."
+      else
+        Puppet.err "Unable to unbind HBA '#{resource[:vmhba]}' from VMkernel nic '#{each_vmk_nic}'."
+      end
+    end
   end
-  
+
   # Check whether HBA is mapped to VMkernel nic.
   def exists?
     is_binded
@@ -85,38 +83,36 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
       Puppet.err err_content
     else
       content = File.open(log_filename, 'rb') { |file| file.read }
-      if (/(?i:Vmknic:\s+)/.match(content))		
-		actual_binded_vmk_nics_arr = content.scan(/Vmknic:\s+(?<match>.*)/) # It will be array of Array. Example: actual_binded_vmk_nics_arr : [["vmk1"], ["vmk2"]]
-		Puppet.notice "Actual binded VMKernel nic : #{actual_binded_vmk_nics_arr}"
-		
-		binded_vmk_nics_arr = [] 
-		for item in actual_binded_vmk_nics_arr
-		   binded_vmk_nics_arr.push(item[0])
-		end
-		
-		Puppet.notice "Binded VMKernel nic : #{binded_vmk_nics_arr}" # Binded VMKernel nic : [["vmk1"], ["vmk2"]]
-		
-		input_vmk_nics = resource[:vmknics]
-	    Puppet.notice "Input VMKernel nic : #{input_vmk_nics}"
-		
-		input_vmk_nics_arr = input_vmk_nics.split(' ')
-		Puppet.notice "input_vmk_nics_arr : #{input_vmk_nics_arr}"
-		Puppet.notice "binded_vmk_nics_arr : #{binded_vmk_nics_arr}"
-		
-		if ( binded_vmk_nics_arr.uniq.sort == input_vmk_nics_arr.uniq.sort )
-			flag = 0
-		else		
-			flag = 1
-		end
-        Puppet.notice content
+      if (/(?i:Vmknic:\s+)/.match(content))
+        actual_binded_vmk_nics_arr = content.scan(/Vmknic:\s+(?<match>.*)/) # It will be array of Array. Example: actual_binded_vmk_nics_arr : [["vmk1"], ["vmk2"]]
+        Puppet.notice "Actual binded VMKernel nic : #{actual_binded_vmk_nics_arr}"
+
+        binded_vmk_nics_arr = []
+        for item in actual_binded_vmk_nics_arr
+          binded_vmk_nics_arr.push(item[0])
+        end
+
+        Puppet.notice "Binded VMKernel nic : #{binded_vmk_nics_arr}" # Binded VMKernel nic : [["vmk1"], ["vmk2"]]
+
+        input_vmk_nics = resource[:vmknics]
+        Puppet.notice "Input VMKernel nic : #{input_vmk_nics}"
+
+        input_vmk_nics_arr = input_vmk_nics.split(' ')
+        Puppet.notice "input_vmk_nics_arr : #{input_vmk_nics_arr}"
+        Puppet.notice "binded_vmk_nics_arr : #{binded_vmk_nics_arr}"
+
+        if ( binded_vmk_nics_arr.uniq.sort == input_vmk_nics_arr.uniq.sort )
+          flag = 0
+        else
+          flag = 1
+        end
       else
         flag = 1
-        Puppet.notice content
       end
     end
-    
+
     remove_files( error_log_filename , log_filename)
-    
+
     if flag.eql?(0)
       Puppet.info "HBA is already bind to VMkernel."
       return true
@@ -125,9 +121,9 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
       return false
     end
   end
-  
+
   private
-  
+
   def execute_system_cmd(cmd,log_filename,error_log_filename)
     flag = 0
     system(cmd , :out => [log_filename, 'a'], :err => [error_log_filename, 'a'])
@@ -148,7 +144,7 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
     remove_files(log_filename, error_log_filename)
     return flag
   end
-  
+
   # Removing files
   def remove_files(logfile , errorfile)
     if File.exist?(logfile)
