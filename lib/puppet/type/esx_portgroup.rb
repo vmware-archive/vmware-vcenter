@@ -117,12 +117,7 @@ Puppet::Type.newtype(:esx_portgroup) do
 
     end
   end
-
-  newproperty(:overridefailoverorder) do
-    desc "flag to indicate the failover policy is to be overridden or not"
-    newvalues(:Enabled,:Disabled)
-  end
-
+  
   newproperty (:vmotion) do
     desc "Enable or Disable the vmotion on the VMkernel portgroup."
     newvalues(:Enabled, :Disabled)
