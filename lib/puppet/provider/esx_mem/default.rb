@@ -4,9 +4,7 @@ require 'rbvmomi'
 
 Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcenter) do
   @doc = "Configure and install MEM on ESX server"
-
-
-   def configure_mem
+  def configure_mem
     return false
   end
 
@@ -60,7 +58,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
   end
 
   def install_mem
-      mem
+    mem
   end
 
   # Intalling MEM
@@ -130,7 +128,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     if ret_val == 2 and operation.eql?('enter')
       Puppet.notice "The host '#{host_ip}' is already in maintenance mode."
     elsif ret_val == 3 and operation.eql?('exit')
-      Puppet.notice "Exit operation is not to be performed because the host '#{host_ip}' is not in the maintenance mode." 
+      Puppet.notice "Exit operation is not to be performed because the host '#{host_ip}' is not in the maintenance mode."
     elsif ret_val == 1
       flag = 1
 
@@ -239,7 +237,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     elsif resource[:vnics].nil?
       Puppet.err "Unable to configure MEM, because the 'vnics' value is not provided."
     elsif !resource[:iscsi_chapuser].nil? and resource[:iscsi_chapsecret].nil?
-        Puppet.err "Unable to configure MEM, because the 'iscsi_chapsecret' value is not provided."
+      Puppet.err "Unable to configure MEM, because the 'iscsi_chapsecret' value is not provided."
     else
       flag = 0
 

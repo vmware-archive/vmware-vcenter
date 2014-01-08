@@ -1,7 +1,6 @@
 Puppet::Type.newtype(:esx_mem) do
   @doc = "Install and configure MEM on ESX Host."
 
-
   newproperty(:configure_mem) do
     desc "Confgure MEM  on host."
     newvalues(:'true')
@@ -11,7 +10,6 @@ Puppet::Type.newtype(:esx_mem) do
     desc "Install MEM  on host."
     newvalues(:'true')
   end
-
 
   newparam(:name, :namevar => true) do
     desc "ESX hostname or ip address."
@@ -95,7 +93,7 @@ Puppet::Type.newtype(:esx_mem) do
   newparam(:iscsi_netmask) do
     desc "Netmask to use for iSCSI VMkernel ports."
   end
-  
+
   newparam(:disable_hw_iscsi) do
     desc "Disable the Hardware iSCSI initiator."
     newvalues(:'true', :'false')

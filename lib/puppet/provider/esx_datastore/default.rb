@@ -4,7 +4,6 @@ require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter CIFS/NFS (file) datastores."
-
   def create
     begin
       volume = {}
