@@ -5,6 +5,7 @@ require 'rbvmomi'
 
 Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vCenter VMs Snapshot Operation."
+
   def exists?
     return true;
   end
@@ -17,7 +18,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
     begin
       ss_name = resource[:name]
       if value == :create
-	  Puppet.info "Creating a Virtual Machine snapshot."
+        Puppet.info "Creating a Virtual Machine snapshot."
         vm.CreateSnapshot_Task(:name=> resource[:name], :memory => resource[:memory_snapshot], :quiesce => true).wait_for_completion
       else
         vmsnapshot = vm.snapshot
@@ -52,6 +53,23 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
     rescue Exception => e
       Puppet.err "Unable to perform the operation because the following exception occurred."
       Puppet.err e.message
+    end
+  end
+
+  def find_node(tree, name)
+    begin
+      snapshot = nil
+      tree.each do |node|
+        if node.name == name
+          snapshot = node.snapshot
+        elsif !node.childSnapshotList.empty?
+          snapshot = find_node(node.childSnapshotList, name)
+        end
+      end
+      return snapshot
+    rescue Exception => e
+      puts "Unable to perform the operation because the following exception occurred."
+      puts e.message
     end
   end
 

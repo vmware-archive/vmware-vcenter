@@ -1,5 +1,5 @@
 # Copyright (C) 2013 VMware, Inc.
-import 'data_snapshot.pp'
+import 'data.pp'
 
 transport { 'vcenter':
   username => $vcenter['username'],
@@ -8,12 +8,10 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-# This resource is not ready for testing:
 vm_snapshot { 'name':
-  name => test_dkumar,
-  ensure => present,
-  #snapshot_name => name11,
-  snapshot_operation => revert,
-  datacenter => DDCQA,
-  transport => Transport['vcenter'],
+  vm_name            => "testvm",
+  name               => "testsnapshot",
+  snapshot_operation => create,
+  datacenter         => "DC1",
+  transport          => Transport['vcenter'],
 }

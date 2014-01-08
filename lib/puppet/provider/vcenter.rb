@@ -9,7 +9,7 @@ end
 
 begin
   require 'puppet_x/puppetlabs/transport/vsphere'
-rescue LoadError => e 
+rescue LoadError => e
   require 'pathname' # WORK_AROUND #14073 and #7788
   module_lib = Pathname.new(__FILE__).parent.parent.parent
   require File.join module_lib, 'puppet_x/puppetlabs/transport/vsphere'
@@ -17,7 +17,7 @@ end
 
 begin
   require 'puppet_x/vmware/util'
-rescue LoadError => e 
+rescue LoadError => e
   require 'pathname' # WORK_AROUND #14073 and #7788
   module_lib = Pathname.new(__FILE__).parent.parent.parent
   vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
@@ -108,24 +108,5 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
   def basename(path=resource[:path])
     Pathname.new(path).basename.to_s
   end
-  private
-   def find_node(tree, name)
-     begin
-       snapshot = nil
-       tree.each do |node|
-         if node.name == name
-           snapshot = node.snapshot
-         elsif !node.childSnapshotList.empty?
-           snapshot = find_node(node.childSnapshotList, name)
-         end
-       end
-       return snapshot
-     rescue Exception => e
-       puts "Unable to perform the operation because the following exception occurred."
-       puts e.message
-     end
-   end
- 
-   
- 
+
 end
