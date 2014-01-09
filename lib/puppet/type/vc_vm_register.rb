@@ -1,11 +1,11 @@
 Puppet::Type.newtype(:vc_vm_register) do
   @doc = "Register/Unregister vCenter VMs."
 
-  ensurable 
+  ensurable
 
   newparam(:name, :namevar => true) do
-    desc "Name by which the virtual machine is to be registered, or which has to be unregistered."   
-     validate do |value|
+    desc "Name by which the virtual machine is to be registered, or which has to be unregistered."
+    validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid name of virtual machine."
       end
@@ -21,7 +21,6 @@ Puppet::Type.newtype(:vc_vm_register) do
     end
   end
 
-  
   newparam(:hostip) do
     desc "Name of the host on which to register the vitual machine."
   end
