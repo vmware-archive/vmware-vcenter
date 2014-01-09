@@ -40,7 +40,7 @@ vc_vm { $newVM['vmName']:
                     autologoncount => $newVM['autologoncount'],
 					autousers      => $newVM['autousers'],
 
-  #Guest OS nic specific params
+  #Guest OS nic specific param
   nicspec => {
     nic => [{
       ip        => $newVM['ip1'],
