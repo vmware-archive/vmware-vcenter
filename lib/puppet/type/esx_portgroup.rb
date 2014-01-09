@@ -56,7 +56,9 @@ Puppet::Type.newtype(:esx_portgroup) do
     end
   end
 
-
+  newparam(:nicorderpolicy) do
+    desc "nic order ploicy to be applied to vSwitch"
+  end
 
   newparam(:portgrouptype) do
     desc "Type of port group."
@@ -117,7 +119,12 @@ Puppet::Type.newtype(:esx_portgroup) do
 
     end
   end
-  
+
+  newproperty(:overridefailoverorder) do
+    desc "flag to indicate the failover policy is to be overridden or not"
+    newvalues(:Enabled,:Disabled)
+  end
+
   newproperty (:vmotion) do
     desc "Enable or Disable the vmotion on the VMkernel portgroup."
     newvalues(:Enabled, :Disabled)
@@ -127,11 +134,7 @@ Puppet::Type.newtype(:esx_portgroup) do
     desc "IP settings on the VMkernel port group."
     newvalues(:dhcp, :static)
   end
-  
-  newproperty(:nicorderpolicy) do
-    desc "nic order ploicy to be applied to vSwitch"
-  end
-  
+
   newproperty(:vlanid) do
     desc "VLAN id."
     dvalue = 0
