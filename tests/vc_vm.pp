@@ -18,6 +18,7 @@ vc_vm { $newVM['vmName']:
     transport                      => Transport['vcenter'],
     host                           => $newVM['host'],
     cluster                        => $newVM['cluster'],
+    target_datastore               => $newVM['target_datastore'],
     diskformat                     => $newVM['diskformat'],
     #Guest Customization Params
     guestcustomization             => $newVM['guestCustomization'],

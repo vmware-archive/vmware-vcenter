@@ -19,6 +19,7 @@ $newVM = {
   'numCPU'     => 2,
   'cluster'    => '',
   'host'       => '172.16.100.56',
+  'target_datastore' => 'datastore1' ,
   'datacenter' => 'DDCQA',
   'ensure'     => 'absent',
   'guestCustomization'              => 'true',
