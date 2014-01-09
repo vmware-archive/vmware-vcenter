@@ -7,7 +7,7 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-esx_get_iqns { "get_iqns":
+esx_get_iqns { "get_iqn":
   host         => '172.16.103.189',
   hostusername => 'root',
   hostpassword => 'iforgot@123',

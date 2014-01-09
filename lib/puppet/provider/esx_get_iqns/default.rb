@@ -3,7 +3,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:esx_get_iqns).provide(:esx_get_iqns, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Get availavle iqns from esx host system."
+  @doc = "Get availavle iqns from esx host."
   def get_esx_iqns
     hbalist = Array.new
     iqnlist = Array.new

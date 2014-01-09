@@ -1,6 +1,6 @@
 # Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:esx_maintmode) do
-  @doc = "Manage vsphere hosts entering / exiting maintenance mode."
+  @doc = "Manage Host system enter / exit maintenance mode."
 
   ensurable do
     newvalue(:present) do

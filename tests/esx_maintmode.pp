@@ -8,7 +8,7 @@ transport { 'vcenter':
 }
 
 # provide any  prperty of host
-esx_maintmode { 'esx1':
+esx_maintmode { 'esxhost':
   ensure                   => present,
   evacuate_powered_off_vms => true,
   timeout                  => 0,

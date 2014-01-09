@@ -4,7 +4,7 @@ require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
 Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Manages vsphere hosts entering and exiting maintenance mode."
+  @doc = "Manage vsphere hosts entering and exiting maintenance mode."
   # Place the system into MM
   def create
     begin

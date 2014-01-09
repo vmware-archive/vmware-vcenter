@@ -12,7 +12,7 @@ $ovf = {
   'ovffilepath'      => '/root/OVF/test_123.ovf',
   'datacenter'       => 'DDCQA',
   'target_datastore' => 'datastore3',
-  'host'             => '172.16.100.56'
+  'host'             => '172.16.100.55'
 }
 
 vc_vm_ovf { $ovf['vmname']:

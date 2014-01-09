@@ -4,7 +4,7 @@ Puppet::Type.newtype(:esx_get_iqns) do
   ensurable
 
   newparam(:host, :namevar => true) do
-    desc "IP address or name of ESX host where the datastore is attached to."
+    desc "IP address or host name of ESX host where the datastore is attached to."
     validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid name or IP of the host."

@@ -3,7 +3,7 @@ require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
 Puppet::Type.type(:vc_vm_ovf).provide(:vc_vm_ovf, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Export and Import OVF"
+  @doc = "Export and Import OVF from vm"
   def create
     #Import OVF.
     flag = 0

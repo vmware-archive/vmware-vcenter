@@ -16,7 +16,7 @@ Puppet::Type.newtype(:vc_vm_ovf) do
   end
 
   newparam(:name, :namevar => true) do
-    desc "The virtual machine name."
+    desc "The virtual machine name required."
   end
 
   newparam(:datacenter) do
