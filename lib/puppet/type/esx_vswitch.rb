@@ -13,7 +13,22 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newparam(:name, :namevar => true) do
-    desc "Virtual Switch port group name."
+    desc "ESX host:vSwitch name."
+    munge do |value|
+      @resource[:host], @resource[:vswitch] = value.split(':',2)
+      value
+    end
+  end
+
+  newparam(:path) do
+    desc "Path to datacenter"
+    validate do |path|
+      raise ArgumentError, "Absolute path is required: #{path}" unless Puppet::Util.absolute_path?(path)
+    end
+  end
+
+  newparam(:vswitch) do
+    desc "The name of vSwitch"
     validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid vSwitch name."
@@ -21,15 +36,8 @@ Puppet::Type.newtype(:esx_vswitch) do
     end
   end
 
-  newparam(:path) do
-    desc "DC path"
-    validate do |path|
-      raise ArgumentError, "Absolute path is required: #{path}" unless Puppet::Util.absolute_path?(path)
-    end
-  end
-
   newparam(:host) do
-    desc "ESX host"
+    desc "ESX hostname or IP"
     validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid host name."
@@ -38,7 +46,7 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newproperty(:num_ports) do
-    desc "Num of ports"
+    desc "The number of ports that this virtual switch is configured to use. The maximum value is 1024"
     dvalue = '128'
     defaultto(dvalue)
     validate do |value|
@@ -54,7 +62,7 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newproperty(:nics, :array_matching => :all) do
-    desc "nics to be attached to vSwitch"
+    desc "The list of keys of the physical network adapters to be bridged to vSwitch"
 
     def insync?(is)
       self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
@@ -73,11 +81,11 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newproperty(:nicorderpolicy) do
-    desc "nic order ploicy to be applied to vSwitch"
+    desc "Failover order policy for network adapters on this switch."
   end
 
   newproperty(:mtu) do
-    desc "MTU"
+    desc "The maximum transmission unit (MTU) of the virtual switch in bytes."
     dvalue = '1500'
     defaultto(dvalue)
     validate do |value|
@@ -93,8 +101,8 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newproperty(:checkbeacon) do
-    newvalues(:true, :false)
     desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+    newvalues(:true, :false)
     defaultto(:true)
   end
 
