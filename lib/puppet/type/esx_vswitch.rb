@@ -21,7 +21,7 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newparam(:path) do
-    desc "Path to datacenter"
+    desc "Datacenter path where host resides"
     validate do |path|
       raise ArgumentError, "Absolute path is required: #{path}" unless Puppet::Util.absolute_path?(path)
     end

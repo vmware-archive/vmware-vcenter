@@ -13,7 +13,7 @@ Puppet::Type.newtype(:esx_rescanallhba) do
   end
 
   newparam(:host, :namevar => true) do
-    desc "ESX host:service name."
+    desc "ESX host name."
   end
 
   newparam(:path) do
