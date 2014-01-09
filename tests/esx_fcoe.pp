@@ -7,8 +7,8 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-esx_fcoe { 'vmnic1':
+esx_fcoe { "${esx1['hostname']}:vmnic1":
   ensure         => present,
-  host           => "${esx1['hostname']}",
+  path         => '<Datacenter_path>',
   transport      => Transport['vcenter'],
 }
