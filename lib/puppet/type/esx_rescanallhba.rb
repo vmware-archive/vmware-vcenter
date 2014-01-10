@@ -14,6 +14,11 @@ Puppet::Type.newtype(:esx_rescanallhba) do
 
   newparam(:host, :namevar => true) do
     desc "ESX host name."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid name or IP address of the host."
+      end
+    end
   end
 
   newparam(:path) do

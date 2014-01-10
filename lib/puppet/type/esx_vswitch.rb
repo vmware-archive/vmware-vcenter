@@ -14,6 +14,11 @@ Puppet::Type.newtype(:esx_vswitch) do
 
   newparam(:name, :namevar => true) do
     desc "ESX host:vSwitch name."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid vSwitch name."
+      end
+    end
     munge do |value|
       @resource[:host], @resource[:vswitch] = value.split(':',2)
       value
@@ -63,7 +68,6 @@ Puppet::Type.newtype(:esx_vswitch) do
 
   newproperty(:nics, :array_matching => :all) do
     desc "The list of keys of the physical network adapters to be bridged to vSwitch"
-
     def insync?(is)
       self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
