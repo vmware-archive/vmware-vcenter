@@ -19,7 +19,20 @@ Puppet::Type.newtype(:esx_portgroup) do
         raise ArgumentError, "Invalid vSwitch portgroup name."
       end
     end
+    munge do |value|
+      @resource[:host], @resource[:portgrp] = value.split(':',2)
+     value
+    end
 
+  end
+  
+  newparam(:portgrp) do
+    desc "The name of portgroup."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid portgroup name."
+      end
+    end
   end
 
   newparam(:datacenter) do
@@ -98,14 +111,14 @@ Puppet::Type.newtype(:esx_portgroup) do
     newvalues(:Enabled, :Disabled)
   end
 
-  newproperty(:checkbeacon) do
+  newparam(:checkbeacon) do
     newvalues(:true, :false)
-    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+    desc "Value of checkbeacon flag."
   end
 
-  newproperty(:failback) do
+  newparam(:failback) do
     newvalues(:true, :false)
-    desc "The flag to indicate whether or not to use a rolling policy when restoring links."
+    desc "Value of failback flag."
     #defaultto(:false)
   end
 
@@ -125,6 +138,16 @@ Puppet::Type.newtype(:esx_portgroup) do
     newvalues(:Enabled,:Disabled)
   end
 
+  newproperty(:overridecheckbeacon) do
+    newvalues(:Enabled, :Disabled)
+    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+  end
+
+   newproperty(:overridefailback) do
+    newvalues(:Enabled, :Disabled)
+    desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
+  end
+
   newproperty (:vmotion) do
     desc "Enable or Disable the vmotion on the VMkernel portgroup."
     newvalues(:Enabled, :Disabled)
@@ -140,7 +163,7 @@ Puppet::Type.newtype(:esx_portgroup) do
     dvalue = 0
     defaultto(dvalue)
     validate do |vlanid|
-      raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<=0 || vlanid.to_i > 4095)
+      raise ArgumentError, "VLAN id must be in between 0 and 4095." if (vlanid.to_i<0 || vlanid.to_i > 4095)
     end
   end
 end

@@ -5,7 +5,6 @@ require 'rbvmomi'
 
 Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vSwitch Portgroups."
-
   def create
     Puppet.debug "Entered in create portgroup method."
     begin
@@ -55,8 +54,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       if (find_vswitch == false)
         raise Puppet::Error, "Unable to find the vSwitch " + resource[:vswitch]
       end
-      hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:name], :policy => portg.spec.policy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
-      @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => hostportgroupspec)
+      hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:portgrp], :policy => portg.spec.policy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
+      @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => hostportgroupspec)
     rescue Exception => excep
       Puppet.err "Unable to configure a VLAN Id on a port group because the following exception occurred: -"
       Puppet.err excep.message
@@ -72,7 +71,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       vnics=@networksystem.networkInfo.vnic
 
       vnics.each do |vnic|
-        if (vnic.portgroup && resource[:name] == vnic.portgroup)
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           mtuonportgroup = vnic.spec.mtu
           return mtuonportgroup.to_s
         end
@@ -96,7 +95,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     end
   end
 
-  def checkbeacon
+  def overridecheckbeacon
     Puppet.debug "Retrieving checkbeacon on portgroup"
     begin
       find_host
@@ -104,22 +103,34 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.failureCriteria != nil)
         checkbeaconpg = mypg.spec.policy.nicTeaming.failureCriteria.checkBeacon
-        if (checkbeaconpg != nil)
-          return checkbeaconpg.to_s
-        elsif (checkbeaconpg == nil)
-          return nil
+        if ( resource[:overridecheckbeacon] == :Enabled)
+          if (checkbeaconpg != nil)
+            if ((checkbeaconpg == true && resource[:checkbeacon] == :true) || (checkbeaconpg == false && resource[:checkbeacon] == :false))
+              return resource[:overridecheckbeacon]
+            elsif ((checkbeaconpg == false && resource[:checkbeacon] == :true) || (checkbeaconpg == true && resource[:checkbeacon] == :false))
+              return "currentstatus"
+            end
+          elsif (checkbeaconpg == nil)
+            return "Disabled"
+          end
+        elsif ( resource[:overridecheckbeacon] == :Disabled)
+          if (checkbeaconpg != nil)
+            return "Enabled"
+          else
+            return resource[:overridecheckbeacon]
+          end
         end
       else
         Puppet.debug "checkbeacon is nil on pg so need to change"
-        return nil
+        return "Disabled"
       end
-      return nil
+      #return nil
     rescue Exception => excep
       Puppet.err excep.message
     end
   end
 
-  def checkbeacon=(value)
+  def overridecheckbeacon=(value)
     Puppet.debug "Updating checkbeacon flag of specified portgroup."
     begin
       set_checkbeacon
@@ -129,7 +140,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     end
   end
 
-  def failback
+  def overridefailback
     Puppet.debug "Retrieving failback on portgroup"
     begin
       find_host
@@ -137,13 +148,18 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.rollingOrder != nil)
         failbackorderonpg = mypg.spec.policy.nicTeaming.rollingOrder
-        if (failbackorderonpg == true)
-          return "false"
-        elsif (failbackorderonpg == false)
-          return "true"
+        if ( resource[:overridefailback] == :Enabled)
+          if ((failbackorderonpg == true && resource[:failback] == :false) || (failbackorderonpg == false && resource[:failback] == :true))
+            return resource[:overridefailback]
+          elsif ((failbackorderonpg == true && resource[:failback] == :true) || (failbackorderonpg == false && resource[:failback] == :false))
+            return "currentstatus"
+          end
+        elsif ( resource[:overridefailback] == :Disabled)
+          #return Enabled if on portgroup failback is enabled and given is Disabled"
+          return "Enabled"
         end
       else
-        return nil
+        return "Disabled"
       end
     rescue Exception => excep
       Puppet.err excep.message
@@ -151,7 +167,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   end
 
-  def failback=(value)
+  def overridefailback=(value)
     Puppet.debug "Updating failback status flag of specified portgroup."
     begin
       set_failback
@@ -184,7 +200,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
           return "Enabled"
         end
       else
-        return "currentstatus"
+        return nil
       end
     rescue Exception => excep
       Puppet.err excep.message
@@ -245,10 +261,11 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     begin
       find_host
       @networksystem=@host.configManager.networkSystem
+
       vnics=@networksystem.networkInfo.vnic
 
       vnics.each do |vnic|
-        if (vnic.portgroup && resource[:name] == vnic.portgroup)
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           if (resource[:ipsettings] == :static)
             ipaddressonportgroup = vnic.spec.ip.ipAddress
             subnetmaskonportgroup = vnic.spec.ip.subnetMask
@@ -280,17 +297,12 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     begin
       find_host
       @networksystem=@host.configManager.networkSystem
-      vnics=@networksystem.networkInfo.vnic
-      @vmotionsystem = @host.configManager.vmotionSystem
+      vnics=@networksystem.networkInfo.vnic      
       vnicdevice = nil
 
       vnics.each do |vnic|
-        if (vnic.portgroup && resource[:name] == vnic.portgroup)
-          # Select vnic for vmotion first to update ip configuration
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           vnicdevice=vnic.device
-          if (vnicdevice != nil)
-            @vmotionsystem.SelectVnic(:device => vnicdevice)
-          end
 
           if (resource[:ipsettings] == :static)
             if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
@@ -298,11 +310,18 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
             elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
               raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
             end
+
             ipconfiguration=RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
-            @vmotionsystem.UpdateIpConfig(:ipConfig => ipconfiguration)
-          elsif (resource[:ipsettings] == :dhcp)
+            hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:ip => ipconfiguration)
+            if (vnicdevice != nil)
+              @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
+            end
+            elsif (resource[:ipsettings] == :dhcp)
             ipconfiguration = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
-            @vmotionsystem.UpdateIpConfig(:ipConfig => ipconfiguration)
+            hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:ip => ipconfiguration)
+            if (vnicdevice != nil)
+              @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
+            end
           end
         end
       end
@@ -316,8 +335,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Get the traffic shapping policy.
   def traffic_shaping_policy
     Puppet.debug "Retrieving the traffic shaping policy of specified port group."
-    begin
-      #@host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    begin     
       find_host
       @networksystem=@host.configManager.networkSystem
       portg=find_portgroup
@@ -383,7 +401,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
       @pg.each do |portg|
         availablepgs = portg.spec.name
-        if (availablepgs == resource[:name])
+        if (availablepgs == resource[:portgrp])
           return true
         end
       end
@@ -417,7 +435,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         actualspec.policy = hostnetworkpolicy
       end
 
-      @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
+      @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
 
     elsif ( resource[:traffic_shaping_policy] == :Disabled)
       enabled = 0
@@ -425,14 +443,13 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
       actualspec = portg.spec
       actualspec.policy = hostnetworkpolicy
-      @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
+      @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
     end
     return true
   end
 
   # Private method to find the vSwitch
-  def find_vswitch
-    #host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+  def find_vswitch    
     find_host
     networksystem=@host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
@@ -456,7 +473,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       raise Puppet::Error, "Unable to find the vSwitch " + resource[:vswitch]
     end
     hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy()
-    hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => name, :policy => hostnetworkpolicy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
+    hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:portgrp], :policy => hostnetworkpolicy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
     @networksystem.AddPortGroup(:portgrp => hostportgroupspec)
 
     if (resource[:traffic_shaping_policy] !=nil )
@@ -483,7 +500,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         setupmtu
       end
     end
-    Puppet.notice "Successfully created a portgroup {" + resource[:name] + "}"
+    Puppet.notice "Successfully created a portgroup {" + resource[:portgrp] + "}"
   end
 
   def add_virtual_nic
@@ -496,18 +513,18 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         end
         upip = RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
         hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
-        @networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)
+        @networksystem.AddVirtualNic(:portgroup => resource[:portgrp], :nic => hostvirtualnicspec)
       elsif (resource[:ipsettings] == :dhcp)
         upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
         hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
-        @networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)
+        @networksystem.AddVirtualNic(:portgroup => resource[:portgrp], :nic => hostvirtualnicspec)
       else
         upip = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
         hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
-        @networksystem.AddVirtualNic(:portgroup => resource[:name], :nic => hostvirtualnicspec)
+        @networksystem.AddVirtualNic(:portgroup => resource[:portgrp], :nic => hostvirtualnicspec)
       end
     rescue Exception => excep
-      @networksystem.RemovePortGroup(:pgName => resource[:name])
+      @networksystem.RemovePortGroup(:pgName => resource[:portgrp])
       Puppet.err excep.message
     end
   end
@@ -519,29 +536,34 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     mypg=find_portgroup
     @networksystem=@host.configManager.networkSystem
 
-    if ( resource[:failback] != nil)
-      if ( resource[:failback] == :true )
-        failbk = false
-      elsif (resource[:failback] == :false)
-        failbk = true
-      end
-      hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => failbk)
-      hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:nicTeaming=> hostnicteamingpolicy)
-
-      actualspec = mypg.spec
-
-      if (actualspec.policy != nil )
-        if (actualspec.policy.nicTeaming !=nil)
-          actualspec.policy.nicTeaming.rollingOrder = failbk
-        else
-          actualspec.policy = hostnetworkpolicy
+    if (resource[:overridefailback] != nil && resource[:overridefailback] == :Enabled)
+      if ( resource[:failback] != nil)
+        if ( resource[:failback] == :true )
+          failbk = false
+        elsif (resource[:failback] == :false)
+          failbk = true
         end
+        hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => failbk)
+      else
+        hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => nil)
+      end
+    elsif (resource[:overridefailback] != nil && resource[:overridefailback] == :Disabled)
+      hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => nil)
+    end
+
+    hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:nicTeaming=> hostnicteamingpolicy)
+    actualspec = mypg.spec
+    if (actualspec.policy != nil )
+      if (actualspec.policy.nicTeaming !=nil)
+        actualspec.policy.nicTeaming.rollingOrder = failbk
       else
         actualspec.policy = hostnetworkpolicy
       end
-
-      @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
+    else
+      actualspec.policy = hostnetworkpolicy
     end
+
+    @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
     return true
   end
 
@@ -552,25 +574,32 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     mypg=find_portgroup
     @networksystem=@host.configManager.networkSystem
 
-    if ( resource[:checkbeacon] != nil)
-      customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => resource[:checkbeacon])
-      hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:failureCriteria => customfailurecriteria)
-      hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:nicTeaming=> hostnicteamingpolicy)
+    if (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :Enabled)
+      if ( resource[:checkbeacon] != nil)
+        customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => resource[:checkbeacon])
+      else
+        customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => nil)
+      end
+    elsif (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :Disabled)
+      customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => nil)
+    end
 
-      actualspec = mypg.spec
-      if (actualspec.policy != nil )
-        if (actualspec.policy.nicTeaming !=nil)
-          actualspec.policy.nicTeaming.failureCriteria=customfailurecriteria
-        else
-          actualspec.policy = hostnetworkpolicy
+    hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:failureCriteria => customfailurecriteria)
+    hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:nicTeaming=> hostnicteamingpolicy)
 
-        end
+    actualspec = mypg.spec
+    if (actualspec.policy != nil )
+      if (actualspec.policy.nicTeaming !=nil)
+        actualspec.policy.nicTeaming.failureCriteria=customfailurecriteria
       else
         actualspec.policy = hostnetworkpolicy
-      end
 
-      @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
+      end
+    else
+      actualspec.policy = hostnetworkpolicy
     end
+
+    @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
     return true
   end
 
@@ -582,23 +611,25 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     vnicdevice = nil
 
     if (resource[:portgrouptype] == :VMkernel)
-      @vmotionsystem = @host.configManager.vmotionSystem
+      @virtualNicManager = @host.configManager.virtualNicManager
+
+      #@vmotionsystem = @host.configManager.vmotionSystem
       vnics=@networksystem.networkInfo.vnic
 
       #enabling vmotion
-      if (resource[:vmotion] == :Enabled)
-        vnics.each do |vnic|
-          if (vnic.portgroup && resource[:name] == vnic.portgroup)
-            vnicdevice=vnic.device
-          end
+      vnics.each do |vnic|
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
+          vnicdevice=vnic.device
         end
+      end
+      if (resource[:vmotion] == :Enabled)
         if (vnicdevice != nil)
-          @vmotionsystem.SelectVnic(:device =>  vnicdevice)
+          @virtualNicManager.SelectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
         end
       end
       #disabling vmotion
       if (resource[:vmotion] == :Disabled)
-        @vmotionsystem.DeselectVnic()
+        @virtualNicManager.DeselectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
       end
 
     end
@@ -614,7 +645,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     #enabling mtu
     if (resource[:mtu] && resource[:mtu].to_i > 1500 && resource[:mtu].to_i<=9000)
       vnics.each do |vnic|
-        if (vnic.portgroup && resource[:name] == vnic.portgroup)
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           vnicdevice=vnic.device
           hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:mtu => resource[:mtu])
           if (vnicdevice != nil)
@@ -663,7 +694,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       actualspec.policy = hostnetworkpolicy
     end
 
-    @networksystem.UpdatePortGroup(:pgName => resource[:name], :portgrp => actualspec)
+    @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
   end
 
   # Private method to remove the portgroup.
@@ -677,7 +708,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       vnics=@networksystem.networkInfo.vnic
 
       vnics.each do |vnic|
-        if (vnic.portgroup && resource[:name] == vnic.portgroup)
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           vnicdevice=vnic.device
         end
       end
@@ -686,24 +717,18 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         @networksystem.RemoveVirtualNic(:device => vnicdevice)
       end
     end
-
-    @networksystem.RemovePortGroup(:pgName => resource[:name])
-
-    Puppet.notice "Successfully removed the portgroup {" + resource[:name] + "}"
+    @networksystem.RemovePortGroup(:pgName => resource[:portgrp])
+    Puppet.notice "Successfully removed the portgroup {" + resource[:portgrp] + "}"
   end
 
   # Private method to find the host.
   def find_host
-    begin
+    #begin
       @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
       if @host.nil?
-        raise Puppet::Error, "No Host in datacenter #{walk_dc}" unless @host
+        raise Puppet::Error, "Host not found in datacenter #{walk_dc}" unless @host
       end
       @host
-    rescue Exception => excep
-      fail "An invalid host name, IP address or datacenter is entered. Enter a correct host name/IP address and datacenter name and retry the operation."
-      #Puppet.err excep.message
-    end
   end
 
   def find_portgroup
@@ -712,7 +737,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     @pg = @networksystem.networkInfo.portgroup
     @pg.each do |portg|
       availablepgs = portg.spec.name
-      if (availablepgs == resource[:name])
+      if (availablepgs == resource[:portgrp])
         return portg
       end
     end

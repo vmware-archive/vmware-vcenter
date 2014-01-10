@@ -9,28 +9,28 @@ transport { 'vcenter':
 }
 
 esx_portgroup { 'name':
-  name => "test01",
+  name => "172.16.100.56:test05",
   ensure => present,
   portgrouptype => "VMkernel",
-  failback => "true",
-  mtu => "2014",
+  overridefailback => "Enabled",
+  failback => "false",
+  mtu => "2019",
   overridefailoverorder => "Enabled",
   nicorderpolicy => {
-    activenic  => ["vmnic1"],
-    standbynic => []
+	standbynic => ["vmnic1"]
   },
-  checkbeacon    => true,
+  overridecheckbeacon => "Enabled",
+  checkbeacon    => "true",
   vmotion => "Enabled",
   ipsettings => "static",
-  ipaddress => "172.16.103.74",
+  ipaddress => "172.16.104.52",
   subnetmask => "255.255.255.0",
   traffic_shaping_policy => "Enabled",
-  averagebandwidth => 2000,
-  peakbandwidth => 2000,
-  burstsize => 2024,
+  averagebandwidth => 5000,
+  peakbandwidth => 7027,
+  burstsize => 2085,
   vswitch => vSwitch1,
-  host => "172.16.100.56",
-  path => "/Datacenter/cluster-01/",
-  vlanid => 1023,
+  path => "/Datacenter/Cluster01/",
+  vlanid => 1,
   transport => Transport['vcenter'],
 }
