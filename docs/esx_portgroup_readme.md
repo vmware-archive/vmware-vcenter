@@ -83,10 +83,10 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
   overridecheckbeacon: (Optional) This parameter facilitates the user to override switch checkbeacon policy.
 			Valid values : "Enabled" and "Disabled"			
 			
-  failback: (Optional) This parameter is the value of failback policy.
+  failback: This parameter is the value of failback policy.This is required if overridefailback is "Enabled"
 			Valid values : "true" and "false"
 			
-  checkbeacon : (Optional) This parameter is the value of checkbeacon policy.. 
+  checkbeacon : This parameter is the value of checkbeacon policy.This is required if overridecheckbeacon is "Enabled" 
            Valid values : "true" and "false"
 		   
   mtu :  (Optional) This paramter is used to specify the MTU size for this port group. A valid MTU value must not be less than 1500 and must not exceed 9000.
