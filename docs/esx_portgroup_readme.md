@@ -78,11 +78,16 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 
   vmotion: (Optional) This parameter notifies whether or not a vMotion is required on the VMkernel port group. This parameter is optional in case of the port group of the type "virtualMachine".
            Valid values : "Enabled" and "Disabled"
-  failback: (Optional) This parameter notifies whether or not a  failback is required on the port group.
-			Valid values : "True" and "False"
+  overridefailback: (Optional) This parameter facilitates the user to override switch failback policy.
+			Valid values : "Enabled" and "Disabled"
+  overridecheckbeacon: (Optional) This parameter facilitates the user to override switch checkbeacon policy.
+			Valid values : "Enabled" and "Disabled"			
 			
-  checkbeacon : (Optional) This parameter notifies whether or not a checkbeacon is required on the port group. 
-           Valid values : "True" and "False"
+  failback: (Optional) This parameter is the value of failback policy.
+			Valid values : "true" and "false"
+			
+  checkbeacon : (Optional) This parameter is the value of checkbeacon policy.. 
+           Valid values : "true" and "false"
 		   
   mtu :  (Optional) This paramter is used to specify the MTU size for this port group. A valid MTU value must not be less than 1500 and must not exceed 9000.
 			
