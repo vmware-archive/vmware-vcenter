@@ -1,0 +1,13 @@
+registervm:
+  ensure: 'present'
+  name: 'QA1'
+  hostip: '172.16.100.56'
+  datacenter: 'DDCQA'  
+  vmpath_ondatastore: '[gale-fsr] QA1/QA1.vmtx'
+  astemplate: 'false'
+
+removevm:
+    ensure: 'absent'
+    name: 'QA1'
+    hostip: '172.16.100.56'
+    datacenter: 'DDCQA'
