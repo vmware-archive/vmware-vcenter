@@ -141,9 +141,9 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     iscsi_name = nil
 
     target_iqn = resource[:target_iqn]
-    luntype = 'iscsi'
-    if target_iqn =~ /fc/
-      luntype = 'fc'
+    luntype = 'fc'
+    if target_iqn =~ /^iqn/
+      luntype = 'iscsi'
     end
     luntype = luntype.to_s
     Puppet.notice "luntype : #{luntype}"
@@ -154,7 +154,13 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
 
             # fc.5000d310005ec401:5000d310005ec437
             if luntype.eql?('iscsi')
-              iscsi_name = target.transport.iScsiName
+              # Added the following check to make sure 'iScsiName' exists as part of each disk HostTargetTransport data object.
+              # Here , 'iScsiName' is instance variable of HostInternetScsiTargetTransport data object for given iScsi disk.
+              if (defined?(target.transport.iScsiName))
+                iscsi_name = target.transport.iScsiName
+              else
+                next
+              end
             else
               nwwn_decimal = target.transport.nodeWorldWideName  #nwwn in decimal format
               nwwn_hexadecimal = nwwn_decimal.to_s(16) #nwwn in decimal hexadecimal format
