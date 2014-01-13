@@ -26,32 +26,18 @@ Puppet::Type.newtype(:vc_vm) do
     end
   end
 
-  newparam(:goldvm ) do
-    desc "The gold virtual machine name."
-    validate do |value|
-      if value.strip.length == 0
-        raise ArgumentError, "Invalid gold Virtual Machine name."
-      end
-    end
+  newparam(:operation ) do
+    desc "Operation name whether user wants to create a new Virtual Machine or wants to clone a new Virtual Machine from existing one."
+    newvalues(:create, :clone)
+    defaultto(:create)
   end
 
+  # common parameters required for both operations
   newparam(:datacenter_name) do
     desc "Name of the datacenter."
     validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid datacenter name."
-      end
-    end
-  end
-
-  newparam(:goldvm_datacenter) do
-    desc "Name of the gold vm datacenter."
-    defaultto('')
-    munge do |value|
-      if value.strip.length == 0
-        value = @resource[:datacenter_name]
-      else
-        value
       end
     end
   end
@@ -67,10 +53,6 @@ Puppet::Type.newtype(:vc_vm) do
         value.to_i
       end
     end
-  end
-
-  newparam(:dnsdomain) do
-    desc "DNS domain name."
   end
 
   newparam(:numcpu) do
@@ -104,6 +86,114 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto(:thin)
   end
 
+  # parameters for create vm operation
+  newparam(:disksize) do
+    desc "Capacity of the virtual disk (in KB)."
+    dvalue = '4096'
+    defaultto(dvalue)
+    munge do |value|
+      if value.strip.length == 0
+        dvalue.to_i
+      else
+        value.to_i
+      end
+    end
+  end
+
+  newparam(:memory_hot_add_enabled) do
+    desc 'Indicates whether or not memory can be added to the virtual machine while it is running'
+    newvalues(:true, :false)
+    defaultto(:true)
+  end
+
+  newparam(:cpu_hot_add_enabled) do
+    desc 'Indicates whether or not cpu can be added to the virtual machine while it is running'
+    newvalues(:true, :false)
+    defaultto(:true)
+  end
+
+  newparam(:guestid) do
+    desc 'Guest operating system identifier. User can get the guestid from following url +
+    https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html'
+    dvalue = 'otherGuest'
+    defaultto(dvalue)
+    munge do |value|
+      if value.strip.length == 0
+        dvalue.to_s
+      else
+        value.to_s
+      end
+    end
+  end
+
+  newparam(:portgroup) do
+    desc "Name of the port group to which the vNIC is to be attached."
+    dvalue = 'VM Network'
+    defaultto(dvalue)
+    munge do |value|
+      if value.strip.length == 0
+        dvalue.to_s
+      else
+        value.to_s
+      end
+    end
+  end
+
+  newparam(:nic_type) do
+    desc "vNIC type to be created."
+    newvalues(:"VMXNET 2", :E1000, :"VMXNET 3")
+    defaultto(:E1000)
+  end
+
+  newparam (:nic_count) do
+    desc "Nic Count that needs to be added in the new Virtual Machine. This parameter is required only in case of create"
+    dvalue = '1'
+    defaultto(dvalue)
+    munge do |value|
+      if value.strip.length == 0
+        dvalue.to_i
+      else
+        value.to_i
+      end
+    end
+  end
+
+  # parameters for clone vm operation
+
+  newparam(:goldvm ) do
+    desc "The gold virtual machine name."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid gold Virtual Machine name."
+      end
+    end
+  end
+
+  newparam(:goldvm_datacenter) do
+    desc "Name of the gold vm datacenter."
+    defaultto('')
+    munge do |value|
+      if value.strip.length == 0
+        value = @resource[:datacenter_name]
+      else
+        value
+      end
+    end
+  end
+
+  newparam(:dnsdomain) do
+    desc "DNS domain name."
+  end
+
+  newparam(:nicspec) do
+    desc "This parameter holds follwoing virtual NICs specification parameter values.+
+            ip: Static IP address to the Virtual Machine. If left blank, the module uses the DHCP to set the IP address.+
+            subnet: Default subnet mask on the NICs.+
+            gateway: Default Gateway on the NIC.+
+            dnsserver: DNS servers on the NICs."
+  end
+
+  # Guest Customization params
   newparam(:guestcustomization ) do
     desc "Flag for guest customization"
     newvalues(:true, :false)
@@ -118,14 +208,6 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:guesthostname) do
     desc "Computer name for provisioned VM."
-  end
-
-  newparam(:nicspec) do
-    desc "This parameter holds follwoing virtual NICs specification parameter values.+
-          ip: Static IP address to the Virtual Machine. If left blank, the module uses the DHCP to set the IP address.+
-          subnet: Default subnet mask on the NICs.+
-          gateway: Default Gateway on the NIC.+
-          dnsserver: DNS servers on the NICs."
   end
 
   newparam(:linuxtimezone) do

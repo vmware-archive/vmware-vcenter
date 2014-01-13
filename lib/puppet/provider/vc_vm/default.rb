@@ -9,42 +9,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def create
     flag = 0
     begin
-      dc_name = resource[:datacenter_name]
-      goldvm_dc_name = resource[:goldvm_datacenter]
+
       vm_name = resource[:name]
-      source_dc = vim.serviceInstance.find_datacenter(goldvm_dc_name)
-      virtualmachine_obj = source_dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
-      goldvm_adapter = virtualmachine_obj.summary.config.numEthernetCards
-      # Calling createrelocate_spec method
-      relocate_spec = createrelocate_spec
-      if relocate_spec.nil?
-        raise Puppet::Error, "Unable to retrieve the specification required to relocate the Virtual Machine."
-      end
 
-      config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
-      :numCPUs => resource[:numcpu])
+      operation_name = resource[:operation].to_s
+      # Calling create_vm functionality
 
-      guestcustomizationflag = resource[:guestcustomization]
-      guestcustomizationflag = guestcustomizationflag.to_s
+      create_vm if operation_name.eql?('create')
+      clone_vm if operation_name.eql?('clone')
 
-      if guestcustomizationflag.eql?('true')
-        Puppet.notice "Customizing the guest OS."
-        # Calling getguestcustomization_spec method in case guestcustomization
-        # parameter is specified with value true
-        customization_spec_info = getguestcustomization_spec ( goldvm_adapter )
-        if customization_spec_info.nil?
-          raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
-        end
-        spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
-        :template => false, :customization => customization_spec_info, :config => config_spec)
-      else
-        spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
-        :template => false, :config => config_spec)
-      end
-
-      dc = vim.serviceInstance.find_datacenter(dc_name)
-      virtualmachine_obj.CloneVM_Task( :folder => dc.vmFolder, :name => vm_name ,
-      :spec => spec).wait_for_completion
     rescue Exception => exc
       flag = 1
       Puppet.err(exc.message)
@@ -403,6 +376,154 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
   end
 
+  # This method creates a new virtual machine,instead of cloning a virtual machine from an existing one.
+
+  def create_vm
+
+    datacenter = resource[:datacenter_name]
+    dc = vim.serviceInstance.find_datacenter(datacenter)
+    vm_devices = []
+    target_datastore = resource['target_datastore']
+    if !dc.find_datastore(target_datastore)
+      raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist."
+    end
+    ds_path = "[#{target_datastore}]"
+
+    # calling controller_vm_dev_conf_spec method to create controller vm dev conf spec
+    controller_vm_dev_conf_spec = create_conf_spec
+    # calling disk_vm_dev_conf_spec method to create disk vm dev conf spec
+    disk_vm_dev_conf_spec = create_virtual_disk(ds_path)
+    vm_devices.push(controller_vm_dev_conf_spec, disk_vm_dev_conf_spec)
+
+    # Getting nic specification for each nic
+    1.upto(resource[:nic_count]) do |count|
+      vm_devices.push( get_network_config(count))
+    end
+
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => resource[:name], :memoryMB => resource[:memorymb],
+    :numCPUs => resource[:numcpu] , :guestId => resource[:guestid], :files => { :vmPathName => ds_path },
+    :memoryHotAddEnabled => resource[:memory_hot_add_enabled], :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
+    :deviceChange => vm_devices  )
+
+    cluster_name = resource[:cluster]
+    if cluster_name and cluster_name.strip.length != 0
+      # Getting the pool information from cluster
+      cluster = dc.find_compute_resource(cluster_name)
+      raise Puppet::Error, "Unable to find the cluster '#{cluster_name}' because the cluster is either invalid or does not exist." if !cluster
+      resource_pool = cluster.resourcePool
+    else
+      # Getting the pool from host view
+      host_ip = resource[:host]
+      host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip , :vmSearch => false)
+      raise Puppet::Error, "Unable to find the host '#{host_ip}' because the host is either invalid or does not exist." if !host_view
+      resource_pool = host_view.parent.resourcePool
+    end
+
+    dc.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
+
+  end
+
+  #    # create virtual device config spec for controller
+  def create_conf_spec
+    controller = RbVmomi::VIM.VirtualBusLogicController(:key => 0,:device => [0], :busNumber => 0,
+    :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
+
+    controller_vm_dev_conf_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(:device => controller,
+    :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
+
+    return controller_vm_dev_conf_spec
+  end
+
+  #  create virtual device config spec for disk
+  def create_virtual_disk(ds_path)
+
+    thin_provisioning = true
+    # Need to set the value to false if user has provided diskformat value as thick
+    thin_provisioning = false if resource[:diskformat].eql?('thick')
+    disk_backing_info = RbVmomi::VIM.VirtualDiskFlatVer2BackingInfo(:diskMode => 'persistent',
+    :fileName => ds_path , :thinProvisioned => thin_provisioning )
+
+    disk = RbVmomi::VIM.VirtualDisk(:backing => disk_backing_info, :controllerKey => 0,
+    :key => 0, :unitNumber => 0, :capacityInKB => resource[:disksize])
+
+    disk_vm_dev_conf_spec =  RbVmomi::VIM.VirtualDeviceConfigSpec(:device => disk,
+    :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
+    :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
+    return disk_vm_dev_conf_spec
+  end
+
+  # get network configuration
+  def get_network_config(count)
+
+    port_group =  resource[:portgroup]
+
+    backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => port_group)
+    nic_type = resource[:nic_type].to_s
+
+    if nic_type.eql?("E1000")
+
+      nic = RbVmomi::VIM.VirtualE1000({
+        :key => count, :backing => backing ,
+        :deviceInfo => {:label => "Network Adapter",:summary => port_group }})
+    elsif nic_type.eql?("VMXNET 3")
+      nic = RbVmomi::VIM.VirtualVmxnet3({
+        :key => count,:backing => backing ,
+        :deviceInfo => { :label => "Network Adapter", :summary => port_group }})
+    else
+      nic = RbVmomi::VIM.VirtualVmxnet2({
+        :key => count,:backing => backing ,
+        :deviceInfo => {:label => "Network Adapter", :summary => port_group}})
+    end
+
+    nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(:device => nic, :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
+
+    return nic_config
+  end
+
+  # This method creates a VMware Virtual Machine instance based on the specified base image
+  # or the base image template name. The existing baseline Virtual Machine, must be available
+  # on a shared data-store and must be visible on all ESX hosts. The Virtual Machine capacity
+  # is allcoated based on the "numcpu" and "memorymb" parameter values, that are speicfied in the input file.
+  def clone_vm
+    dc_name = resource[:datacenter_name]
+    goldvm_dc_name = resource[:goldvm_datacenter]
+    vm_name = resource[:name]
+    source_dc = vim.serviceInstance.find_datacenter(goldvm_dc_name)
+    virtualmachine_obj = source_dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
+    goldvm_adapter = virtualmachine_obj.summary.config.numEthernetCards
+    # Calling createrelocate_spec method
+    relocate_spec = createrelocate_spec
+    if relocate_spec.nil?
+      raise Puppet::Error, "Unable to retrieve the specification required to relocate the Virtual Machine."
+    end
+
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
+    :numCPUs => resource[:numcpu])
+
+    guestcustomizationflag = resource[:guestcustomization]
+    guestcustomizationflag = guestcustomizationflag.to_s
+
+    if guestcustomizationflag.eql?('true')
+      Puppet.notice "Customizing the guest OS."
+      # Calling getguestcustomization_spec method in case guestcustomization
+      # parameter is specified with value true
+      customization_spec_info = getguestcustomization_spec ( goldvm_adapter )
+      if customization_spec_info.nil?
+        raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
+      end
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
+      :template => false, :customization => customization_spec_info, :config => config_spec)
+    else
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
+      :template => false, :config => config_spec)
+    end
+
+    dc = vim.serviceInstance.find_datacenter(dc_name)
+    virtualmachine_obj.CloneVM_Task( :folder => dc.vmFolder, :name => vm_name ,
+    :spec => spec).wait_for_completion
+
+  end
+
   private
 
   def findvm(folder,vm_name)
@@ -421,7 +542,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           end
         end
       else
-        puts "unknown child type found: #{f.class}"
+        Puppet.err
+        "unknown child type found: #{f.class}"
         exit
       end
     end

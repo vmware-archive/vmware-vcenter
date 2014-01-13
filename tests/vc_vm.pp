@@ -8,60 +8,68 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
+
 vc_vm { $newVM['vmName']:
     ensure                         => $newVM['ensure'],
-    datacenter_name                => $newVM['datacenter'],
-    goldvm                         => $goldVMName['name'],
-    memorymb                       => $newVM['memoryMB'],
-    dnsdomain                      => $newVM['dnsDomain'],
-    numcpu                         => $newVM['numCPU'],
     transport                      => Transport['vcenter'],
+    operation                      => $newVM['operation'],
+    datacenter_name                => $newVM['datacenter'],
+    memorymb                       => $newVM['memoryMB'],
+    numcpu                         => $newVM['numCPU'],
     host                           => $newVM['host'],
     cluster                        => $newVM['cluster'],
     target_datastore               => $newVM['target_datastore'],
     diskformat                     => $newVM['diskformat'],
-    #Guest Customization Params
-    guestcustomization             => $newVM['guestCustomization'],
-    guesthostname                  => $newVM['guesthostname'],
-    guesttype                      => $newVM['guesttype'],
-    #Linux guest os specific
-    linuxtimezone                  => $newVM['linuxtimezone'],
-    #Windows guest os specific
-    windowstimezone                => $newVM['windowstimezone'],
-    guestwindowsdomain             => $newVM['guestwindowsdomain'],
-  guestwindowsdomainadministrator  => $newVM['guestwindowsdomainadministrator'],
-  guestwindowsdomainadminpassword  => $newVM['guestwindowsdomainadminpassword'],
-  windowsadminpassword             => $newVM['windowsadminpassword'],
-  productid                        => $newVM['productid'],
-  windowsguestowner                => $newVM['windowsguestowner'],
-  windowsguestorgnization          => $newVM['windowsguestorgnization'],
-  customizationlicensedatamode     => $newVM['customizationlicensedatamode'],
-                         autologon => $newVM['autologon'],
-                    autologoncount => $newVM['autologoncount'],
-					autousers      => $newVM['autousers'],
+    
+    # Create VM Parameters
+    # disk size should be in KB
+    disksize                       => $createVM['disksize'],
+    memory_hot_add_enabled         => $createVM['memory_hot_add_enabled'],
+    cpu_hot_add_enabled            => $createVM['cpu_hot_add_enabled'],
+    # user can get the guestif from following url
+    # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    guestid                        => $createVM['guestid'],
+    portgroup                      => $createVM['portgroup'],
+    nic_count                      => $createVM['nic_count'],
+    nic_type                       => $createVM['nic_type'],
 
-  #Guest OS nic specific param
-  nicspec => {
-    nic => [{
-      ip        => $newVM['ip1'],
-      subnet    => $newVM['subnet1'],
-      dnsserver => $newVM['dnsserver1'],
-      gateway   => $newVM['gateway1']
-    },{
-      ip        => '172.21.95.81',
-      subnet    => $newVM['subnet1'],
-      dnsserver => $newVM['dnsserver1'],
-      gateway   => $newVM['gateway1']
-    },{
-      ip        => '172.21.95.82',
-      subnet    => $newVM['subnet1'],
-      dnsserver => $newVM['dnsserver1'],
-      gateway   => $newVM['gateway1']
-    },{
-      ip        => '172.21.95.83',
-      subnet    => $newVM['subnet1'],
-      dnsserver => $newVM['dnsserver1'],
-      gateway   => $newVM['gateway1']
-    }],
-  }
+    # Clone VM parameters
+    goldvm                         => $goldVMName['name'],
+    dnsdomain                      => $cloneVM['dnsDomain'],
+
+    #Guest OS nic specific params
+    nicspec => {
+        nic => [{
+            ip        => $cloneVM['ip1'],
+            subnet    => $cloneVM['subnet1'],
+            dnsserver => $cloneVM['dnsserver1'],
+            gateway   => $cloneVM['gateway1']
+        },{
+            ip        => $cloneVM['ip2'],
+            subnet    => $cloneVM['subnet1'],
+            dnsserver => $cloneVM['dnsserver1'],
+            gateway   => $cloneVM['gateway1']
+        }],
+    },
+
+    #Guest Customization Params
+    guestcustomization              => $cloneVM['guestCustomization'],
+    guesthostname                   => $cloneVM['guesthostname'],
+    guesttype                       => $cloneVM['guesttype'],
+    #Linux guest os specific
+    linuxtimezone                   => $cloneVM['linuxtimezone'],
+    #Windows guest os specific
+    windowstimezone                 => $cloneVM['windowstimezone'],
+    guestwindowsdomain              => $cloneVM['guestwindowsdomain'],
+    guestwindowsdomainadministrator => $cloneVM['guestwindowsdomainadministrator'],
+    guestwindowsdomainadminpassword => $cloneVM['guestwindowsdomainadminpassword'],
+    windowsadminpassword            => $cloneVM['windowsadminpassword'],
+    productid                       => $cloneVM['productid'],
+    windowsguestowner               => $cloneVM['windowsguestowner'],
+    windowsguestorgnization         => $cloneVM['windowsguestorgnization'],
+    customizationlicensedatamode    => $cloneVM['customizationlicensedatamode'],
+    autologon                       => $cloneVM['autologon'],
+    autologoncount                  => $cloneVM['autologoncount'],
+    autousers                       => $cloneVM['autousers'],
+    
 }
