@@ -1,4 +1,4 @@
-class Esx_portgroup
+class Esx_portgroup_fixture
 
   attr_accessor :esx_portgroup, :provider
   def initialize
