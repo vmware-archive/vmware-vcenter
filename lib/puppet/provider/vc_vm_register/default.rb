@@ -7,20 +7,16 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
   def create
 
     begin
-      host_view = vim.searchIndex.FindByIp(:datacenter => @dc , :ip => resource[:hostip], :vmSearch => false)
+      host_view = get_host_view
       if !host_view
         raise Puppet::Error, "Unable to find the host it is either invalid or does not exist."
       end
 
-      astemplate = resource[:astemplate]
+      astemplate = get_template
       if astemplate.to_s == 'true'
-        Puppet.notice "The Virtual Machine is being registered as a template."
-        @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
-        :asTemplate => astemplate, :host => host_view).wait_for_completion
+        vm_register_as_template
       else
-        @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
-        :asTemplate => astemplate, :host => host_view,
-        :pool =>host_view.parent.resourcePool ).wait_for_completion
+        vm_register
       end
 
     rescue Exception => excep
@@ -33,15 +29,7 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
   def destroy
 
     begin
-      if !@vmObj.config.template # check power state only if virtual machine is registered as a vm(not a template)
-        vmpower_state = @vmObj.runtime.powerState
-        Puppet.debug "vmpower_state: #{@vmpower_state}"
-        if vmpower_state.eql?('poweredOn')
-          Puppet.notice "The Virtual Machine is in Powered On state. It is required to Power Off the Virtual Machine before removing it from the inventory."
-          @vmObj.PowerOffVM_Task.wait_for_completion
-        end
-      end
-      @vmObj.UnregisterVM
+      power_off_vm_unregister
     rescue Exception => excep
       Puppet.err "Unable to remove virtual machine from inventory because the following exception occurred."
       Puppet.err excep.message
@@ -51,6 +39,38 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
 
   def exists?
     vm
+  end
+
+  def get_host_view
+    return  vim.searchIndex.FindByIp(:datacenter => @dc , :ip => resource[:hostip], :vmSearch => false)
+  end
+
+  def get_template
+    return resource[:astemplate]
+  end
+
+  def vm_register_as_template
+    Puppet.notice "The Virtual Machine is being registered as a template."
+    @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
+    :asTemplate => astemplate, :host => host_view).wait_for_completion
+  end
+
+  def vm_register
+    @vmfolder.RegisterVM_Task(:name => resource[:name], :path => resource[:vmpath_ondatastore],
+    :asTemplate => astemplate, :host => host_view,
+    :pool =>host_view.parent.resourcePool ).wait_for_completion
+  end
+
+  def power_off_vm_unregister
+    if !@vmObj.config.template # check power state only if virtual machine is registered as a vm(not a template)
+      vmpower_state = @vmObj.runtime.powerState
+      Puppet.debug "vmpower_state: #{@vmpower_state}"
+      if vmpower_state.eql?('poweredOn')
+        Puppet.notice "The Virtual Machine is in Powered On state. It is required to Power Off the Virtual Machine before removing it from the inventory."
+        @vmObj.PowerOffVM_Task.wait_for_completion
+      end
+    end
+    @vmObj.UnregisterVM
   end
 
   private
