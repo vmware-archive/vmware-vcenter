@@ -1,0 +1,13 @@
+createdatastore:
+  ensure: 'present'
+  type: 'vmfs'
+  target_iqn: 'iqn.2001-05.com.equallogic:0-1cb196-cd273302b-6c0b10f87bb52d3e-testvolume'
+  datastore: 'newDS'  
+  host: '172.28.12.3'
+
+destroydatastore:
+  ensure: 'absent'
+  type: 'vmfs'
+  target_iqn: 'iqn.2001-05.com.equallogic:0-1cb196-cd273302b-6c0b10f87bb52d3e-testvolume'
+  datastore: 'newDS'
+  host : '172.28.12.3'
