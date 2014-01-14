@@ -84,7 +84,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
 
   def destroy
     begin
-      host.configManager.datastoreSystem.RemoveDatastore(:datastore => @datastore)
+      host.configManager.datastoreSystem.RemoveDatastore(:datastore => host.datastore.find{|d|d.name==resource[:datastore]})
     rescue Exception => excep
       Puppet.err "Unable to perform the operation because the following exception occurred - "
       Puppet.err excep.message
