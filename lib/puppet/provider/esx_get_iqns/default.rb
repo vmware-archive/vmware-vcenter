@@ -5,14 +5,14 @@ require File.join(provider_path, 'vcenter')
 Puppet::Type.type(:esx_get_iqns).provide(:esx_get_iqns, :parent => Puppet::Provider::Vcenter) do
   @doc = "Get availavle iqns from esx host."
   def get_esx_iqns
-    begin 
+    begin
       iqnlist = Array.new
       hbalist = get_iqn_from_host
       if !hbalist.nil?
-           iqnlist = get_iqn(hbalist)
-       else
-           Puppet.err "Could not find any IQNS from given host server"
-      end   
+        iqnlist = get_iqn(hbalist)
+      else
+        raise Puppet::Error, "Could not find any IQNS from given host server"
+      end
       if iqnlist.size > 0
         Puppet.notice "Successfully found iqns from host: #{resource[:host]}"
       else
@@ -23,7 +23,7 @@ Puppet::Type.type(:esx_get_iqns).provide(:esx_get_iqns, :parent => Puppet::Provi
       Puppet.err "Unable to perform the operation because the following exception occurred - "
       Puppet.err excep.message
     end
-   
+
   end
 
   def get_esx_iqns=(value)
@@ -31,17 +31,22 @@ Puppet::Type.type(:esx_get_iqns).provide(:esx_get_iqns, :parent => Puppet::Provi
   end
 
   def get_iqn_from_host
-    hbalist = Array.new
-    servers = nil
-    command = "/usr/bin/esxcli --server=#{resource[:host]} --username=#{resource[:hostusername]}  --password=#{resource[:hostpassword]} iscsi adapter list"
-    IO.popen(command) do |servers|
-      servers.each do |hbas|
-        if !(hbas.include? "unbound") and !(hbas.include? "-------") and !(hbas.include? "Description")
-          hbalist.push hbas.split[0]
+    begin
+      hbalist = Array.new
+      servers = nil
+      command = "/usr/bin/esxcli --server=#{resource[:host]} --username=#{resource[:hostusername]}  --password=#{resource[:hostpassword]} iscsi adapter list"
+      IO.popen(command) do |servers|
+        servers.each do |hbas|
+          if !(hbas.include? "unbound") and !(hbas.include? "-------") and !(hbas.include? "Description")
+            hbalist.push hbas.split[0]
+          end
         end
       end
+      return hbalist
+    rescue Exception => excep
+      puts excep.message
+      return nil
     end
-   return hbalist
   end
 
   def get_iqn( hbalist)
