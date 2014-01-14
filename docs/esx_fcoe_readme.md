@@ -31,6 +31,8 @@ The VMware/vCenter module uses the VMware vCenter Ruby SDK (rbvmomi, version 1.6
     If the ensure parameter is set to "Present", the module calls the 'Create' method.
     If the ensure parameter is set to "Absent", the module calls the 'Destroy' method.
 
+	name: (Required) This parameter defines the name or IP address of the host to which a FCoE adapter needs to be added. It also defines the name of the underlying physical NIC that will be associated with the FCoE HBA. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_fcoe' is used. 
+		
     host: (Required) This parameter defines the name or IP address of the host.         
 
     physical_nic: (Required) This parameter defines the name of the underlying physical NIC that will be associated with the FCoE HBA. If this parameter is not defined explicitly in the manifest file, then the title of the type 'esx_fcoe' is used.
@@ -49,9 +51,9 @@ transport { 'vcenter':
 }
 
 #Provide FCoE HBA property
-esx_fcoe { 'vmnic0':
+esx_fcoe { "${esx1['hostname']}:vmnic0":
   ensure         => present,
-  host           => "${esx1['hostname']}",
+  path			 => '<Datacenter path>'
   transport      => Transport['vcenter'],
 }
 

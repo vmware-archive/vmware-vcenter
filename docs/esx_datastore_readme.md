@@ -60,11 +60,11 @@ transport { 'vcenter':
 
 #Provide datastore property
 esx_datastore { "${esx1['hostname']}:vmfs_store":
-  ensure    => present,
-  lun	    => '0',  
-  type      => 'vmfs',
-  target_iqn => 'iqn.2006-01.com.openfiler:tsn.5f393ceedf4c',
-  transport => Transport['vcenter'],
+  ensure    	=> present,
+  lun	    	=> '0',  
+  type      	=> 'vmfs',
+  target_iqn 	=> 'iqn.2006-01.com.openfiler:tsn.5f393ceedf4c',
+  transport 	=> Transport['vcenter'],
 }
 
 #-------------------------------------------------------------------------------------------------------------------------
