@@ -297,7 +297,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     begin
       find_host
       @networksystem=@host.configManager.networkSystem
-      vnics=@networksystem.networkInfo.vnic      
+      vnics=@networksystem.networkInfo.vnic
       vnicdevice = nil
 
       vnics.each do |vnic|
@@ -316,7 +316,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
             if (vnicdevice != nil)
               @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
             end
-            elsif (resource[:ipsettings] == :dhcp)
+          elsif (resource[:ipsettings] == :dhcp)
             ipconfiguration = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
             hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:ip => ipconfiguration)
             if (vnicdevice != nil)
@@ -335,7 +335,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Get the traffic shapping policy.
   def traffic_shaping_policy
     Puppet.debug "Retrieving the traffic shaping policy of specified port group."
-    begin     
+    begin
       find_host
       @networksystem=@host.configManager.networkSystem
       portg=find_portgroup
@@ -449,7 +449,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   end
 
   # Private method to find the vSwitch
-  def find_vswitch    
+  def find_vswitch
     find_host
     networksystem=@host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
@@ -627,9 +627,20 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
           @virtualNicManager.SelectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
         end
       end
-      #disabling vmotion
-      if (resource[:vmotion] == :Disabled)
-        @virtualNicManager.DeselectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
+
+      begin
+        #disabling vmotion
+        if (resource[:vmotion] == :Disabled)
+          if (vnicdevice != nil)
+            @virtualNicManager.DeselectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
+          end
+        end
+      rescue Exception => excep
+=begin
+        Exception is handled here to just log a debug message because there is no way to retrieve vMotion current status and if puupet tries to disable vMotion when it is already disabled,
+        it throws an exception - just a workaround to handle this scenario.
+=end
+        Puppet.debug "vmotion is already disabled."
       end
 
     end
@@ -724,11 +735,11 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Private method to find the host.
   def find_host
     #begin
-      @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-      if @host.nil?
-        raise Puppet::Error, "Host not found in datacenter #{walk_dc}" unless @host
-      end
-      @host
+    @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
+    if @host.nil?
+      raise Puppet::Error, "Host not found in datacenter #{walk_dc}" unless @host
+    end
+    @host
   end
 
   def find_portgroup
