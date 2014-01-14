@@ -11,7 +11,7 @@ transport { 'vcenter':
 $mem = {
     'host'                      => '172.16.103.189',
     'script_executable_path'    => '/usr/bin/perl',
-    'setup_script_filepath'     => '/root/scripts/setup.pl',
+    'setup_script_filepath'     => '/opt/Dell/scripts/EquallogicMEM/setup.pl',
     'host_username'             => 'root',
     'host_password'             => 'iforgot@123',
 }
