@@ -5,11 +5,20 @@ require 'rbvmomi'
 
 Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manage vsphere hosts entering and exiting maintenance mode."
+  
+  def enterMaintenanceMode
+    host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
+    :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
+  end
+
+  def exitMaintenanceMode
+    host.ExitMaintenanceMode_Task(:timeout => resource[:timeout]).wait_for_completion
+  end
+
   # Place the system into MM
   def create
     begin
-      host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
-      :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
+      enterMaintenanceMode
     rescue
       Puppet.err 'Could not find Host system.Either Host is not exist or disconnected'
     end
@@ -18,7 +27,7 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
   # Exit MM on the system
   def destroy
     begin
-      host.ExitMaintenanceMode_Task(:timeout => resource[:timeout]).wait_for_completion
+      exitMaintenanceMode
     rescue
       Puppet.err 'Could not find Host system.Either Host is not exist or disconnected'
     end
@@ -33,7 +42,6 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
   end
 
   private
-
   def host
     begin
       @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
@@ -41,4 +49,5 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
       Puppet.err 'Could not find Host system.Either Host is not exist or disconnected'
     end
   end
+  
 end
