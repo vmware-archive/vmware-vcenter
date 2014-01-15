@@ -103,7 +103,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.failureCriteria != nil)
         checkbeaconpg = mypg.spec.policy.nicTeaming.failureCriteria.checkBeacon
-        if ( resource[:overridecheckbeacon] == :Enabled)
+        if ( resource[:overridecheckbeacon] == :enabled)
           if (checkbeaconpg != nil)
             if ((checkbeaconpg == true && resource[:checkbeacon] == :true) || (checkbeaconpg == false && resource[:checkbeacon] == :false))
               return resource[:overridecheckbeacon]
@@ -111,18 +111,18 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
               return "currentstatus"
             end
           elsif (checkbeaconpg == nil)
-            return "Disabled"
+            return "disabled"
           end
-        elsif ( resource[:overridecheckbeacon] == :Disabled)
+        elsif ( resource[:overridecheckbeacon] == :disabled)
           if (checkbeaconpg != nil)
-            return "Enabled"
+            return "enabled"
           else
             return resource[:overridecheckbeacon]
           end
         end
       else
         Puppet.debug "checkbeacon is nil on pg so need to change"
-        return "Disabled"
+        return "disabled"
       end
       #return nil
     rescue Exception => excep
@@ -148,18 +148,18 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.rollingOrder != nil)
         failbackorderonpg = mypg.spec.policy.nicTeaming.rollingOrder
-        if ( resource[:overridefailback] == :Enabled)
+        if ( resource[:overridefailback] == :enabled)
           if ((failbackorderonpg == true && resource[:failback] == :false) || (failbackorderonpg == false && resource[:failback] == :true))
             return resource[:overridefailback]
           elsif ((failbackorderonpg == true && resource[:failback] == :true) || (failbackorderonpg == false && resource[:failback] == :false))
             return "currentstatus"
           end
-        elsif ( resource[:overridefailback] == :Disabled)
-          #return Enabled if on portgroup failback is enabled and given is Disabled"
-          return "Enabled"
+        elsif ( resource[:overridefailback] == :disabled)
+          #return enabled if on portgroup failback is enabled and given is disabled"
+          return "enabled"
         end
       else
-        return "Disabled"
+        return "disabled"
       end
     rescue Exception => excep
       Puppet.err excep.message
@@ -185,7 +185,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.nicOrder != nil)
         nicorderonpg = mypg.spec.policy.nicTeaming.nicOrder
-        if ( resource[:overridefailoverorder] == :Enabled)
+        if ( resource[:overridefailoverorder] == :enabled)
           acitvenicsonpg = mypg.spec.policy.nicTeaming.nicOrder.activeNic
           standbynicsonpg = mypg.spec.policy.nicTeaming.nicOrder.standbyNic
           nicorderpolicy = resource[:nicorderpolicy ]
@@ -194,10 +194,10 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
           if (acitvenicsonpg != activenic || standbynicsonpg != standbynic)
             return "currentstatus"
           elsif (acitvenicsonpg == activenic && standbynicsonpg == standbynic)
-            return "Enabled"
+            return "enabled"
           end
-        elsif(resource[:overridefailoverorder] == :Disabled)
-          return "Enabled"
+        elsif(resource[:overridefailoverorder] == :disabled)
+          return "enabled"
         end
       else
         return nil
@@ -344,19 +344,19 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       pkbw = portg.computedPolicy.shapingPolicy.peakBandwidth
       burstsize = portg.computedPolicy.shapingPolicy.burstSize
 
-      if (resource[:traffic_shaping_policy] == :Enabled)
+      if (resource[:traffic_shaping_policy] == :enabled)
 
         if (enabled == true && avgbw/1000 == resource[:averagebandwidth].to_i && pkbw/1000 == resource[:peakbandwidth].to_i && burstsize/1024 == resource[:burstsize].to_i)
-          return "Enabled"
+          return "enabled"
 
         elsif (enabled == false || avgbw/1000 != resource[:averagebandwidth].to_i || pkbw/1000 != resource[:peakbandwidth].to_i || burstsize/1024 != resource[:burstsize].to_i)
           return "currentstatus"
         end
-      elsif (resource[:traffic_shaping_policy] == :Disabled)
+      elsif (resource[:traffic_shaping_policy] == :disabled)
         if (enabled == false)
-          return "Disabled"
+          return "disabled"
         elsif (enabled == true)
-          return "Enabled"
+          return "enabled"
         end
       end
     rescue Exception => excep
@@ -418,7 +418,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     find_host
     @networksystem=@host.configManager.networkSystem
     portg=find_portgroup
-    if ( resource[:traffic_shaping_policy] == :Enabled )
+    if ( resource[:traffic_shaping_policy] == :enabled )
       avgbandwidth = resource[:averagebandwidth].to_i * 1000
       peakbandwidth =  resource[:peakbandwidth].to_i * 1000
       burstsize = resource[:burstsize].to_i * 1024
@@ -437,7 +437,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
       @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
 
-    elsif ( resource[:traffic_shaping_policy] == :Disabled)
+    elsif ( resource[:traffic_shaping_policy] == :disabled)
       enabled = 0
       hostnetworktrafficshapingpolicy =  RbVmomi::VIM.HostNetworkTrafficShapingPolicy(:enabled => enabled)
       hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
@@ -536,7 +536,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     mypg=find_portgroup
     @networksystem=@host.configManager.networkSystem
 
-    if (resource[:overridefailback] != nil && resource[:overridefailback] == :Enabled)
+    if (resource[:overridefailback] != nil && resource[:overridefailback] == :enabled)
       if ( resource[:failback] != nil)
         if ( resource[:failback] == :true )
           failbk = false
@@ -547,7 +547,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       else
         hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => nil)
       end
-    elsif (resource[:overridefailback] != nil && resource[:overridefailback] == :Disabled)
+    elsif (resource[:overridefailback] != nil && resource[:overridefailback] == :disabled)
       hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:rollingOrder => nil)
     end
 
@@ -574,13 +574,13 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     mypg=find_portgroup
     @networksystem=@host.configManager.networkSystem
 
-    if (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :Enabled)
+    if (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :enabled)
       if ( resource[:checkbeacon] != nil)
         customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => resource[:checkbeacon])
       else
         customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => nil)
       end
-    elsif (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :Disabled)
+    elsif (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :disabled)
       customfailurecriteria = RbVmomi::VIM.HostNicFailureCriteria(:checkBeacon => nil)
     end
 
@@ -622,7 +622,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
           vnicdevice=vnic.device
         end
       end
-      if (resource[:vmotion] == :Enabled)
+      if (resource[:vmotion] == :enabled)
         if (vnicdevice != nil)
           @virtualNicManager.SelectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
         end
@@ -630,7 +630,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
       begin
         #disabling vmotion
-        if (resource[:vmotion] == :Disabled)
+        if (resource[:vmotion] == :disabled)
           if (vnicdevice != nil)
             @virtualNicManager.DeselectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
           end
@@ -676,7 +676,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     mypg=find_portgroup
     actualspec = mypg.spec
 
-    if (resource[:overridefailoverorder] == :Enabled)
+    if (resource[:overridefailoverorder] == :enabled)
       nicorderpolicy = resource[:nicorderpolicy ]
       if(nicorderpolicy != nil)
         if(nicorderpolicy['activenic'] != nil &&  nicorderpolicy['activenic'].length > 0)
@@ -688,7 +688,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       end
 
       hostnicorderpolicy = RbVmomi::VIM::HostNicOrderPolicy(:activeNic => activenic, :standbyNic => standbynic)
-    elsif (resource[:overridefailoverorder] == :Disabled)
+    elsif (resource[:overridefailoverorder] == :disabled)
       hostnicorderpolicy = nil
     end
 

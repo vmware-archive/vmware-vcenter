@@ -108,7 +108,7 @@ Puppet::Type.newtype(:esx_portgroup) do
 
   newproperty(:traffic_shaping_policy) do
     desc "Enable or Disable the traffic shaping policy on the vSwitch portgroup."
-    newvalues(:Enabled, :Disabled)
+    newvalues(:enabled, :disabled)
   end
 
   newparam(:checkbeacon) do
@@ -135,22 +135,22 @@ Puppet::Type.newtype(:esx_portgroup) do
 
   newproperty(:overridefailoverorder) do
     desc "flag to indicate the failover policy is to be overridden or not"
-    newvalues(:Enabled,:Disabled)
+    newvalues(:enabled,:disabled)
   end
 
   newproperty(:overridecheckbeacon) do
-    newvalues(:Enabled, :Disabled)
+    newvalues(:enabled, :disabled)
     desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
   end
 
    newproperty(:overridefailback) do
-    newvalues(:Enabled, :Disabled)
+    newvalues(:enabled, :disabled)
     desc "The flag to indicate whether or not to enable beacon probing as a method to validate the link status of a physical network adapter."
   end
 
   newproperty (:vmotion) do
     desc "Enable or Disable the vmotion on the VMkernel portgroup."
-    newvalues(:Enabled, :Disabled)
+    newvalues(:enabled, :disabled)
   end
 
   newproperty (:ipsettings) do
