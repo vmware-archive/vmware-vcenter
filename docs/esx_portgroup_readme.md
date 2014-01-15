@@ -59,14 +59,15 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
 # -------------------------------------------------------------------------
 
   name: (Required) This parameter defines the port group to be created or already to be created.
-
+		The name is a combination of host and port group separated by colon.
+		example: 172.16.100.56:test05
+		
+		
   ensure: (Required) This parameter is required to call the Create or Destroy method.
         Valid values: Present/Absent
         If the value of ensure parameter is set to present, the RA calls the Create method.
         If the value of ensure parameter is set to absent, the RA calls the Destroy method.
         Default value: Present
-
-  host: (Required) This parameter defines the Name/IPAddress of the host.
 
   path: (Required) This parameter defines the path to the host, for example: /Datacenter-1/cluster-1.
         
@@ -136,7 +137,7 @@ transport { 'vcenter':
 # The following resource is not ready for testing:
 
   esx_portgroup { 'name':
-    name => "test25",
+    name => "172.16.100.56:test05",
     ensure => present,
     portgrouptype => "VMkernel",
     vmotion => "Disabled",
