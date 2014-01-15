@@ -45,19 +45,11 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
 
   # Method to relocate Virtual machine from one datastore to another
   def migratevm_datastore=(value)
-    Puppet.notice "A Virtual Machine is being migrated from datastore '#{vm.storage.perDatastoreUsage[0].datastore.name}' to '#{value}'."
+    Puppet.notice "A Virtual Machine is being migrated from datastore '#{get_vm_ds}' to '#{value}'."
     begin
-      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-      ds ||= dc.find_datastore(value)
-      raise Puppet::Error, "Unable to find the target datastore '#{value}' because the target datastore is either invalid or does not exist." unless ds
-      disk_format = resource[:disk_format]
-      if disk_format.eql?('same_as_source')
-        spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:datastore => ds)
-      else
-        transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(disk_format);
-        spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:datastore => ds , :transform => transform)
-      end
-      vm.RelocateVM_Task( :spec => spec).wait_for_completion
+      ds_view = get_ds_view(value)
+      raise Puppet::Error, "Unable to find the target datastore '#{value}' because the target datastore is either invalid or does not exist." unless ds_view
+      relocate_vm(:ds_view => ds_view)
     rescue Exception => excep
       Puppet.err "Unable to perform the Virtual Machine migration operation because of the following error:\n #{excep.message}"
     end
@@ -66,13 +58,11 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
 
   # Method to migrate Virtual machine from one host to another
   def migratevm_host=(value)
-    Puppet.notice "A Virtual Machine is being migrated from  host '#{vm.runtime.host.name}' to '#{value}'."
+    Puppet.notice "A Virtual Machine is being migrated from  host '#{get_vm_host}' to '#{value}'."
     begin
-      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-      host_view = vim.searchIndex.FindByDnsName(:datacenter => dc , :dnsName => value, :vmSearch => false)
+      host_view = get_host_view(value)
       raise Puppet::Error, "Unable to find the host '#{value}' because the host is either invalid or does not exist." unless host_view
-      spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view , :pool => host_view.parent.resourcePool)
-      vm.RelocateVM_Task( :spec => spec).wait_for_completion
+      relocate_vm(:host_view => host_view)
 
     rescue Exception => excep
       Puppet.err "Unable to perform the Virtual Machine migration operation because of the following error:\n #{excep.message}"
@@ -86,25 +76,60 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
     target_host = value.split(",").first.strip
     # Getting target_datastore
     target_datastore = value.split(",").last.strip
-    Puppet.notice "A Virtual Machine is being migrated from  from host '#{vm.runtime.host.name}' to '#{target_host}' and from datastore '#{vm.storage.perDatastoreUsage[0].datastore.name}' to '#{target_datastore}'."
+    Puppet.notice "A Virtual Machine is being migrated from  from host '#{get_vm_host}' to '#{target_host}' and from datastore '#{get_vm_host}' to '#{get_vm_ds}'."
     begin
-      dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-      host_view = vim.searchIndex.FindByDnsName(:datacenter => dc , :dnsName => target_host, :vmSearch => false)
+      host_view = get_host_view(target_host)
       raise Puppet::Error, "Unable to find the host '#{target_host}' because the host is either invalid or does not exist." unless host_view
-      ds ||= dc.find_datastore(target_datastore)
-      raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist." unless ds
-
-      disk_format = resource[:disk_format]
-      if disk_format.eql?('same_as_source')
-        spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view , :datastore => ds , :pool => host_view.parent.resourcePool)
-      else
-        transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(disk_format);
-        spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view , :datastore => ds , :transform => transform , :pool => host_view.parent.resourcePool)
-      end
-      vm.RelocateVM_Task( :spec => spec).wait_for_completion
+      ds_view = get_ds_view(target_datastore)
+      raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist." unless ds_view
+      relocate_vm(:ds_view => ds_view , :host_view => host_view )
     rescue Exception => excep
       Puppet.err "Unable to perform the Virtual Machine migration operation because of the following error:\n #{excep.message}"
     end
+  end
+
+  def get_host_view(target_host)
+    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+    return vim.searchIndex.FindByDnsName(:datacenter => dc , :dnsName => target_host, :vmSearch => false)
+  end
+
+  def get_ds_view(target_datastore)
+    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+    ds ||= dc.find_datastore(target_datastore)
+    return ds
+  end
+
+  def relocate_vm(args={})
+    # initilizing the default values
+    args[:host_view] ||= nil
+    args[:ds_view] ||= nil
+
+    host_view = args[:host_view]
+    ds_view = args[:ds_view]
+
+    spec_input = Hash.new
+    disk_format = resource[:disk_format]
+    if !ds_view.nil?
+      spec_input[:datastore] = ds_view
+      if !disk_format.eql?('same_as_source')
+        transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(disk_format);
+        spec_input[:transform] = transform
+      end
+    end
+    if !host_view.nil?
+      spec_input[:host] = host_view
+      spec_input[:pool] = host_view.parent.resourcePool
+    end
+    spec = RbVmomi::VIM.VirtualMachineRelocateSpec(spec_input)
+    vm.RelocateVM_Task( :spec => spec).wait_for_completion
+  end
+  
+  def get_vm_host
+    vm.runtime.host.name
+  end
+  
+  def get_vm_ds
+    vm.storage.perDatastoreUsage[0].datastore.name
   end
 
   private
