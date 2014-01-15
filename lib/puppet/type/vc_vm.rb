@@ -1,9 +1,11 @@
 # Copyright (C) 2013 VMware, Inc.
 require 'pathname'
-
+begin
 vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet/property/vmware'
-
+if !vmware_module.nil?
+  require File.join vmware_module.path, 'lib/puppet/property/vmware' 
+end
+end
 Puppet::Type.newtype(:vc_vm) do
   @doc = "Manage vCenter VMs."
 

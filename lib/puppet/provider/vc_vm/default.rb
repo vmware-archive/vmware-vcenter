@@ -10,9 +10,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     flag = 0
     begin
 
-      vm_name = resource[:name]
-
-      operation_name = resource[:operation].to_s
+      operation_name = get_operation_name
       # Calling create_vm functionality
 
       create_vm if operation_name.eql?('create')
@@ -22,15 +20,23 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       flag = 1
       Puppet.err(exc.message)
     end
+    check_vm(flag)
+  end
+  def check_vm(flag)
+    vm_name = resource[:name]
     if flag != 1
-      # Validate if VM is cloned successfully.
-      if vm
-        Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
-      else
-        Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
-      end
-
-    end
+          # Validate if VM is cloned successfully.
+          if vm
+            Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
+          else
+            Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
+          end
+    
+        end
+  end
+  
+  def get_operation_name
+    return resource[:operation].to_s
   end
 
   # Method to create vm guestcustomization spec
@@ -302,20 +308,31 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # Method to delete VM from vCenter
   def destroy
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter_name])
     vm_name = resource[:name]
-    virtualmachine_obj = nil
-    virtualmachine_obj = dc.find_vm(vm_name)
-
-    puppet.err("Unable to find Virtual Machine.") if virtualmachine_obj.eql?(nil)
-    vmpower_state = virtualmachine_obj.runtime.powerState
+    virtualmachine_obj = get_vm_from_datacenter
+    Puppet.err("Unable to find Virtual Machine.") if virtualmachine_obj.eql?(nil)
+    vmpower_state = get_power_state
     Puppet.notice "Virtual Machine is already in powered Off state." if vmpower_state.eql?('poweredOff')
     Puppet.notice "Virtual Machine is in suspended state." if vmpower_state.eql?('suspended')
+    delete_vm(virtualmachine_obj)
+  end
+
+  def get_power_state
+    return virtualmachine_obj.runtime.powerState
+  end
+
+  def delete_vm(virtualmachine_obj)
+    vmpower_state = get_power_state
     if vmpower_state.eql?('poweredOn')
-      Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
-      virtualmachine_obj.PowerOffVM_Task.wait_for_completion
-    end
-    virtualmachine_obj.Destroy_Task.wait_for_completion
+          Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
+          virtualmachine_obj.PowerOffVM_Task.wait_for_completion
+        end
+        virtualmachine_obj.Destroy_Task.wait_for_completion
+  end
+  
+  def get_vm_from_datacenter
+    dc = vim.serviceInstance.find_datacenter(resource[:datacenter_name])
+    return  dc.find_vm(resource[:name])
   end
 
   def exists?
