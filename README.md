@@ -1,18 +1,7 @@
-
-
 # VMware vCenter module
-
-
 
 This module manages resources in VMware vCenter such as folders, datacenter,
 ESX host and clusters.
-
-**Table of contents**
-
-
-[TOC]
-
-
 
 ## Description
 
