@@ -50,9 +50,6 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
     begin
       dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
       @vmObj ||= dc.find_vm(resource[:vm_name]) or raise Puppet::Error, "Unable to find the Virtual Machine because the Virtual Machine does not exist."
-    rescue Exception => e
-      Puppet.err "Unable to perform the operation because the following exception occurred."
-      Puppet.err e.message
     end
   end
 
