@@ -47,7 +47,10 @@
             If the 'ensure' parameter is set to "present", then it calls the 'create' method.
             If the 'ensure' parameter is set to "absent", then it calls the 'destroy method.
 
-	name: (Required) This parameter defines the name of vSwitch to be created.
+	name: (Required) This parameter defines the name or IP address of the host to which vSwitch needs to be added. It also defines the name of the vSwitch to be created. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_vswitch' is used. 
+	
+	vswitch: (Required) This parameter defines the name of vSwitch to be created.
+	
 	host: (Required) This parameter defines the ESXi host IP or host name.
 
 	path: (Required) This parameter defines the path to the ESXi host.
@@ -82,10 +85,9 @@ transport { 'vcenter':
 
 
 #Configures vSwitch on ESXi host
-esx_vswitch { 'name':
+esx_vswitch { "esx1:vSwitch1":
   ensure    => present,
-  name      => "vSwitch1",
-  host      => "esx1",
+  name      => "esx1:vSwitch1",
   path      => "/dc1/cl1/",
   num_ports => 120,
   nics      => ["pnic1", "pnic2", "pnic3", "pnic4"],

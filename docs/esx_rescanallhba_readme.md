@@ -30,7 +30,9 @@ The VMware/VCenter module uses the vCentre Ruby SDK (rbvmomi Version 1.6.0) to i
     Possible values: present/absent
     Default is : present
  
-    host: (Required) This parameter defines the name/IP of the host machine.       
+    host: (Required) This parameter defines the name/IP of the host machine.     
+	
+	path: (Required) This parameter defines the path to the ESXi host.
  
  
 # -------------------------------------------------------------------------
@@ -45,8 +47,10 @@ transport { 'vcenter':
 }
  
 esx_rescanallhba {$newVM['host']:
-  ensure  => present,  
-  transport   => Transport['vcenter'],
+  ensure  => present,
+  host => $newVM['host'],
+  path => '/Datacenter1',
+  transport  => Transport['vcenter'],
 }
  
  
