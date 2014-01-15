@@ -10,7 +10,7 @@ ARGV.clear
 
 begin
   require 'rubygems'
-  #require 'puppetlabs_spec_helper/module_spec_helper'
+  require 'puppetlabs_spec_helper/module_spec_helper'
 rescue LoadError
 end
 
