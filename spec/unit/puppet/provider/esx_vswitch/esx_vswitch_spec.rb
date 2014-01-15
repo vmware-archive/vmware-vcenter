@@ -4,8 +4,6 @@ require 'puppet/provider/vcenter'
 require 'rspec/mocks'
 require 'fixtures/unit/puppet/provider/esx_vswitch/esx_vswitch_fixture'
 
-#require '/etc/puppet/modules/vcenter/spec/fixtures/unit/puppet/provider/esx_vswitch/esx_vswitch_fixture'
-
 describe "Create vSwitch behavior testing" do
   before(:each) do
     @fixture = Esx_vswitch_fixture.new
@@ -27,6 +25,36 @@ describe "Create vSwitch behavior testing" do
 
     it "should have a parent 'Puppet::Provider::Vcenter'" do
       @fixture.provider.should be_kind_of(Puppet::Provider::Vcenter)
+    end
+  end
+
+  context "when esx_vswitch is created " do
+    it "should create vSwitch" do
+      #Then
+      @fixture.provider.should_receive(:create_vswitch)
+
+      #When
+      @fixture.provider.create
+    end
+  end
+
+  context "when esx_vswitch is destroyed " do
+    it "should destroy vSwitch" do
+      #Then
+      @fixture.provider.should_receive(:remove_vswitch)
+
+      #When
+      @fixture.provider.destroy
+    end
+  end
+
+  context "when esx_vswitch is checked for existence " do
+    it "should check its existence" do
+      #Then
+      @fixture.provider.should_receive(:find_vswitch)
+
+      #When
+      @fixture.provider.exists?
     end
   end
 

@@ -28,4 +28,34 @@ describe "Create portgroup behavior testing" do
     end
   end
 
+  context "when esx_portgroup is created " do
+    it "should create esx_portgroup" do
+      #Then
+      @fixture.provider.should_receive(:create_port_group)
+
+      #When
+      @fixture.provider.create
+    end
+  end
+
+  context "when esx_portgroup is destroyed " do
+    it "should destroy esx_portgroup" do
+      #Then
+      @fixture.provider.should_receive(:remove_port_group)
+
+      #When
+      @fixture.provider.destroy
+    end
+  end
+
+  context "when esx_portgroup is checked for existence " do
+    it "should check its existence" do
+      #Then
+      @fixture.provider.should_receive(:check_portgroup_existance)
+
+      #When
+      @fixture.provider.exists?
+    end
+  end
+
 end
