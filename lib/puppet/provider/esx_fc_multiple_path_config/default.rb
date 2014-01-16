@@ -7,7 +7,7 @@ Puppet::Type.type(:esx_fc_multiple_path_config).provide(:esx_fc_multiple_path_co
   def create
     begin
       if host == nil
-        raise Puppet::Error, "Unable to find the host. The specified host does not exist."
+        raise Puppet::Error, "An invalid host name or IP address is entered. Enter the correct host name and IP address."
       else
         change_policy
       end
