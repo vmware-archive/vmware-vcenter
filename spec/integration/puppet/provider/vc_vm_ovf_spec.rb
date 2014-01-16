@@ -65,25 +65,13 @@ describe Puppet::Type.type(:vc_vm_ovf).provider(:vc_vm_ovf) do
 
   describe "when importing an ovf" do
     it "should be able to import ovf" do
-      #Then
-      response = import_ovf.provider.should_receive(:importovf)
-      if response == 1
-        Puppet.should_receive(:err)
-      end
-      #When
-      import_ovf.provider.create
+      expect {  import_ovf.provider.create}.to_not raise_error      
     end
   end
 
   describe "when exporting  an vm  - which already exists" do
     it "should be able to export vm" do
-      #Then
-      response = export_ovf.provider.should_receive(:exportovf)
-      if response == 1
-        Puppet.should_receive(:err)    
-      end
-      #When
-      export_ovf.provider.destroy
+      expect { export_ovf.provider.destroy}.to_not raise_error       
     end
   end
 end
