@@ -49,7 +49,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '1024'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -62,7 +62,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -94,7 +94,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '4096'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -152,7 +152,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -230,7 +230,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '035'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -337,7 +337,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
@@ -350,7 +350,7 @@ Puppet::Type.newtype(:vc_vm) do
     dvalue = '1'
     defaultto(dvalue)
     munge do |value|
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         dvalue.to_i
       else
         value.to_i
