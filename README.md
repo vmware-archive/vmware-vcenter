@@ -1200,7 +1200,10 @@ vc_vm_ovf { $ovf['vmname']:
 #### Functionality Description
 
   1. Create
-     This method creates a VMware Virtual Machine instance based on the specified base image or the base image template name. 
+     This method creates or clones a VMware Virtual Machine instance. Creation of virtual machine depends on the 'operation' 
+     parameter value. If its value is set to 'create', the module will create a Virtual Machine from scratch. If its value
+     is set to 'clone', Virtual Machine will be created based on the specified base image or on the base image template name.  
+     
      The existing baseline Virtual Machine, must be available on a shared data-store and must be visible on all ESX hosts.
      The Virtual Machine capacity is allcoated based on the "numcpu" and "memorymb" parameter values, that are speicfied in the input file.
      NOTE: If multiple vNICs exist in the gold image, then the same number of vNICS get created in the new Virtual Machine.
@@ -1217,37 +1220,100 @@ vc_vm_ovf { $ovf['vmname']:
     ensure: (Required) This parameter is required to call the Create or Destroy method.
     Possible values: present/absent
     If the value of ensure parameter is set to present, the module calls the Create method.
-    If the value of ensure parameter is set to absent, the module calls the Destroy method.
-
+    If the value of ensure parameter is set to absent, the module calls the Destroy method.    
+        
     datacenter_name: (Required) This parameter defines the name of the datacenter.
-
+    
     power_state: (Optional) This parameter can be used to powerOn, powerOff, reset or suspend the Virtual Machine.
     Possible values: poweredOff, poweredOn, suspended or reset.
-
-    goldvm:  This parameter defines the name of the gold Virtual Machine.
-
-    goldvm_datacenter: (Optional) This parameter defines the name of the gold Virtual Machine's dataCenter. This parameter is required if the gold Virtual Machine belongs to a different datacenter or if the user wants to clone a new Virtual Machine across dataCenter.
-    Note: In this case the user is supposed to provide the following parameter values.
-    Either cluster or host, and target_datastore.
-
     
     name: (Required) This parameter defines the name of the new Virtual Machine.
     
-    memorymb: This parameter defines the memory assigned to the new Virtual Machine. Its value must be provided in the MB.
+    operation: (Required) This parameter define the type of Virtual Machine creation.
+    Possible values: create/clone
+    If the value of operation parameter is set to create, the module will create Virtual Machine from scratch.
+    If the value of operation parameter is set to clone, the module will create Virtual Machine based on the specified 
+    base image or on the base image template name.
+    
+    #--------------------------------------------------------------------------
+    # Create Virtual Machine parameter ( if operation is set to 'create' )
+    #--------------------------------------------------------------------------
+    
+    host: (Required) This parameter defines the host name where the new Virtual Machine is to be created. 
+
+    cluster: (Required) This parameter defines the cluster name where the new Virtual Machine is to be created. 
+    NOTE:- If the cluster value is specified, the module ignores the specified host value in the input file.
+           
+    target_datastore: (Required) This parameter defines the name of the datastore containing the Virtual Machine. 
+    
+    diskformat: (Optional) This parameter controls the type of disk created.
+    Possible values: thin/thick
+    Default: thin
+   
+           
+    memorymb: (Optional) This parameter defines the memory assigned to the new Virtual Machine. Its value must be provided in the MB.
     Default: 1024
 
-    numcpu: This parameter defines the number of CPU's assigned to the new Virtual Machine.
+    numcpu: (Optional) This parameter defines the number of CPU's assigned to the new Virtual Machine.
     Default: 1
-
+    
+    disksize: (Optional) This parameter defines the capacity of the virtual disk (in KB).
+    Default: 4096
+    
+    memory_hot_add_enabled: (Optional) This parameter indicates whether or not memory can be added to the virtual machine while it is running.
+    Possible values: true/false
+    Default: true 
+    
+    cpu_hot_add_enabled: (Optional) This parameter indicates whether or not virtual processors can be removed from the virtual machine while it is running
+    Possible values: true/false
+    Default: true  
+    
+    guestid: (Optional) This parameter defines the guest operating system identifier. User can get the guestif from following url
+    https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    
+    portgroup: (Optional) This parameter defines the portgroup that is to be attached with the Virtual Machine vNIC.
+    Default: "VM Network"  
+    
+    nic_count: (Optional) This parameter defines the number of vNics that is to be created on the Virtual Machine.
+    Default: 1  
+    
+    nic_type: (Optional) This parameter defines the NIC type of the vNIC.
+    Possible values: VMXNET 2/E1000/VMXNET 3
+    Default value: E1000
+    
+    
+    #--------------------------------------------------------------------------
+    # Create Virtual Machine parameter ( if operation is set to 'clone' )
+    #--------------------------------------------------------------------------
+    
     host: (Optional) This parameter defines the host name where the new Virtual Machine is to be created. 
 
     cluster: (Optional) This parameter defines the cluster name where the new Virtual Machine is to be created. 
     NOTE:- If the cluster value is specified, the module ignores the specified host value in the input file.
            If both the parameter values are not provided, the module attempts to create a new Virtual Machine in the gold Virtual Machine host.
- 
+           
     target_datastore: (Optional) This parameter defines the name of the datastore containing the Virtual Machine. If not provided, the Virtual Machine is created on the available datastore.
+    
+    diskformat: (Required) This parameter controls the type of disk created.
+    Possible values: thin/thick
+    Default: thin
+   
+           
+    memorymb: (Optional) This parameter defines the memory assigned to the new Virtual Machine. Its value must be provided in the MB.
+    Default: 1024
 
-    diskformat: (Required) This parameter controls the type of disk created during the cloning operation.
+    numcpu: (Optional) This parameter defines the number of CPU's assigned to the new Virtual Machine.
+    Default: 1    
+    
+
+    goldvm: This parameter defines the name of the gold Virtual Machine.
+
+    goldvm_datacenter: (Optional) This parameter defines the name of the gold Virtual Machine's dataCenter. This parameter is required if the gold Virtual Machine belongs to a different datacenter or if the user wants to clone a new Virtual Machine across dataCenter.
+    Note: In this case the user is supposed to provide the following parameter values.
+    Either cluster or host, and target_datastore. 
+    
+
+    diskformat: (Optional) This parameter controls the type of disk created during the cloning operation.
     Possible values: thin/thick
     Default: thin
 
@@ -1324,10 +1390,10 @@ vc_vm_ovf { $ovf['vmname']:
     autologoncount: (Optional, used if autologon='true') This parameter value specifies the number of times the machine must  automatically log on as Administrator. 
     Default: 1    
 
-    
-
+	
 
 #### Parameter Signature 
+import 'data.pp'
 
 transport { 'vcenter':
   username => $vcenter['username'],
@@ -1338,34 +1404,70 @@ transport { 'vcenter':
 
 
 vc_vm { $newVM['vmName']:
-  ensure     => present,
-  datacenter => $newVM['datacenter'],
-  goldvm => $goldVMName['name'],
-  memorymb => $newVM['memoryMB'],
-  dnsdomain => $newVM['dnsDomain'],
-  computername => $newVM['computerName'],
-  numcpu => $newVM['numCPU'],
-  transport  => Transport['vcenter'],
-  host => $newVM['host'],
-  cluster => $newVM['cluster'],
-  guestcustomization => 'false',
-  
-  nicspec => {
-    nic => [{
-      ip    => $newVM['ip1'],
-      subnet => $newVM['subnet1'],
-	  dnsserver => $newVM['dnsserver1'],
-	  gateway => $newVM['gateway1']
-    }],
-    nic => [{
-      ip    => $newVM['ip2'],
-      subnet => $newVM['subnet2'],
-	  dnsserver => $newVM['dnsserver2'],
-	  gateway => $newVM['gateway2']
-    }],
-  } 
+    ensure                         => $newVM['ensure'],
+    transport                      => Transport['vcenter'],
+    operation                      => $newVM['operation'],
+    datacenter_name                => $newVM['datacenter'],
+    memorymb                       => $newVM['memoryMB'],
+    numcpu                         => $newVM['numCPU'],
+    host                           => $newVM['host'],
+    cluster                        => $newVM['cluster'],
+    target_datastore               => $newVM['target_datastore'],
+    diskformat                     => $newVM['diskformat'],
+    
+    # Create VM Parameters
+    # disk size should be in KB
+    disksize                       => $createVM['disksize'],
+    memory_hot_add_enabled         => $createVM['memory_hot_add_enabled'],
+    cpu_hot_add_enabled            => $createVM['cpu_hot_add_enabled'],
+    # user can get the guestif from following url
+    # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    guestid                        => $createVM['guestid'],
+    portgroup                      => $createVM['portgroup'],
+    nic_count                      => $createVM['nic_count'],
+    nic_type                       => $createVM['nic_type'],
 
+    # Clone VM parameters
+    goldvm                         => $goldVMName['name'],
+    dnsdomain                      => $cloneVM['dnsDomain'],
+
+    #Guest OS nic specific params
+    nicspec => {
+        nic => [{
+            ip        => $cloneVM['ip1'],
+            subnet    => $cloneVM['subnet1'],
+            dnsserver => $cloneVM['dnsserver1'],
+            gateway   => $cloneVM['gateway1']
+        },{
+            ip        => $cloneVM['ip2'],
+            subnet    => $cloneVM['subnet1'],
+            dnsserver => $cloneVM['dnsserver1'],
+            gateway   => $cloneVM['gateway1']
+        }],
+    },
+
+    #Guest Customization Params
+    guestcustomization              => $cloneVM['guestCustomization'],
+    guesthostname                   => $cloneVM['guesthostname'],
+    guesttype                       => $cloneVM['guesttype'],
+    #Linux guest os specific
+    linuxtimezone                   => $cloneVM['linuxtimezone'],
+    #Windows guest os specific
+    windowstimezone                 => $cloneVM['windowstimezone'],
+    guestwindowsdomain              => $cloneVM['guestwindowsdomain'],
+    guestwindowsdomainadministrator => $cloneVM['guestwindowsdomainadministrator'],
+    guestwindowsdomainadminpassword => $cloneVM['guestwindowsdomainadminpassword'],
+    windowsadminpassword            => $cloneVM['windowsadminpassword'],
+    productid                       => $cloneVM['productid'],
+    windowsguestowner               => $cloneVM['windowsguestowner'],
+    windowsguestorgnization         => $cloneVM['windowsguestorgnization'],
+    customizationlicensedatamode    => $cloneVM['customizationlicensedatamode'],
+    autologon                       => $cloneVM['autologon'],
+    autologoncount                  => $cloneVM['autologoncount'],
+    autousers                       => $cloneVM['autousers'],
+    
 }
+
 
 #### Usage
 
