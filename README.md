@@ -847,7 +847,7 @@ transport { 'vcenter':
 Provide any host property
 esx_maintmode { 'esx1':
   ensure => present,
-  evacuate_powered_off_vms  => true,
+  evacuate_powered_off_vms  => false,
   timeout   => $esx1['timeout'],  
   hostdns    => $esx1['host'],
   transport  => Transport['vcenter'],
