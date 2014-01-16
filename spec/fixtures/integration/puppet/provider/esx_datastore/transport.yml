@@ -1,0 +1,7 @@
+transport:
+  name: 'vcenter'
+  username : 'aidev\administrator'
+  password : 'P@ssw0rd'
+  server   : '172.28.12.6'
+  options  : { 'insecure' : true }
+  

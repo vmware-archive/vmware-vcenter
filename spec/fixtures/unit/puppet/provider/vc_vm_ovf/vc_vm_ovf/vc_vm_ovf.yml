@@ -1,0 +1,18 @@
+importvm:
+  ensure: 'import'
+  datacenter: 'DDCQA'
+  ovffilepath: '/root/OVF/test_123.ovf'
+  target_datastore: 'datastore3'
+  host: '172.16.100.56'
+  vmname: 'testVM_1'
+  disk_format: 'thin'
+
+
+exportvm:
+  ensure: 'export'
+  datacenter: 'DDCQA'
+  ovffilepath: '/root/OVF/test_123.ovf'
+  target_datastore: 'datastore3'
+  host: '172.16.100.56'
+  vmname: 'testVM_1'
+  disk_format: 'thin'

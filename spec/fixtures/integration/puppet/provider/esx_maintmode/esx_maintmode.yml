@@ -1,0 +1,2 @@
+maintmode:
+  hostseq: '172.16.103.195:esx1'

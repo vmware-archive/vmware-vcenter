@@ -4,10 +4,11 @@ require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts."
-
+  # Add host to datacenter or cluster
   def create
     sslThumbprint = resource[:sslthumbprint]
     retry_attempt = 0
+    Puppet.debug "Adding host to Vcenter/cluster."
 
     begin
       spec = {
@@ -20,13 +21,15 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
 
       o = vmfolder(resource[:path])
       if o.respond_to? :AddStandaloneHost_Task
+        # Add host to datacenter
         o.AddStandaloneHost_Task(
-          :spec => spec, :addConnected => true).wait_for_completion
+        :spec => spec, :addConnected => true).wait_for_completion
       elsif o.respond_to? :AddHost_Task
+        # Add host to cluster
         o.AddHost_Task(
-          :spec => spec, :asConnected => true).wait_for_completion
+        :spec => spec, :asConnected => true).wait_for_completion
       else
-        fail "unsupported operation: attempt to add host to object of class #{o.class}"
+        raise "unsupported operation: attempt to add host to object of class #{o.class}"
       end
     rescue RbVmomi::VIM::SSLVerifyFault
       unless resource[:secure]
@@ -35,12 +38,29 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
         retry_attempt += 1
         retry if retry_attempt <= 1
       end
-      raise
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err excep.message
     end
   end
 
+  # remove host from datacenter or cluster
   def destroy
-    @host.Destroy_Task.wait_for_completion
+    Puppet.debug "Removing host from Vcenter/cluster."
+
+    begin
+      parentFolder = @host.parent
+      if parentFolder.to_s =~ /ClustercomputeResource/i
+        # remove host from cluster
+        @host.Destroy_Task.wait_for_completion
+      else
+        # remove host from datacenter
+        @host.parent.Destroy_Task.wait_for_completion
+      end
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err excep.message
+    end
   end
 
   # TODO: implement real path checking.
@@ -51,6 +71,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
   def path=(value)
   end
 
+  # check if host exists
   def exists?
     find_host ? true : false
   end
