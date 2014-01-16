@@ -95,7 +95,7 @@ An ESX host can be attached and managed indirectly via vSphere API:
 
 See tests folder for additional examples.
 ## References
-### esx_fc_mutilple_path_config
+### esx_fc_multiple_path_config
 
 
 #### Supported Functionality
@@ -127,6 +127,7 @@ See tests folder for additional examples.
  
     host: (Required) This parameter defines the name or IP Address of the host machine.       
     policyname: (Required) This property defines the policy that needs to be applied.
+    path: (Required) This parameter defines the path to the ESXi host.
  
 
 #### Parameter Signature 
@@ -139,9 +140,10 @@ See tests folder for additional examples.
   options  => $vcenter['options'],
 }
 
-esx_fc_mutilple_path_config {$newVM['host']:
-  ensure => present,
-  policyname => 'VMW_PSP_RR',
+esx_fc_multiple_path_config {$newVM['host']:
+  ensure  => present,
+  policyname  => 'VMW_PSP_RR',
+  path  => '/Datacenter1',
   transport   => Transport['vcenter'],
 }
  
@@ -301,7 +303,7 @@ esx_datastore { "${esx1['hostname']}:vmfs_store":
 
   5. Set the IP configuration of the port group
      This method sets the IP settings (dhcp/static) on the created port group.
-	 Note: To update the IP address, it is required to set the vMotion flag to "Enabled", so that it gets enabled before updating the IP address to either dhcp/static.
+	 Note: To update the IP address, it is required to set the vMotion flag to "enabled", so that it gets enabled before updating the IP address to either dhcp/static.
 	 
   6. override failover policy
 	 This method overrides the failover order of vSwitch and sets it as per the input given by the user.
@@ -317,13 +319,16 @@ esx_datastore { "${esx1['hostname']}:vmfs_store":
 	 
 ####  Summary of Parameters.
 
-  name: (Required) This parameter defines the port group to be created or already to be created.
+  name: (Required) This parameter defines the name or IP address of the host to which portgroup needs to be added. It also defines the name of the portgroup to be created. If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_portgroup' is used. 
+		example: 172.16.100.56:portgroup1
 
   ensure: (Required) This parameter is required to call the Create or Destroy method.
         Valid values: Present/Absent
         If the value of ensure parameter is set to present, the RA calls the Create method.
         If the value of ensure parameter is set to absent, the RA calls the Destroy method.
         Default value: Present
+
+  portgrp: (Required) This parameter defines the port group to be created or already to be created.
 
   host: (Required) This parameter defines the Name/IPAddress of the host.
 
@@ -336,22 +341,23 @@ esx_datastore { "${esx1['hostname']}:vmfs_store":
         Default value: "VirtualMachine"
 
   vmotion: (Optional) This parameter notifies whether or not a vMotion is required on the VMkernel port group. This parameter is optional in case of the port group of the type "virtualMachine".
-           Valid values : "Enabled" and "Disabled"
-  overridefailback: (Optional) This parameter facilitates the user to override switch failback policy.
-			Valid values : "Enabled" and "Disabled"
+           Valid values : "enabled" and "disabled"
+           
+   overridefailback: (Optional) This parameter facilitates the user to override switch failback policy.
+			Valid values : "enabled" and "disabled"
   overridecheckbeacon: (Optional) This parameter facilitates the user to override switch checkbeacon policy.
-			Valid values : "Enabled" and "Disabled"			
+			Valid values : "enabled" and "disabled"			
 			
-  failback: This parameter is the value of failback policy.This is required if overridefailback is "Enabled"
+  failback: This parameter is the value of failback policy.This is required if overridefailback is "enabled"
 			Valid values : "true" and "false"
 			
-  checkbeacon : This parameter is the value of checkbeacon policy.This is required if overridecheckbeacon is "Enabled" 
+  checkbeacon : This parameter is the value of checkbeacon policy.This is required if overridecheckbeacon is "enabled" 
            Valid values : "true" and "false"
 		   
   mtu :  (Optional) This paramter is used to specify the MTU size for this port group. A valid MTU value must not be less than 1500 and must not exceed 9000.
 			
   overridefailoverorder : (Optional) This parameter facilitates the user to override switch failover order.
-			Valid values : "Enabled" and "Disabled"
+			Valid values : "enabled" and "disabled"
   
   nicorderpolicy : (Optional) This parameter gives option to the user to select active NICs and standby NICs for this port group. The value of this parameter must be in a hash format, for example: 
 				nicorderpolicy => {
@@ -366,7 +372,7 @@ esx_datastore { "${esx1['hostname']}:vmfs_store":
   subnetmask: This parameter is the subnetmask to be applied on the created port group. This parameter is required if the "ipsettings" parameter value is "static".
 
   traffic_shaping_policy: (Optional) This parameter defines the traffic shaping policy to be applied on the port group.
-   Valid values : "Enabled", "Disabled"
+   Valid values : "enabled", "disabled"
                          
   averagebandwidth: (Optional) This parameter defines the average bandwidth to be applied on the port group. This parameter is used if the "traffic_shaping_policy" is enabled.
                    Default value: 1000 Kbits/sec
@@ -393,15 +399,15 @@ transport { 'vcenter':
 
 The following resource is not ready for testing:
 
-  esx_portgroup { 'name':
-    name => "test25",
+  esx_portgroup { "172.16.100.56:portgroup1":
+    name => "172.16.100.56:portgroup1",
     ensure => present,
     portgrouptype => "VMkernel",
-    vmotion => "Disabled",
+    vmotion => "disabled",
 	failback => "true",
 	checkbeacon => "false",
 	mtu => "2014",
-	overridefailoverorder => "Enabled",
+	overridefailoverorder => "enabled",
 	nicorderpolicy => {
     activenic  => ["vmnic1"],
     standbynic => []
@@ -409,12 +415,11 @@ The following resource is not ready for testing:
     ipsettings => "static",
     ipaddress => "172.16.12.16",
     subnetmask => "255.255.0.0",
-    traffic_shaping_policy => "Disabled",
+    traffic_shaping_policy => "disabled",
     averagebandwidth => 1000,
     peakbandwidth => 1000,
     burstsize => 1024,
     vswitch => vSwitch1,
-    host => "172.16.100.56",
     path => "/Datacenter/cluster-1",
     vlanid => 5,
     transport => Transport['vcenter'],
@@ -451,7 +456,9 @@ The following resource is not ready for testing:
     Possible values: present/absent
     Default is : present
  
-    host: (Required) This parameter defines the name/IP of the host machine.       
+    host: (Required) This parameter defines the name/IP of the host machine.     
+	
+	path: (Required) This parameter defines the path to the ESXi host.    
  
  
 #### Parameter signature 
@@ -464,7 +471,9 @@ transport { 'vcenter':
 }
  
 esx_rescanallhba {$newVM['host']:
-  ensure  => present,  
+  ensure  => present,
+  host => $newVM['host'],
+  path => '/Datacenter1',
   transport   => Transport['vcenter'],
 }
  
@@ -514,12 +523,15 @@ esx_rescanallhba {$newVM['host']:
             If the 'ensure' parameter is set to "present", then it calls the 'create' method.
             If the 'ensure' parameter is set to "absent", then it calls the 'destroy method.
 
-	name: (Required) This parameter defines the name of vSwitch to be created.
+	name: (Required) This parameter defines the name or IP address of the host to which vSwitch needs to be added. It also defines the name of the vSwitch to be created.If this parameter is not provided explicitly in the manifest file, then the title of the type 'esx_vswitch' is used. 
+	
+	vswitch: (Required) This parameter defines the name of vSwitch to be created.
+	
 	host: (Required) This parameter defines the ESXi host IP or host name.
 
 	path: (Required) This parameter defines the path to the ESXi host.
 	
-	num_ports: (Optional) This parameter defines the number of ports that this vSwitch is configured to use. Changing this setting does not take effect until the next reboot. The maximum value is 1024, although other constraints, such as memory limits, may establish a lower effective limit. 
+	num_ports: (Optional) This parameter defines the number of ports that this vSwitch is configured to use. Changing this setting does not take effect until the next reboot. The maximum value is 4088, although other constraints, such as memory limits, may establish a lower effective limit. 
                Default value: 128
     
     nics: (Optional) This parameter defines the array of the physical network adapters to be bridged. If an empty array is defined, then any physical network adapters bridged to the vSwitch will be deleted or unset.
@@ -547,10 +559,9 @@ transport { 'vcenter':
 
 
 Configures vSwitch on ESXi host
-esx_vswitch { 'name':
+esx_vswitch { "esx1:vSwitch1":
   ensure    => present,
-  name      => "vSwitch1",
-  host      => "esx1",
+  name      => "esx1:vSwitch1",
   path      => "/dc1/cl1/",
   num_ports => 120,
   nics      => ["pnic1", "pnic2", "pnic3", "pnic4"],
