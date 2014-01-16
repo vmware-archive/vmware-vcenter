@@ -16,7 +16,7 @@ Puppet::Type.newtype(:esx_vswitch) do
     desc "ESX host:vSwitch name."
     validate do |value|
       if value.strip.length == 0
-        raise ArgumentError, "Invalid vSwitch name."
+        raise ArgumentError, "Invalid ESX host:vSwitch name."
       end
     end
     munge do |value|
@@ -51,11 +51,11 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newproperty(:num_ports) do
-    desc "The number of ports that this virtual switch is configured to use. The maximum value is 1024"
+    desc "The number of ports that this virtual switch is configured to use. The maximum value is 4088"
     dvalue = '128'
     defaultto(dvalue)
     validate do |value|
-      raise ArgumentError, "num_ports must be in range 0 - 1024." if value.to_i > 1024
+      raise ArgumentError, "num_ports must be in range 0 - 4088." if value.to_i > 4088
     end
     munge do |value|
       if value.to_i == 0
