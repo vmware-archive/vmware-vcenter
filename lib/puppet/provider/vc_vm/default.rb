@@ -311,18 +311,18 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_name = resource[:name]
     virtualmachine_obj = get_vm_from_datacenter
     Puppet.err("Unable to find Virtual Machine.") if virtualmachine_obj.eql?(nil)
-    vmpower_state = get_power_state
+    vmpower_state = get_power_state(virtualmachine_obj)
     Puppet.notice "Virtual Machine is already in powered Off state." if vmpower_state.eql?('poweredOff')
     Puppet.notice "Virtual Machine is in suspended state." if vmpower_state.eql?('suspended')
     delete_vm(virtualmachine_obj)
   end
 
-  def get_power_state
+  def get_power_state(virtualmachine_obj)
     return virtualmachine_obj.runtime.powerState
   end
 
   def delete_vm(virtualmachine_obj)
-    vmpower_state = get_power_state
+    vmpower_state = get_power_state(virtualmachine_obj)
     if vmpower_state.eql?('poweredOn')
           Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
           virtualmachine_obj.PowerOffVM_Task.wait_for_completion
