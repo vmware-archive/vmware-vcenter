@@ -30,23 +30,22 @@ Puppet::Type.type(:esx_fcoe).new(
 end
 
 describe "When managing the fcoe" do
-	it "should add the fcoe" do
-		fcoe.provider.create
-		if (fcoe.provider.exists? != 'nil')
-			puts "Successfully added the FCOE adapter"
-		else
-			puts "Failed to add the FCOE adapter"
-		end
-	end
-	
-	it "should remove the fcoe" do
-		fcoe.provider.destroy
-		if (fcoe.provider.exists? == 'nil')
-			puts "successfully removed the FCOE adapter"
-		else
-			puts "Failed to remove the FCOE adapter"
-		end
-	end
-	
+  it "should add the fcoe" do
+      fcoe.provider.create
+      if (fcoe.provider.exists? != 'nil')
+        puts "Successfully added the FCOE adapter"
+      else
+        fail "Failed to add the FCOE adapter"
+      end
+    end
+    
+    it "should remove the fcoe" do
+      fcoe.provider.destroy
+      if (fcoe.provider.exists? == 'nil')
+        puts "successfully removed the FCOE adapter"
+      else
+        fail "Failed to remove the FCOE adapter"
+      end
+    end	
 end
 end

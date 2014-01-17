@@ -32,14 +32,17 @@ Puppet::Type.type(:vm_snapshot).new(
 end
 
 describe "When managing the snapshot" do
-	it "should create snapshot" do
-		snapshot.provider.snapshot_operation=(:create) 
-	end
-	it "should revert snapshot" do
-		snapshot.provider.snapshot_operation=(:revert) 
-	end
-	it "should remove snapshot" do
-		snapshot.provider.snapshot_operation=(:remove) 
-	end
+  it "should create snapshot" do
+      response = snapshot.provider.snapshot_operation=(:create)     
+      response.should_not be_nil
+    end
+    it "should revert snapshot" do
+      response = snapshot.provider.snapshot_operation=(:revert)
+      response.should_not be_nil  
+    end
+    it "should remove snapshot" do
+      response = snapshot.provider.snapshot_operation=(:remove) 
+      response.should_not be_nil
+    end
 end
 end

@@ -30,7 +30,8 @@ end
 
 describe "When changing the multiple FC path configuration" do
 	it "should change to Round Robin on all FC HBAs" do
-		multiPathConfig.provider.create
+    response = multiPathConfig.provider.create  
+    response.should be_nil
 	end
 end
 end

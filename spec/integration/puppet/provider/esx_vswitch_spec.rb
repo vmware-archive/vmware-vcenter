@@ -36,12 +36,22 @@ Puppet::Type.type(:esx_vswitch).new(
 end
 
 describe "When managing the vswitch" do
-	it "should add the vSwitch" do
-		vSwitch.provider.create
-	end
-	
-	it "should remove the vSwitch" do
-		vSwitch.provider.destroy
-	end	
+  it "should add the vSwitch" do
+      vSwitch.provider.create
+      if (vSwitch.provider.exists? == true)
+        puts "Successfully added the vSwitch"     
+      else      
+        fail "Failed to add the vswitch"
+      end
+    end
+    
+    it "should remove the vSwitch" do
+      vSwitch.provider.destroy
+      if (vSwitch.provider.exists? == false)
+        puts "successfully removed the vSwitch"
+      else    
+        fail "Failed to remove the Vswitch"
+      end
+    end 
 end
 end

@@ -31,7 +31,8 @@ end
   
  describe "when rescanning the HBAs" do
 	it "should rescan all HBAs, VMFS and refresh host storage system" do
-		rescanHBA.provider.create
+    response = rescanHBA.provider.create    
+    response.should be_nil  
 	end
 end
 end
