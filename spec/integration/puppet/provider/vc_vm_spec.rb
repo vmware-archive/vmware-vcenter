@@ -122,22 +122,15 @@ describe Puppet::Type.type(:vc_vm).provider(:vc_vm) do
 
   describe "when creating a vm" do
     it "should be able to create vm" do
-      #Then
-      create_vm.provider.should_receive(:get_operation_name).and_return('create')
-      create_vm.provider.should_receive(:create_vm)
-      #When
-      create_vm.provider.create
+      expect {  create_vm.provider.create}.to_not raise_error 
+      
     end
   end
 
   describe "when removing  vm  - which already exists" do
     it "should be able to export vm" do
-      #Then
-           delete_vm.provider.should_receive(:get_vm_from_datacenter)
-           delete_vm.provider.should_receive(:get_power_state)
-           delete_vm.provider.should_receive(:delete_vm)
-      #When
-      delete_vm.provider.destroy
+      expect {   delete_vm.provider.destroy}.to_not raise_error 
+     
     end
   end
 end

@@ -34,15 +34,7 @@ describe Puppet::Type.type(:esx_get_iqns).provider(:esx_get_iqns) do
 
   describe "when getting iqns from server" do
     it "should be able to get iqns" do
-      #Then
-      hbalist = esx_get_iqn.provider.should_receive(:get_iqn_from_host).and_return(nil)
-      if !hbalist.nil?
-      esx_get_iqn.provider.should_receive(:get_iqn)
-      else
-        esx_get_iqn.provider.should_not_receive(:get_iqn)
-      end
-      #When
-      esx_get_iqn.provider.get_esx_iqns
+      expect {  esx_get_iqn.provider.get_esx_iqns}.to_not raise_error       
     end
   end
 end

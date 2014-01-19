@@ -124,7 +124,6 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         Puppet.debug "checkbeacon is nil on pg so need to change"
         return "disabled"
       end
-      #return nil
     rescue Exception => excep
       Puppet.err excep.message
     end
@@ -303,25 +302,25 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       vnics.each do |vnic|
         if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           vnicdevice=vnic.device
-
           if (resource[:ipsettings] == :static)
             if (resource[:ipaddress] == nil || resource[:subnetmask] == nil)
               raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
             elsif( resource[:ipaddress].length == 0 || resource[:subnetmask].length == 0)
               raise Puppet::Error, "ipaddress and subnetmask are required in case of static IP configuration."
             end
-
             ipconfiguration=RbVmomi::VIM.HostIpConfig(:dhcp => 0, :ipAddress => resource[:ipaddress], :subnetMask => resource[:subnetmask])
-            hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:ip => ipconfiguration)
-            if (vnicdevice != nil)
-              @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
-            end
           elsif (resource[:ipsettings] == :dhcp)
             ipconfiguration = RbVmomi::VIM.HostIpConfig(:dhcp => 1)
-            hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:ip => ipconfiguration)
-            if (vnicdevice != nil)
-              @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
+          end
+          hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:ip => ipconfiguration)
+          if (vnicdevice != nil)
+            actualnicspec = vnic.spec
+            if (actualnicspec!= nil )
+              actualnicspec.ip = ipconfiguration
+            else
+              actualnicspec = hostvirtualnicspec
             end
+            @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => actualnicspec)
           end
         end
       end
@@ -426,25 +425,20 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
       hostnetworktrafficshapingpolicy =  RbVmomi::VIM.HostNetworkTrafficShapingPolicy(:averageBandwidth => avgbandwidth, :burstSize => burstsize, :enabled => enabled, :peakBandwidth => peakbandwidth)
 
-      hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
-
-      actualspec = portg.spec
-      if (actualspec.policy != nil )
-        actualspec.policy.shapingPolicy = hostnetworktrafficshapingpolicy
-      else
-        actualspec.policy = hostnetworkpolicy
-      end
-
-      @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
-
     elsif ( resource[:traffic_shaping_policy] == :disabled)
       enabled = 0
       hostnetworktrafficshapingpolicy =  RbVmomi::VIM.HostNetworkTrafficShapingPolicy(:enabled => enabled)
-      hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
-      actualspec = portg.spec
-      actualspec.policy = hostnetworkpolicy
-      @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
     end
+
+    hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:shapingPolicy => hostnetworktrafficshapingpolicy)
+
+    actualspec = portg.spec
+    if (actualspec.policy != nil )
+      actualspec.policy.shapingPolicy = hostnetworktrafficshapingpolicy
+    else
+      actualspec.policy = hostnetworkpolicy
+    end
+    @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => actualspec)
     return true
   end
 
@@ -557,7 +551,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       if (actualspec.policy.nicTeaming !=nil)
         actualspec.policy.nicTeaming.rollingOrder = failbk
       else
-        actualspec.policy = hostnetworkpolicy
+        actualspec.policy.nicTeaming = hostnicteamingpolicy
       end
     else
       actualspec.policy = hostnetworkpolicy
@@ -592,7 +586,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       if (actualspec.policy.nicTeaming !=nil)
         actualspec.policy.nicTeaming.failureCriteria=customfailurecriteria
       else
-        actualspec.policy = hostnetworkpolicy
+        actualspec.policy.nicTeaming = hostnicteamingpolicy
 
       end
     else
@@ -613,7 +607,6 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     if (resource[:portgrouptype] == :VMkernel)
       @virtualNicManager = @host.configManager.virtualNicManager
 
-      #@vmotionsystem = @host.configManager.vmotionSystem
       vnics=@networksystem.networkInfo.vnic
 
       #enabling vmotion
@@ -659,8 +652,15 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
           vnicdevice=vnic.device
           hostvirtualnicspec = RbVmomi::VIM.HostVirtualNicSpec(:mtu => resource[:mtu])
+
           if (vnicdevice != nil)
-            @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => hostvirtualnicspec)
+            actualnicspec = vnic.spec
+            if (actualnicspec!= nil )
+              actualnicspec.mtu = resource[:mtu]
+            else
+              actualnicspec = hostvirtualnicspec
+            end
+            @networksystem.UpdateVirtualNic(:device => vnicdevice, :nic => actualnicspec)
           end
         end
       end
@@ -699,7 +699,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       if (actualspec.policy.nicTeaming != nil)
         actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
       else
-        actualspec.policy = hostnetworkpolicy
+        actualspec.policy.nicTeaming = hostnicteamingpolicy
       end
     else
       actualspec.policy = hostnetworkpolicy
@@ -754,4 +754,3 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     end
   end
 end
-

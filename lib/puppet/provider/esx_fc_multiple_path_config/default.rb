@@ -7,7 +7,7 @@ Puppet::Type.type(:esx_fc_multiple_path_config).provide(:esx_fc_multiple_path_co
   def create
     begin
       if host == nil
-        raise Puppet::Error, "Unable to find the host. The specified host does not exist."
+        raise Puppet::Error, "An invalid host name or IP address is entered. Enter the correct host name and IP address."
       else
         change_policy
       end
@@ -26,8 +26,8 @@ Puppet::Type.type(:esx_fc_multiple_path_config).provide(:esx_fc_multiple_path_co
       else	 
         device_arr.each do |change_policy|		
 			paths = change_policy.path		
-			paths.each do |path|					
-				if ((path.transport.class.to_s.strip == 'HostFibreChannelTargetTransport') || (path.transport.class.to_s.strip == 'HostFibreChannelOverEthernetTargetTransport') && (change_policy.path.length > 1 ))          
+			paths.each do |path|			   			
+				if ((path.transport.class.to_s.strip == 'HostFibreChannelTargetTransport') || (path.transport.class.to_s.strip == 'HostFibreChannelOverEthernetTargetTransport'))          
 					Puppet.notice "Changing the multipath policy to #{resource[:policyname]} for FC or FCoE deviceID #{change_policy.id} is in progress."
 					policySpec = RbVmomi::VIM::HostMultipathInfoFixedLogicalUnitPolicy(:policy => resource[:policyname], :prefer => "*")
 					host.configManager.storageSystem.SetMultipathLunPolicy(:lunId => change_policy.id , :policy => policySpec)

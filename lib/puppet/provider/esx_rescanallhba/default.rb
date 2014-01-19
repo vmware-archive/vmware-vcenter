@@ -7,7 +7,7 @@ Puppet::Type.type(:esx_rescanallhba).provide(:esx_rescanallhba, :parent => Puppe
   def create
     begin
       if host == nil
-        raise Puppet::Error, "Unable to find the host because host does not exists."
+        raise Puppet::Error, "An invalid host name or IP address is entered. Enter the correct host name and IP address."
       else
         Puppet.notice "Re-Scanning for all HBAs."
         host.configManager.storageSystem.RescanAllHba()

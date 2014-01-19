@@ -13,12 +13,12 @@ esxconfiguremem:
   host_username : 'root'
   host_password : 'iforgot@123'
   script_executable_path : '/usr/bin/perl'
-  setup_script_filepath : '/root/scripts/setup.pl'
+  setup_script_filepath : '/opt/Dell/scripts/EquallogicMEM/setup.pl'
   
 esxinstallmem:
   install_mem : 'true'
   host : '172.16.103.186'
   script_executable_path : '/usr/bin/perl'
-  setup_script_filepath : '/root/scripts/setup.pl'
+  setup_script_filepath : '/opt/Dell/scripts/EquallogicMEM/setup.pl'
   host_username : 'root'
   host_password : 'iforgot@123'
