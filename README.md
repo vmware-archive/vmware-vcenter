@@ -108,6 +108,7 @@ See tests folder for additional examples.
  
   1. create
      This method checks whether specified host exists or not. If it is null, then it displays the error message: "host does not exists."
+
      If the host name exists, it will call the 'change_policy' method to apply the multi-path configuration change.
   
   2. change_policy
@@ -864,7 +865,7 @@ transport { 'vcenter':
 Provide any host property
 esx_maintmode { 'esx1':
   ensure => present,
-  evacuate_powered_off_vms  => true,
+  evacuate_powered_off_vms  => false,
   timeout   => $esx1['timeout'],  
   hostdns    => $esx1['host'],
   transport  => Transport['vcenter'],
