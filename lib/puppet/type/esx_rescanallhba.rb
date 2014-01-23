@@ -16,7 +16,7 @@ Puppet::Type.newtype(:esx_rescanallhba) do
     desc "ESX host name."
     validate do |value|
       if value.strip.length == 0
-        raise ArgumentError, "Invalid name or IP address of the host."
+        raise ArgumentError, "An invalid host name or IP address is entered. Enter the correct host name and IP address."
       end
     end
   end
