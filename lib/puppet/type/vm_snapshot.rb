@@ -20,7 +20,7 @@ Puppet::Type.newtype(:vm_snapshot) do
   newparam(:snapshot_supress_power_on) do
     desc "snapshot_supress_power_on"
     newvalues(:true, :false)
-    defaultto(:true)
+    defaultto(:false)
   end
 
   newparam(:vm_name) do
