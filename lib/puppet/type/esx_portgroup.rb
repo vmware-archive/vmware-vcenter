@@ -126,10 +126,9 @@ Puppet::Type.newtype(:esx_portgroup) do
     desc "mtu size used for jumbo frames."
     validate do |value|
       raise ArgumentError, "mtu must be in between 1500 and 9000." if (value.to_i<1500 || value.to_i > 9000)
-      if value.strip.length == 0
+      if value.to_s.strip.length == 0
         raise ArgumentError, "Invalid mtu."
       end
-
     end
   end
 

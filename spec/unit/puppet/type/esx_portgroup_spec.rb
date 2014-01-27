@@ -282,6 +282,33 @@ describe Puppet::Type.type(:esx_portgroup) do
             :ipaddress => '172.16.104.52', :subnetmask => '255.255.255.0', :traffic_shaping_policy => 'Enabled', :averagebandwidth => '5000', :peakbandwidth => '7027', :burstsize => '2085',
             :vswitch => 'vSwitch1', :path => '/datacenter1/cl1', :vlanid => '1')}.to raise_error Puppet::Error
         end
+
+        it 'should allow mtu as a fixnum' do
+          described_class.new(
+            :name => 'esx1:portgroup1',
+            :ensure => :present,
+            :portgrouptype => 'VMkernel',
+            :overridefailback => 'enabled',
+            :failback => true,
+            :mtu => 2019,
+            :overridefailoverorder => 'enabled',
+            :nicorderpolicy => {:activenic  => ["vmnic1", "vmnic4"],
+            :standbynic => ["vmnic3", "vmnic2"]},
+            :overridecheckbeacon => 'enabled',
+            :checkbeacon => true,
+            :vmotion => 'enabled',
+            :ipsettings => 'static',
+            :ipaddress => '172.16.104.52',
+            :subnetmask => '255.255.255.0',
+            :traffic_shaping_policy => 'enabled',
+            :averagebandwidth => '5000',
+            :peakbandwidth => '7027',
+            :burstsize => '2085',
+            :vswitch => 'vSwitch1',
+            :path => '/datacenter1/cl1',
+            :vlanid => '1'
+          )[:mtu].should.to_s == 2019
+        end
       end
 
       describe "validating overridefailoverorder property" do
