@@ -20,18 +20,19 @@ vc_vm { $newVM['vmName']:
     cluster                        => $newVM['cluster'],
     target_datastore               => $newVM['target_datastore'],
     diskformat                     => $newVM['diskformat'],
-    
+        
     # Create VM Parameters
     # disk size should be in KB
     disksize                       => $createVM['disksize'],
     memory_hot_add_enabled         => $createVM['memory_hot_add_enabled'],
     cpu_hot_add_enabled            => $createVM['cpu_hot_add_enabled'],
     # user can get the guestif from following url
-    # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    # http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.vm.GuestOsDescriptor.GuestOsIdentifier.html
     guestid                        => $createVM['guestid'],
     portgroup                      => $createVM['portgroup'],
     nic_count                      => $createVM['nic_count'],
     nic_type                       => $createVM['nic_type'],
+    scsi_controller_type           => $createVM['scsi_controller_type'],
 
     # Clone VM parameters
     goldvm                         => $goldVMName['name'],

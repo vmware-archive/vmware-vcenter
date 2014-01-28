@@ -18,11 +18,12 @@ $createVM = {
     'memory_hot_add_enabled'        => true,
     'cpu_hot_add_enabled'           => true,
     # user can get the guestif from following url
-    # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    # http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.vm.GuestOsDescriptor.GuestOsIdentifier.html
     'guestid'                       => 'winXPProGuest',
     'portgroup'                     => 'VM network',
     'nic_count'                     => 1,
     'nic_type'                      => 'E1000',
+    'scsi_controller_type'          => 'LSI Logic SAS',
 }
 
 $cloneVM = {
