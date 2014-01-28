@@ -5,12 +5,16 @@ require 'yaml'
 require 'puppet/provider/vcenter'
 require 'rbvmomi'
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 describe Puppet::Type.type(:vc_migratevm).provider(:vc_migratevm) do
 
-  vc_migratevm_yml =  YAML.load_file(my_fixture('vc_migratevm.yml'))
+  integration_yml =  File.join(provider_path, '/fixtures/integration/integration.yml')
+  vc_migratevm_yml = YAML.load_file(integration_yml) 
   migratevm = vc_migratevm_yml['migrate_vm']
 
-  transport_yml =  YAML.load_file(my_fixture('transport.yml'))
+  transport_yml =  File.join(provider_path, '/fixtures/integration/transport.yml')
+  transport_yml = YAML.load_file(transport_yml)
   transport_node = transport_yml['transport']
 
   let(:migrate_vm) do

@@ -1,0 +1,236 @@
+esx_fc_multiple_path_config:
+  host: '172.28.10.3'
+  policyname: 'VMW_PSP_RR'
+  path: '/AS1000DC'
+  
+esx_rescanallhba:
+  host: '172.28.10.3'
+  path: '/AS1000DC'
+ 
+esx_fcoe:
+  name: '172.28.7.3:vmnic1'	
+  path: '/AS1000DC'
+
+esx_portgroup:
+  name: '172.28.7.3:test01'
+  portgrouptype: 'VMkernel'
+  failback: 'true'
+  mtu: '2014'
+  overridefailback: 'enabled'
+  overridefailoverorder: 'disabled'
+  nicorderpolicy: '{
+    activenic  => ["vmnic5"],
+    standbynic => ["vmnic4"]
+  }'
+  overridecheckbeacon: 'enabled'
+  checkbeacon: true
+  vmotion: 'enabled'
+  ipsettings: 'dhcp'
+  ipaddress: '172.28.7.3'
+  subnetmask: '255.255.255.0'
+  traffic_shaping_policy: 'enabled'
+  averagebandwidth: '2000'
+  peakbandwidth: '2000'
+  burstsize: '2024'
+  vswitch: 'vSwitch1'
+  path: '/AS1000DC/DDCCluster/'
+  vlanid: '1023'
+  
+esx_vswitch:
+  name: '172.28.7.137:vSwitch5'
+  path: '/AS1000DCTest123'
+  num_ports: '1024'
+  nics: '["vmnic6","vmnic7"]'
+  nicorderpolicy: '{
+    activenic  => ["vmnic6"],
+    standbynic => ["vmnic7"]
+  }'
+  mtu: '5000'
+  checkbeacon: 'false'
+  
+vm_snapshot:
+  name: 'snapshot_integration_test'
+  snapshot_operation: 'create'
+  memory_snapshot: 'false'
+  datacenter: 'AS1000DC'
+  vm_name: 'dkumar-827-puppet123'
+  
+vm_vnic:
+  name: 'Network adapter 1'
+  vm_name: 'ASM7.5_ASHISH'
+  portgroup: 'Customer PXE 18'
+  nic_type: 'E1000'
+  datacenter: '/AS1000DC'
+  
+createdatastore:
+  ensure: 'present'
+  type: 'vmfs'
+  target_iqn: 'iqn.2001-05.com.equallogic:0-1cb196-cd273302b-6c0b10f87bb52d3e-testvolume'
+  datastore: 'newDS'  
+  host: '172.28.12.3'
+
+destroydatastore:
+  ensure: 'absent'
+  type: 'vmfs'
+  target_iqn: 'iqn.2001-05.com.equallogic:0-1cb196-cd273302b-6c0b10f87bb52d3e-testvolume'
+  datastore: 'newDS'
+  host : '172.28.12.3'
+  
+getiqns:
+  host: '172.16.100.56'
+  hostusername: 'root'
+  hostpassword: 'iforgot@123'
+  
+maintmode:
+  hostseq: '172.16.103.195:esx1'
+  
+esxconfiguremem:
+  configure_mem : 'true'
+  storage_groupip : '192.168.110.3'
+  iscsi_vmkernal_prefix  : 'iSCSI'
+  vnics_ipaddress : '192.168.110.10,192.168.110.11'
+  iscsi_vswitch : 'vSwitch3'
+  iscsi_netmask : '255.255.255.0'
+  vnics : 'vmnic1,vmnic2'
+  iscsi_chapuser : 'demoChap'
+  iscsi_chapsecret : 'demoChap'
+  disable_hw_iscsi : 'true'
+  host : '172.16.103.186'
+  host_username : 'root'
+  host_password : 'iforgot@123'
+  script_executable_path : '/usr/bin/perl'
+  setup_script_filepath : '/root/scripts/setup.pl'
+  
+esxinstallmem:
+  install_mem : 'true'
+  host : '172.16.103.186'
+  script_executable_path : '/usr/bin/perl'
+  setup_script_filepath : '/root/scripts/setup.pl'
+  host_username : 'root'
+  host_password : 'iforgot@123'  
+  
+initiator_binding:
+    ensure: 'present'
+    name:  '172.28.8.102: vmhba33'
+    vmknics: 'vmk1'
+    script_executable_path: '/usr/bin/esxcli'
+    host_username: 'root'
+    host_password: 'P@ssw0rd'
+
+initiator_unbinding:
+    ensure: 'absent'
+    name:  '172.28.8.102: vmhba33'
+    vmknics: 'vmk1'
+    script_executable_path: '/usr/bin/esxcli'
+    host_username: 'root'
+    host_password: 'P@ssw0rd'    
+ 
+migrate_vm:
+    datacenter: 'DDCQA'
+    disk_format: 'thin'
+    name: 'testVM'
+    target_datastore: 'gale-fsr'
+    target_host: '172.16.100.56'
+    target:  '172.16.100.56, datastore3'
+    
+createvm:
+  ensure: 'present'
+  name: 'UbuntuCloneGuestVM'
+  operation: 'create'
+  datacenter_name: 'DDCQA'
+  memorymb: '2048'
+  numcpu: 2
+  host: '172.16.100.56'
+  cluster: ''
+  target_datastore: 'gale-fsr'
+  diskformat: 'thin'
+  disksize: 4096
+  memory_hot_add_enabled: true
+  cpu_hot_add_enabled: true
+  guestid: 'winXPProGuest'
+  portgroup: 'VM network'
+  nic_count: 1
+  nic_type: 'E1000'
+  goldvm: 'vShield Manager'
+  dnsDomain : 'asm.test'
+  guestCustomization: 'false'
+  guesthostname: 'ClonedVM'
+  guesttype: 'linux'
+  linuxtimezone: 'EST'
+  windowstimezone : '035'
+  guestwindowsdomain: ''
+  guestwindowsdomainadministrator: ''
+  guestwindowsdomainadminpassword: ''
+  windowsadminpassword: 'iforgot'
+  productid: ''
+  windowsguestowner: 'TestOwner'
+  windowsguestorgnization: 'TestOrg'
+  autologoncount: ''
+  autousers: ''
+
+deletevm:
+  ensure: 'absent'
+  name: 'UbuntuCloneGuestVM'
+  operation: 'create'
+  datacenter_name: 'DDCQA'
+  memorymb: '2048'
+  numcpu: 2
+  host: '172.16.100.56'
+  cluster: ''
+  target_datastore: 'gale-fsr'
+  diskformat: 'thin'
+  disksize: 4096
+  memory_hot_add_enabled: true
+  cpu_hot_add_enabled: true
+  guestid: 'winXPProGuest'
+  portgroup: 'VM network'
+  nic_count: 1
+  nic_type: 'E1000'
+  goldvm: 'vShield Manager'
+  dnsDomain : 'asm.test'
+  guestCustomization: 'false'
+  guesthostname: 'ClonedVM'
+  guesttype: 'linux'
+  linuxtimezone: 'EST'
+  windowstimezone : '035'
+  guestwindowsdomain: ''
+  guestwindowsdomainadministrator: ''
+  guestwindowsdomainadminpassword: ''
+  windowsadminpassword: 'iforgot'
+  productid: ''
+  windowsguestowner: 'TestOwner'
+  windowsguestorgnization: 'TestOrg'
+  autologoncount: ''
+  autousers: ''
+    
+importovf:
+  ensure: 'import'
+  datacenter: 'DDCQA'
+  ovffilepath: '/root/OVF/test_123.ovf'
+  target_datastore: 'datastore3'
+  host: '172.16.100.56'
+  vmname: 'testVM_1'
+  disk_format: 'thin'
+
+exportovf:
+  ensure: 'export'
+  datacenter: 'DDCQA'
+  ovffilepath: '/root/OVF/test_123.ovf'
+  target_datastore: 'datastore3'
+  host: '172.16.100.56'
+  vmname: 'testVM_1'
+  disk_format: 'thin'
+  
+registervm:
+  ensure: 'present'
+  name: 'QA1'
+  hostip: '172.16.100.56'
+  datacenter: 'DDCQA'  
+  vmpath_ondatastore: '[gale-fsr] QA1/QA1.vmtx'
+  astemplate: 'false'
+
+removevm:
+    ensure: 'absent'
+    name: 'QA1'
+    hostip: '172.16.100.56'
+    datacenter: 'DDCQA'      

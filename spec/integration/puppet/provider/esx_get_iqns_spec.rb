@@ -5,12 +5,16 @@ require 'yaml'
 require 'puppet/provider/vcenter'
 require 'rbvmomi'
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 describe Puppet::Type.type(:esx_get_iqns).provider(:esx_get_iqns) do
-  esx_get_iqns_yml =  YAML.load_file(my_fixture('esx_get_iqns.yml'))
+  integration_yml =  File.join(provider_path, '/fixtures/integration/integration.yml')
+  esx_get_iqns_yml = YAML.load_file(integration_yml)  
   getiqns = esx_get_iqns_yml['getiqns']
 
-  transport_yml =  YAML.load_file(my_fixture('transport.yml'))
-  transport_node = transport_yml['transport']
+  transport_yaml =  File.join(provider_path, '/fixtures/integration/transport.yml')
+  transport_yaml = YAML.load_file(transport_yaml)
+  transport_node = transport_yaml['transport']
 
   let(:esx_get_iqn) do
     @catalog = Puppet::Resource::Catalog.new

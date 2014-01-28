@@ -5,12 +5,16 @@ require 'yaml'
 require 'puppet/provider/vcenter'
 require 'rbvmomi'
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 describe Puppet::Type.type(:iscsi_intiator_binding).provider(:iscsi_intiator_binding) do
 
-  iscsi_intiator_binding_yml =  YAML.load_file(my_fixture('iscsi_intiator_binding.yml'))
+  integration_yml =  File.join(provider_path, '/fixtures/integration/integration.yml')
+  iscsi_intiator_binding_yml = YAML.load_file(integration_yml)  
   initiator_binding = iscsi_intiator_binding_yml['initiator_binding']
 
-  transport_yml =  YAML.load_file(my_fixture('transport.yml'))
+  transport_yml =  File.join(provider_path, '/fixtures/integration/transport.yml')
+  transport_yml = YAML.load_file(transport_yml)
   transport_node = transport_yml['transport']
 
   let(:bind_iscsi_initiator) do

@@ -3,12 +3,20 @@
 require 'spec_helper'
 require 'yaml'
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 describe Puppet::Type.type(:esx_portgroup).provider(:esx_portgroup) do
-puts "We are printing value #{described_class.inspect}"
 
 let :portgroup do
-transport_yaml = YAML.load_file(my_fixture('transport.yml'))
+
+transport_yaml = File.join(provider_path, '/fixtures/integration/transport.yml')
+integration_yaml = File.join(provider_path, '/fixtures/integration/integration.yml')
+
+transport_yaml = YAML.load_file(transport_yaml)
 transport_node = transport_yaml['transport']
+  
+portgroup_path_yaml = YAML.load_file(integration_yaml)
+portgroup_node = portgroup_path_yaml['esx_portgroup']
 
 catalog = Puppet::Resource::Catalog.new
 transport = Puppet::Type.type(:transport).new({
@@ -22,29 +30,26 @@ catalog.add_resource(transport)
 
 
 Puppet::Type.type(:esx_portgroup).new(
-  :name => '172.28.7.3:test01',  
-  :portgrouptype => 'VMkernel',
-  :failback => 'true',
-  :mtu => '2014',
-  :overridefailback => 'enabled',
-  :overridefailoverorder => 'disabled',
-  :nicorderpolicy => '{
-    activenic  => ["vmnic5"],
-    standbynic => ["vmnic4"]
-  }',
-  :overridecheckbeacon => 'enabled',
-  :checkbeacon    => true,
-  :vmotion => 'enabled',
-  :ipsettings => 'dhcp',
-  :ipaddress => '172.28.7.3',
-  :subnetmask => '255.255.255.0',
-  :traffic_shaping_policy => 'enabled',
-  :averagebandwidth => '2000',
-  :peakbandwidth => '2000',
-  :burstsize => '2024',
-  :vswitch => 'vSwitch1',  
-  :path => '/AS1000DC/DDCCluster/',
-  :vlanid => '1023',
+  :name => portgroup_node['name'],  
+  :portgrouptype => portgroup_node['portgrouptype'],
+  :failback => portgroup_node['failback'],
+  :mtu => portgroup_node['mtu'],
+  :overridefailback => portgroup_node['overridefailback'],
+  :overridefailoverorder => portgroup_node['overridefailoverorder'],
+  :nicorderpolicy => portgroup_node['nicorderpolicy'],
+  :overridecheckbeacon => portgroup_node['overridecheckbeacon'],
+  :checkbeacon    => portgroup_node['checkbeacon'],
+  :vmotion => portgroup_node['vmotion'],
+  :ipsettings => portgroup_node['ipsettings'],
+  :ipaddress => portgroup_node['ipaddress'],
+  :subnetmask => portgroup_node['subnetmask'],
+  :traffic_shaping_policy => portgroup_node['traffic_shaping_policy'],
+  :averagebandwidth => portgroup_node['averagebandwidth'],
+  :peakbandwidth => portgroup_node['peakbandwidth'],
+  :burstsize => portgroup_node['burstsize'],
+  :vswitch => portgroup_node['vswitch'],  
+  :path => portgroup_node['path'],
+  :vlanid => portgroup_node['vlanid'],
   :transport => transport,
   :catalog => catalog,  
   )

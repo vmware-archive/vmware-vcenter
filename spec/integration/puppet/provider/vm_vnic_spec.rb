@@ -3,12 +3,20 @@
 require 'spec_helper'
 require 'yaml'
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 describe Puppet::Type.type(:vm_vnic).provider(:vm_vnic) do
 
 let :vnic do
-transport_yaml = YAML.load_file(my_fixture('transport.yml'))
+transport_yaml = File.join(provider_path, '/fixtures/integration/transport.yml')
+integration_yaml = File.join(provider_path, '/fixtures/integration/integration.yml')
+  
+transport_yaml = YAML.load_file(transport_yaml)
 transport_node = transport_yaml['transport']
-
+  
+vnic_yaml = YAML.load_file(integration_yaml)
+vnic_node = vnic_yaml['vm_vnic']
+    
 catalog = Puppet::Resource::Catalog.new
 transport = Puppet::Type.type(:transport).new({
   :name => transport_node['name'],
@@ -21,11 +29,11 @@ catalog.add_resource(transport)
 
 
 Puppet::Type.type(:vm_vnic).new(
-  :name => 'Network adapter 1',  
-  :vm_name => 'ASM7.5_ASHISH',
-  :portgroup => 'Customer PXE 18',
-  :nic_type => 'E1000',
-  :datacenter => '/AS1000DC',
+  :name => vnic_node['name'],  
+  :vm_name => vnic_node['vm_name'],
+  :portgroup => vnic_node['portgroup'],
+  :nic_type => vnic_node['nic_type'],
+  :datacenter => vnic_node['datacenter'],
   :transport => transport,
   :catalog => catalog,  
   )
