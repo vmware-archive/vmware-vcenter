@@ -22,19 +22,20 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
     check_vm(flag)
   end
+
   def check_vm(flag)
     vm_name = resource[:name]
     if flag != 1
-          # Validate if VM is cloned successfully.
-          if vm
-            Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
-          else
-            Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
-          end
-    
-        end
+      # Validate if VM is cloned successfully.
+      if vm
+        Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
+      else
+        Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
+      end
+
+    end
   end
-  
+
   def get_operation_name
     return resource[:operation].to_s
   end
@@ -324,12 +325,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def delete_vm(virtualmachine_obj)
     vmpower_state = get_power_state(virtualmachine_obj)
     if vmpower_state.eql?('poweredOn')
-          Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
-          virtualmachine_obj.PowerOffVM_Task.wait_for_completion
-        end
-        virtualmachine_obj.Destroy_Task.wait_for_completion
+      Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
+      virtualmachine_obj.PowerOffVM_Task.wait_for_completion
+    end
+    virtualmachine_obj.Destroy_Task.wait_for_completion
   end
-  
+
   def get_vm_from_datacenter
     dc = vim.serviceInstance.find_datacenter(resource[:datacenter_name])
     return  dc.find_vm(resource[:name])
@@ -442,8 +443,21 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   #    # create virtual device config spec for controller
   def create_conf_spec
-    controller = RbVmomi::VIM.VirtualBusLogicController(:key => 0,:device => [0], :busNumber => 0,
-    :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
+
+    contoller_type = resource[:scsi_controller_type].to_s
+    if contoller_type.eql?("VMware Paravirtual")
+      controller = RbVmomi::VIM.ParaVirtualSCSIController(:key => 0,:device => [0], :busNumber => 0,
+      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
+    elsif contoller_type.eql?("LSI Logic Parallel")
+      controller = RbVmomi::VIM.VirtualLsiLogicController(:key => 0,:device => [0], :busNumber => 0,
+      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
+    elsif contoller_type.eql?("LSI Logic SAS")
+      controller = RbVmomi::VIM.VirtualLsiLogicSASController(:key => 0,:device => [0], :busNumber => 0,
+      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
+    elsif contoller_type.eql?("BusLogic Parallel")
+      controller = RbVmomi::VIM.VirtualBusLogicController(:key => 0,:device => [0], :busNumber => 0,
+      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
+    end
 
     controller_vm_dev_conf_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(:device => controller,
     :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))

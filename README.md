@@ -1285,7 +1285,7 @@ vc_vm_ovf { $ovf['vmname']:
     Default: true  
     
     guestid: (Optional) This parameter defines the guest operating system identifier. User can get the guestif from following url
-    https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+    http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.vm.GuestOsDescriptor.GuestOsIdentifier.html
     
     portgroup: (Optional) This parameter defines the portgroup that is to be attached with the Virtual Machine vNIC.
     Default: "VM Network"  
@@ -1296,6 +1296,10 @@ vc_vm_ovf { $ovf['vmname']:
     nic_type: (Optional) This parameter defines the NIC type of the vNIC.
     Possible values: VMXNET 2/E1000/VMXNET 3
     Default value: E1000
+    
+    scsi_controller_type: (Optional) This parameter define the virtual SCSI controller type for new Virtual Machine's boot disk.
+    Possible values: 'BusLogic Parallel' / 'LSI Logic SAS' / 'LSI Logic Parallel' /'VMware Paravirtual'
+    Default value: 'LSI Logic SAS'    
     
     
     #--------------------------------------------------------------------------

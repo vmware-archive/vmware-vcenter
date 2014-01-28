@@ -116,7 +116,7 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:guestid) do
     desc 'Guest operating system identifier. User can get the guestid from following url +
-    https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html'
+    http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.vm.GuestOsDescriptor.GuestOsIdentifier.html'
     dvalue = 'otherGuest'
     defaultto(dvalue)
     munge do |value|
@@ -158,6 +158,12 @@ Puppet::Type.newtype(:vc_vm) do
         value.to_i
       end
     end
+  end
+  
+  newparam(:scsi_controller_type) do
+    desc "Virtual SCSI controller type for new Virtual Machine's boot disk."
+    newvalues(:"BusLogic Parallel", :"LSI Logic SAS", :"LSI Logic Parallel" ,:"VMware Paravirtual")
+    defaultto(:"LSI Logic SAS")
   end
 
   # parameters for clone vm operation
