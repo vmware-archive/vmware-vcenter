@@ -5,28 +5,36 @@ require 'yaml'
 
 describe Puppet::Type.type(:esx_fcoe).provider(:esx_fcoe) do
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 let :fcoe do
-transport_yaml = YAML.load_file(my_fixture('transport.yml'))
+transport_yaml = File.join(provider_path, '/fixtures/integration/transport.yml')
+integration_yaml = File.join(provider_path, '/fixtures/integration/integration.yml')
+  
+transport_yaml = YAML.load_file(transport_yaml)
 transport_node = transport_yaml['transport']
+  
+fcoe_yaml = YAML.load_file(integration_yaml)
+fcoe_node = fcoe_yaml['esx_fcoe']
 
 catalog = Puppet::Resource::Catalog.new
 
 transport = Puppet::Type.type(:transport).new({
-	:name => transport_node['name'],
-	:username => transport_node['username'],
-	:password => transport_node['password'],
-	:server => transport_node['server'],
-	:options => transport_node['options'],
+  :name => transport_node['name'],
+  :username => transport_node['username'],
+  :password => transport_node['password'],
+  :server => transport_node['server'],
+  :options => transport_node['options'],
 })
 
 catalog.add_resource(transport)
 
 Puppet::Type.type(:esx_fcoe).new(
-	:name => '172.28.7.3:vmnic1',	
-	:path => '/AS1000DC',		
-	:transport => transport,
-	:catalog => catalog,	
-	)
+  :name => fcoe_node['name'], 
+  :path => fcoe_node['path'],   
+  :transport => transport,
+  :catalog => catalog,  
+  )
 end
 
 describe "When managing the fcoe" do
@@ -46,6 +54,6 @@ describe "When managing the fcoe" do
       else
         fail "Failed to remove the FCOE adapter"
       end
-    end	
+    end 
 end
 end

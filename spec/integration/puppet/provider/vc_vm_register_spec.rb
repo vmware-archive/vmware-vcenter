@@ -5,11 +5,15 @@ require 'yaml'
 require 'puppet/provider/vcenter'
 require 'rbvmomi'
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent
+
 describe Puppet::Type.type(:vc_vm_register).provider(:vc_vm_register) do  
-  vc_vm_register_yml =  YAML.load_file(my_fixture('vc_vm_register.yml'))
+  integration_yml =  File.join(provider_path, '/fixtures/integration/integration.yml')
+  vc_vm_register_yml = YAML.load_file(integration_yml) 
   registervm = vc_vm_register_yml['registervm']  
   
-  transport_yml =  YAML.load_file(my_fixture('transport.yml'))
+  transport_yml =  File.join(provider_path, '/fixtures/integration/transport.yml')
+  transport_yml = YAML.load_file(transport_yml)
   transport_node = transport_yml['transport']  
 
   let(:register_vm) do
@@ -23,15 +27,15 @@ describe Puppet::Type.type(:vc_vm_register).provider(:vc_vm_register) do
      })
     @catalog.add_resource(transport)
 
-	Puppet::Type.type(:vc_vm_register).new(
-	    :name               => registervm['name'],
-		:ensure             => registervm['ensure'],
-		:transport          => transport,	
-		:catalog            => @catalog,
-		:hostip             => registervm['hostip'],
-		:datacenter         => registervm['datacenter'],  
-		:vmpath_ondatastore => registervm['vmpath_ondatastore'],
-		:astemplate         => registervm['astemplate']
+  Puppet::Type.type(:vc_vm_register).new(
+      :name               => registervm['name'],
+    :ensure             => registervm['ensure'],
+    :transport          => transport, 
+    :catalog            => @catalog,
+    :hostip             => registervm['hostip'],
+    :datacenter         => registervm['datacenter'],  
+    :vmpath_ondatastore => registervm['vmpath_ondatastore'],
+    :astemplate         => registervm['astemplate']
     )
   end  
 
@@ -49,13 +53,13 @@ describe Puppet::Type.type(:vc_vm_register).provider(:vc_vm_register) do
 
     @catalog.add_resource(transport)
 
-	Puppet::Type.type(:vc_vm_register).new(
-	    :name               => removevm['name'],
-		:ensure             => removevm['ensure'],
-		:transport          => transport,	
-		:catalog            => @catalog,
-		:hostip             => removevm['hostip'],
-		:datacenter         => removevm['datacenter']
+  Puppet::Type.type(:vc_vm_register).new(
+      :name               => removevm['name'],
+    :ensure             => removevm['ensure'],
+    :transport          => transport, 
+    :catalog            => @catalog,
+    :hostip             => removevm['hostip'],
+    :datacenter         => removevm['datacenter']
     )
   end
 
