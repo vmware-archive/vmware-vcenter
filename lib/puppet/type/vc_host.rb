@@ -56,7 +56,7 @@ Puppet::Type.newtype(:vc_host) do
     desc "The path to the host."
 
     validate do |path|
-      raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(path)
+      raise ArgumentError, "Absolute path of the host is required: #{path}" unless Puppet::Util.absolute_path?(path)
     end
   end
 
