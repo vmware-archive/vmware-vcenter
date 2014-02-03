@@ -20,6 +20,11 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:name, :namevar => true) do
     desc "The vm name"
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid Virtual Machine name."
+      end
+    end
   end
 
   #newparam(:path) do

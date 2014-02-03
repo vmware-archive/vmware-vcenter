@@ -17,10 +17,20 @@ Puppet::Type.newtype(:esx_datastore) do
 
   newparam(:datastore) do
     desc "The name of the datastore."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid name of the datastore."
+      end
+    end
   end
 
   newparam(:host) do
     desc "The ESX host the datastore is attached to."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid name or IP of the host."
+      end
+    end
   end
 
   newproperty(:type) do
