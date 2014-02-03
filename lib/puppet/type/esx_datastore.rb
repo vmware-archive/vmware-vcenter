@@ -1,9 +1,9 @@
 # Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:esx_datastore) do
-  @doc = "Manage vCenter esx hosts service."
+  @doc = "Manage vCenter esx hosts' datastore."
 
   newparam(:name, :namevar => true) do
-    desc "ESX host:service name."
+    desc "ESX host:datastore name."
 
     munge do |value|
       @resource[:host], @resource[:datastore] = value.split(':',2)
@@ -20,7 +20,7 @@ Puppet::Type.newtype(:esx_datastore) do
   end
 
   newparam(:host) do
-    desc "The ESX host the service is running on."
+    desc "The ESX host the datastore is attached to."
   end
 
   newproperty(:type) do
