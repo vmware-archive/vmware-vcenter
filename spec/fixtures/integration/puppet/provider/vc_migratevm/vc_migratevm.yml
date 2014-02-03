@@ -1,0 +1,9 @@
+
+migrate_vm:
+    datacenter: 'DDCQA'
+    disk_format: 'thin'
+    name: 'testVM'
+    target_datastore: 'gale-fsr'
+    target_host: '172.16.100.56'
+    target:  '172.16.100.56, datastore3'
+    
