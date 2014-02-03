@@ -38,7 +38,9 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
         retry_attempt += 1
         retry if retry_attempt <= 1
       end
-      raise
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err excep.message
     end
   end
 
