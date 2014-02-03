@@ -1,6 +1,7 @@
 # Copyright (C) 2013 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
+require 'rbvmomi'
 
 Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vsphere hosts entering and exiting maintenance mode."
