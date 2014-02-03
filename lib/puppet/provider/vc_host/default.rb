@@ -29,7 +29,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
         o.AddHost_Task(
           :spec => spec, :asConnected => true).wait_for_completion
       else
-        fail "unsupported operation: attempt to add host to object of class #{o.class}"
+        raise "unsupported operation: attempt to add host to object of class #{o.class}"
       end
     rescue RbVmomi::VIM::SSLVerifyFault
       unless resource[:secure]
