@@ -4,10 +4,11 @@ require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts."
-
+  # Add host to datacenter or cluster
   def create
     sslThumbprint = resource[:sslthumbprint]
     retry_attempt = 0
+    Puppet.debug "Adding host to Vcenter/cluster."
 
     begin
       spec = {
@@ -20,9 +21,11 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
 
       o = vmfolder(resource[:path])
       if o.respond_to? :AddStandaloneHost_Task
+        # Add host to datacenter
         o.AddStandaloneHost_Task(
           :spec => spec, :addConnected => true).wait_for_completion
       elsif o.respond_to? :AddHost_Task
+        # Add host to cluster
         o.AddHost_Task(
           :spec => spec, :asConnected => true).wait_for_completion
       else
@@ -39,6 +42,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
     end
   end
 
+  # remove host from datacenter or cluster
   def destroy
     Puppet.debug "Removing host from Vcenter/cluster."
 
