@@ -40,7 +40,21 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
   end
 
   def destroy
-    @host.Destroy_Task.wait_for_completion
+    Puppet.debug "Removing host from Vcenter/cluster."
+
+    begin
+      parentFolder = @host.parent
+      if parentFolder.to_s =~ /ClustercomputeResource/i
+        # remove host from cluster
+        @host.Destroy_Task.wait_for_completion
+      else
+        # remove host from datacenter
+        @host.parent.Destroy_Task.wait_for_completion
+      end
+    rescue Exception => excep
+      Puppet.err "Unable to perform the operation because the following exception occurred."
+      Puppet.err excep.message
+    end
   end
 
   # TODO: implement real path checking.
