@@ -82,6 +82,14 @@ Puppet::Type.newtype(:esx_datastore) do
   newparam(:uid) do
   end
 
+  newparam(:target_iqn) do
+    desc "Target IQN of lun created on storage."
+  end
+
+  newparam(:path) do
+    desc "Datacenter path where host resides"
+  end
+
   validate do
     raise Puppet::Error, "Must supply a value for type" if self[:type].nil?
     if ["NFS", "CIFS"].include? self[:type]
@@ -89,7 +97,7 @@ Puppet::Type.newtype(:esx_datastore) do
       raise Puppet::Error, "Missing remote_path property" unless self[:remote_path]
       raise Puppet::Error, "lun property should only be included if type is 'vmfs'" if self[:lun]
     elsif self[:type] == "VMFS"
-      raise Puppet::Error, "Missing lun property" unless self[:lun]
+      raise Puppet::Error, "Missing lun or target_iqn property" unless self[:lun] or self[:target_iqn]
       raise Puppet::Error, "remote_host property should only be included if type is 'nfs' or 'cifs'" if self[:remote_host]
       raise Puppet::Error, "remote_path property should only be included if type is 'nfs' or 'cifs'" if self[:remote_path]
     end
