@@ -15,7 +15,7 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
         :force         => true,
         :hostName      => resource[:name],
         :userName      => resource[:username],
-        :password      => resource[:password],
+        :password      => get_password,
         :sslThumbprint => sslThumbprint,
       }
 
@@ -42,6 +42,10 @@ Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcent
       Puppet.err "Unable to perform the operation because the following exception occurred."
       Puppet.err excep.message
     end
+  end
+
+  def get_password
+    resource[:password]
   end
 
   # remove host from datacenter or cluster
