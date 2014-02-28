@@ -15,7 +15,7 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
 
     for each_vmk_nic in vmk_nic_arr
       begin
-        cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
+        cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{get_host_password} --server=#{resource[:host_name]} iscsi networkportal add --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
 
         error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
         log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
@@ -44,7 +44,7 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
 
     for each_vmk_nic in vmk_nik_arr
       begin
-        cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name]} iscsi networkportal remove --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
+        cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{get_host_password} --server=#{resource[:host_name]} iscsi networkportal remove --nic #{each_vmk_nic} --adapter #{resource[:vmhba]}"
 
         error_log_filename = "/tmp/bindVMkernel_err_log.#{Process.pid}"
         log_filename = "/tmp/bindVMkernel_log.#{Process.pid}"
@@ -71,7 +71,7 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
   def is_binded
     flag = 0
 
-    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:host_name ]} iscsi networkportal list -A #{resource[:vmhba]}"
+    cmd = "#{resource[:script_executable_path]} --username #{resource[:host_username]} --password #{get_host_password} --server=#{resource[:host_name ]} iscsi networkportal list -A #{resource[:vmhba]}"
 
     error_log_filename = "/tmp/bind_rerr_log.#{Process.pid}"
     log_filename = "/tmp/bind_log.#{Process.pid}"
@@ -155,4 +155,9 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :par
       File.delete(errorfile)
     end
   end
+
+  def get_host_password
+    resource[:host_password]
+  end
+
 end
