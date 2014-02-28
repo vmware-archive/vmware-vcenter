@@ -2,7 +2,7 @@
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 
-Puppet::Type.type(:vc_host).provide(:vc_host, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter hosts."
   # Add host to datacenter or cluster
   def create

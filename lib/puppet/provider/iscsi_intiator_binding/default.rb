@@ -2,7 +2,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
-Puppet::Type.type(:iscsi_intiator_binding).provide(:iscsi_intiator_binding, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:iscsi_intiator_binding).provide(:default, :parent => Puppet::Provider::Vcenter) do
   @doc = "Binding the HBA to VMkernel nic."
   def create
     #Binding the HBA to VMkernel nic.
