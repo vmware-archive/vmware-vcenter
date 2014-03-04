@@ -1,0 +1,13 @@
+createdatastore:
+  ensure: 'present'
+  type: 'vmfs'
+  lun: 100
+  datastore: 'newDS'  
+  host: '172.16.100.56'
+  
+destroydatastore:
+  ensure: 'absent'
+  type: 'vmfs'
+  lun: 100
+  datastore: 'newDS'  
+  host: '172.16.100.56'

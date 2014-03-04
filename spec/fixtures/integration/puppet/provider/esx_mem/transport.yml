@@ -1,0 +1,7 @@
+transport:
+  name: 'vcenter'
+  username : 'administrator'
+  password : 'iforgot@123'
+  server   : '172.16.100.167'
+  options  : { 'insecure' : true }
+  

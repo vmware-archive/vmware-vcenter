@@ -63,6 +63,7 @@ define vcenter::host (
     policy    => $config_dt['ntpConfig']['policy'],
     running   => $config_dt['ntpConfig']['running'],
     subscribe => Esx_ntpconfig[$name],
+    transport => $transport,
   }
 
   # shells
@@ -86,11 +87,13 @@ define vcenter::host (
     policy    => $config_shells['esxi_shell']['policy'],
     running   => $config_shells['esxi_shell']['running'],
     subscribe => Esx_shells[$name],
+    transport => $transport,
   }
   esx_service { "${name}:TSM-SSH":
     policy    => $config_shells['ssh']['policy'],
     running   => $config_shells['ssh']['running'],
     subscribe => Esx_shells[$name],
+    transport => $transport,
   }
 
   # simple services
@@ -100,5 +103,6 @@ define vcenter::host (
   esx_service { "${name}:DCUI":
     policy  => $config_svcs['dcui']['policy'],
     running => $config_svcs['dcui']['running'],
+    transport => $transport,
   }
 }

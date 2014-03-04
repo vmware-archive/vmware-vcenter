@@ -16,14 +16,29 @@ Puppet::Type.newtype(:vc_host) do
 
   newparam(:name, :namevar => true) do
     desc "ESX hostname or ip address."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid hostname or IP."
+      end
+    end
   end
 
   newparam(:username) do
     desc "ESX username."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid username."
+      end
+    end
   end
 
   newparam(:password) do
     desc "ESX password."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid password."
+      end
+    end
   end
 
   newparam(:sslthumbprint) do
@@ -41,7 +56,7 @@ Puppet::Type.newtype(:vc_host) do
     desc "The path to the host."
 
     validate do |path|
-      raise "Absolute path required: #{value}" unless Puppet::Util.absolute_path?(path)
+      raise ArgumentError, "Absolute path of the host is required: #{path}" unless Puppet::Util.absolute_path?(path)
     end
   end
 

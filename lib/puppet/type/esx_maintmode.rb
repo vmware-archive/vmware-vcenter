@@ -1,6 +1,6 @@
 # Copyright (C) 2013 VMware, Inc.
 Puppet::Type.newtype(:esx_maintmode) do
-  @doc = "Manage vsphere hosts entering / exiting maintenance mode."
+  @doc = "Manage Host system enter / exit maintenance mode."
 
   ensurable do
     newvalue(:present) do
@@ -40,15 +40,16 @@ Puppet::Type.newtype(:esx_maintmode) do
          " completing the operation"
     newvalues(:true, :false)
     defaultto(:false)
-    # 
+    #
     # The provider must accept and return Symbols :true and
     # :false, not TrueClass nor FalseClass. Methods is_to_s and
     # should_to_s clarify messages like 'changed true to true'
     # that would result from provider bugs.
-    # 
+    #
     def is_to_s(v)
       v.inspect
     end
+
     def should_to_s(v)
       v.inspect
     end

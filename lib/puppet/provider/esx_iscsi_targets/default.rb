@@ -8,7 +8,7 @@ module_lib = Pathname.new(__FILE__).parent.parent.parent.parent
 require File.join module_lib, 'puppet/provider/vcenter'
 require File.join module_lib, 'puppet_x/vmware/mapper'
 
-Puppet::Type.type(:esx_iscsi_targets).provide(:esx_iscsi_targets, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:esx_iscsi_targets).provide(:default, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages iSCSI targets."
 
   def self.map

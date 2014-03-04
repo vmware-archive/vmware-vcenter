@@ -1,0 +1,4 @@
+getiqns:
+  host: '172.16.100.56'
+  hostusername: 'root'
+  hostpassword: 'iforgot@123'

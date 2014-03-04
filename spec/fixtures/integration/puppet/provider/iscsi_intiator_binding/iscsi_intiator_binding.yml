@@ -1,0 +1,20 @@
+
+initiator_binding:
+    ensure: 'present'
+    name:  '172.28.8.102: vmhba33'
+    vmknics: 'vmk1'
+    script_executable_path: '/usr/bin/esxcli'
+    host_username: 'root'
+    host_password: 'P@ssw0rd'
+    
+
+
+initiator_unbinding:
+    ensure: 'absent'
+    name:  '172.28.8.102: vmhba33'
+    vmknics: 'vmk1'
+    script_executable_path: '/usr/bin/esxcli'
+    host_username: 'root'
+    host_password: 'P@ssw0rd'
+    
+
