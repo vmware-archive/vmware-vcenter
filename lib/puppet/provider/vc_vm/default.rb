@@ -537,11 +537,20 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       if customization_spec_info.nil?
         raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
       end
-      spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
-      :template => false, :customization => customization_spec_info, :config => config_spec)
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(
+        :location => relocate_spec,
+        :powerOn => resource[:power_state],
+        :template => false,
+        :customization => customization_spec_info,
+        :config => config_spec
+      )
     else
-      spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
-      :template => false, :config => config_spec)
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(
+        :location => relocate_spec,
+        :powerOn => resource[:power_state],
+        :template => false,
+        :config => config_spec
+      )
     end
 
     dc = vim.serviceInstance.find_datacenter(dc_name)
