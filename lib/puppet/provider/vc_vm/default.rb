@@ -7,31 +7,27 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # Method to create new VM
   def create
     flag = 0
-    begin
 
-      operation_name = get_operation_name
-      # Calling create_vm functionality
-
-      create_vm if operation_name.eql?('create')
-      clone_vm if operation_name.eql?('clone')
-
-    rescue Exception => exc
-      flag = 1
-      Puppet.err(exc.message)
+    case resource[:operation]
+    when :create
+      create_vm
+    when :clone
+      clone_vm
+    else
+      raise Puppet::Error, "Invalid operation: #{resource[:operation]}"
     end
-    check_vm(flag)
+  rescue Exception => exc
+    Puppet.err(exc.message)
+  ensure
+    check_vm
   end
 
-  def check_vm(flag)
+  def check_vm
     vm_name = resource[:name]
-    if flag != 1
-      # Validate if VM is cloned successfully.
-      if vm
-        Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
-      else
-        Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
-      end
-
+    if vm
+      Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
+    else
+      Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
     end
   end
 
