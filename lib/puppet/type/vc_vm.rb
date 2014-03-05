@@ -3,7 +3,7 @@ require 'pathname'
 Puppet::Type.newtype(:vc_vm) do
   vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
   require File.join vmware_module.path, 'lib/puppet/property/vmware'
-  @doc = "Manage vCenter VMs."
+  @doc = 'Manage vCenter VMs.'
 
   ensurable do
     newvalue(:present) do
@@ -16,85 +16,62 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:name, :namevar => true) do
-    desc "The virtual machine name."
-    validate do |value|
-      if value.strip.length == 0
-        raise ArgumentError, "Invalid Virtual Machine name."
-      end
-    end
+    desc 'The virtual machine name.'
+    newvalues(/.+/)
   end
 
-  newparam(:operation ) do
-    desc "Operation name whether user wants to create a new Virtual Machine or wants to clone a new Virtual Machine from existing one."
+  newparam(:operation) do
+    desc 'whether to create a new VM or clone an existing VM.'
     newvalues(:create, :clone)
     defaultto(:create)
   end
 
   # common parameters required for both operations
   newparam(:datacenter_name) do
-    desc "Name of the datacenter."
-    validate do |value|
-      if value.strip.length == 0
-        raise ArgumentError, "Invalid datacenter name."
-      end
-    end
+    desc 'Name of the datacenter.'
+    newvalues(/.+/)
   end
 
   newparam(:memorymb) do
-    desc "Amount of memory to be assigned to provisioned VM."
-    dvalue = '1024'
-    defaultto(dvalue)
+    desc 'Amount of memory to be assigned to provisioned VM.'
+    defaultto(1024)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 
   newparam(:numcpu) do
     desc "Number of CPU's assigned to the new Virtual Machine."
-    dvalue = '1'
-    defaultto(dvalue)
+    defaultto(1)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 
   newparam(:cluster) do
-    desc "Name of the cluster."
+    desc 'Name of the cluster.'
   end
 
   newparam(:host) do
-    desc "Name of the host."
+    desc 'Name of the host.'
   end
 
   newparam(:target_datastore) do
-    desc "Name of the target datastore."
+    desc 'Name of the target datastore.'
   end
 
   newparam(:diskformat) do
-    desc "Name of the target datastore."
+    desc 'Name of the target datastore.'
     newvalues(:thin, :thick)
     defaultto(:thin)
   end
 
   # parameters for create vm operation
   newparam(:disksize) do
-    desc "Capacity of the virtual disk (in KB)."
-    dvalue = '4096'
-    defaultto(dvalue)
+    desc 'Capacity of the virtual disk (in KB).'
+    defaultto(4096)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 
@@ -114,58 +91,39 @@ Puppet::Type.newtype(:vc_vm) do
     desc 'Guest operating system identifier. User can get the guestid from following url +
     http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.vm.GuestOsDescriptor.GuestOsIdentifier.html'
     dvalue = 'otherGuest'
-    defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue.to_s
-      else
-        value.to_s
-      end
-    end
+    defaultto('otherGuest')
   end
 
   newparam(:portgroup) do
-    desc "Name of the port group to which the vNIC is to be attached."
+    desc 'Name of the port group to which the vNIC is to be attached.'
     dvalue = 'VM Network'
     defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue.to_s
-      else
-        value.to_s
-      end
-    end
   end
 
   newparam(:nic_type) do
-    desc "vNIC type to be created."
-    newvalues(:"VMXNET 2", :E1000, :"VMXNET 3")
-    defaultto(:E1000)
+    desc 'vNIC type to be created.'
+    newvalues('E1000', 'VMXNET 3', 'VMXNET 2')
+    defaultto('E1000')
   end
 
   newparam (:nic_count) do
-    desc "Nic Count that needs to be added in the new Virtual Machine. This parameter is required only in case of create"
-    dvalue = '1'
-    defaultto(dvalue)
+    desc 'Nic Count that needs to be added in the new Virtual Machine. This parameter is required only in case of create'
+    defaultto(1)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 
   newparam(:scsi_controller_type) do
-    desc "Virtual SCSI controller type for new Virtual Machine's boot disk."
-    newvalues(:"BusLogic Parallel", :"LSI Logic SAS", :"LSI Logic Parallel" ,:"VMware Paravirtual")
-    defaultto(:"LSI Logic SAS")
+    desc 'Virtual SCSI controller type for new Virtual Machine''s boot disk.'
+    newvalues('BusLogic Parallel', 'LSI Logic SAS', 'LSI Logic Parallel' ,'VMware Paravirtual')
+    defaultto(:'LSI Logic SAS')
   end
 
   # parameters for clone vm operation
 
   newparam(:goldvm ) do
-    desc "The gold virtual machine name."
+    desc 'The gold virtual machine name.'
     validate do |value|
       if value.strip.length == 0
         raise ArgumentError, "Invalid gold Virtual Machine name."
@@ -186,7 +144,7 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   newparam(:dnsdomain) do
-    desc "DNS domain name."
+    desc 'DNS domain name.'
   end
 
   newparam(:nicspec) do
@@ -199,164 +157,100 @@ Puppet::Type.newtype(:vc_vm) do
 
   # Guest Customization params
   newparam(:guestcustomization ) do
-    desc "Flag for guest customization"
+    desc 'Flag for guest customization'
     newvalues(:true, :false)
     defaultto(:false)
   end
 
   newparam(:guesttype) do
-    desc "Name of Guest OS type of Clone VM."
+    desc 'Name of Guest OS type of Clone VM.'
     newvalues(:windows, :linux)
     defaultto(:windows)
   end
 
-  newparam(:guesthostname) do
-    desc "Computer name for provisioned VM."
-  end
+  # name is already namevar, this should not be used.
+  #newparam(:guesthostname) do
+  #  desc 'Computer name for provisioned VM.'
+  #end
 
   newparam(:linuxtimezone) do
-    desc "Time zone for Linux guest OS."
-    dvalue = "EST"
-    defaultto(dvalue)
+    desc 'Time zone for Linux guest OS.'
+    defaultto('GMT')
     munge do |value|
-      if value.strip.length == 0
-        dvalue.upcase
-      else
-        value.upcase
-      end
+      value.upcase
     end
   end
 
   newparam(:windowstimezone) do
-    desc "Time zone for Windows guest OS."
+    desc 'Time zone for Windows guest OS.'
     dvalue = '035'
     defaultto(dvalue)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 
   newparam(:guestwindowsdomain) do
-    desc "Guest domain name for Windows."
-    dvalue = ''
-    defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue
-      else
-        value
-      end
-    end
+    desc 'Guest domain name for Windows.'
+    defaultto('')
   end
 
   newparam(:guestwindowsdomainadministrator) do
-    desc "Guest domain administrator user name for Windows."
-    dvalue = ''
-    defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue
-      else
-        value
-      end
-    end
+    desc 'Guest domain administrator user name for Windows.'
+    defaultto('')
   end
 
   newparam(:guestwindowsdomainadminpassword) do
-    desc "Guest domain administrator password for Windows."
-    dvalue = ''
-    defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue
-      else
-        value
-      end
-    end
+    desc 'Guest domain administrator password for Windows.'
+    defaultto('')
   end
 
   newparam(:windowsadminpassword) do
-    desc "Guest administrator password for Windows."
-    dvalue = ''
-    defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue
-      else
-        value
-      end
-    end
-  end
-
-  newparam(:windowsguestowner) do
-    desc "Onwer name for Windows."
-    dvalue = 'TestOwner'
-    defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue
-      else
-        value
-      end
-    end
+    desc 'Guest administrator password for Windows.'
+    defaultto('')
   end
 
   newparam(:productid) do
-    desc "Product ID for Windows."
+    desc 'Product ID for Windows.'
+  end
+
+  newparam(:windowsguestowner) do
+    desc 'Owner name for Windows.'
+    dvalue = 'TestOwner'
+    defaultto(dvalue)
   end
 
   newparam(:windowsguestorgnization) do
-    desc "Organization name for Windows."
+    desc 'Organization name for Windows.'
     dvalue = 'TestOrg'
     defaultto(dvalue)
-    munge do |value|
-      if value.strip.length == 0
-        dvalue
-      else
-        value
-      end
-    end
   end
 
   newparam(:customizationlicensedatamode ) do
-    desc "Flag for guest customization license data mode."
+    desc 'Flag for guest customization license data mode.'
     newvalues(:perSeat, :perServer)
     defaultto(:perServer)
   end
 
   newparam(:autologon ) do
-    desc "Flag to determine whether or not the machine automatically logs on as Administrator."
+    desc 'Flag to determine whether or not the machine automatically logs on as Administrator.'
     newvalues(:true, :false)
     defaultto(:true)
   end
 
   newparam(:autologoncount ) do
-    desc "If the AutoLogon flag is set, then the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator."
-    dvalue = '1'
-    defaultto(dvalue)
+    desc 'If the AutoLogon flag is set, then the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator.'
+    defaultto(1)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 
   newparam(:autousers ) do
-    desc "This key is valid only if customizationlicensedatamode = perServer. The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. "
-    dvalue = '1'
-    defaultto(dvalue)
+    desc 'This key is valid only if customizationlicensedatamode = perServer. The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. '
+    defaultto(1)
     munge do |value|
-      if value.to_s.strip.length == 0
-        dvalue.to_i
-      else
-        value.to_i
-      end
+      Integer(value)
     end
   end
 

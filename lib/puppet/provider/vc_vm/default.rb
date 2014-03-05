@@ -3,7 +3,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Manages vCenter Virtual Machines."
+  @doc = 'Manages vCenter Virtual Machines.'
   # Method to create new VM
   def create
     flag = 0
