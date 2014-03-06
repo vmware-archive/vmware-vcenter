@@ -16,8 +16,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     else
       raise Puppet::Error, "Invalid operation: #{resource[:operation]}"
     end
-  rescue Exception => exc
-    Puppet.err(exc.message)
   ensure
     check_vm
   end
@@ -30,10 +28,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
     end
   end
-
-  #def get_operation_name
-  #  return resource[:operation].to_s
-  #end
 
   # Method to create vm guestcustomization spec
   def getguestcustomization_spec(vm_adaptercount)
@@ -405,10 +399,16 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       vm_devices.push( get_network_config(count))
     end
 
-    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => resource[:name], :memoryMB => resource[:memorymb],
-    :numCPUs => resource[:numcpu] , :guestId => resource[:guestid], :files => { :vmPathName => ds_path },
-    :memoryHotAddEnabled => resource[:memory_hot_add_enabled], :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
-    :deviceChange => vm_devices  )
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec({
+      :name => resource[:name],
+      :memoryMB => resource[:memorymb],
+      :numCPUs => resource[:numcpu] ,
+      :guestId => resource[:guestid],
+      :files => { :vmPathName => ds_path },
+      :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
+      :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
+      :deviceChange => vm_devices 
+    })
 
     cluster_name = resource[:cluster]
     if cluster_name and cluster_name.strip.length != 0
@@ -425,7 +425,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     dc.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
-
+  
+    # power_state= did not work.  
+    self.send(:power_state=, resource[:power_state].to_sym)
   end
 
   #    # create virtual device config spec for controller
@@ -477,7 +479,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => port_group)
 
-    nic = RbVmomi::Vim.send(resource[:nic_type].to_sym,
+    nic = RbVmomi::VIM.send(resource[:nic_type].to_sym,
       {
         :key => count,
         :backing => backing,
@@ -530,7 +532,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       end
       spec = RbVmomi::VIM.VirtualMachineCloneSpec(
         :location => relocate_spec,
-        :powerOn => resource[:power_state],
+        :powerOn => (resource[:power_state] == :poweredOn),
         :template => false,
         :customization => customization_spec_info,
         :config => config_spec
@@ -538,7 +540,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     else
       spec = RbVmomi::VIM.VirtualMachineCloneSpec(
         :location => relocate_spec,
-        :powerOn => resource[:power_state],
+        :powerOn => (resource[:power_state] == :poweredOn),
         :template => false,
         :config => config_spec
       )
