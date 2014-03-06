@@ -1,8 +1,5 @@
 # Copyright (C) 2013 VMware, Inc.
-require 'pathname'
 Puppet::Type.newtype(:vc_vm) do
-  vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-  require File.join vmware_module.path, 'lib/puppet/property/vmware'
   @doc = 'Manage vCenter VMs.'
 
   ensurable do
@@ -102,8 +99,11 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:nic_type) do
     desc 'vNIC type to be created.'
-    newvalues('E1000', 'VMXNET 3', 'VMXNET 2')
-    defaultto('E1000')
+    newvalues('e1000', 'vmxnet2', 'vmxnet3')
+    defaultto('e1000')
+    munge do |value|
+      "Virtual#{PuppetX::VMware::Util.snakeize(value)}"
+    end
   end
 
   newparam (:nic_count) do
@@ -122,7 +122,7 @@ Puppet::Type.newtype(:vc_vm) do
 
   # parameters for clone vm operation
 
-  newparam(:goldvm ) do
+  newparam(:goldvm) do
     desc 'The gold virtual machine name.'
     validate do |value|
       if value.strip.length == 0
@@ -264,8 +264,4 @@ Puppet::Type.newtype(:vc_vm) do
     desc 'set the powerstate for the vm to either poweredOn/poweredOff/reset/suspended, for poweredOff, if tools is running a shutdownGuest will be issued, otherwise powerOffVM_TASK'
     newvalues(:poweredOn, :poweredOff, :reset, :suspended)
   end
-
-  #autorequire(:vc_folder) do
-  #  Pathname.new(self[:path]).parent.to_s
-  #end
 end

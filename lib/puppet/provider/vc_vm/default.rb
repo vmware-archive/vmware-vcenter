@@ -31,33 +31,24 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
   end
 
-  def get_operation_name
-    return resource[:operation].to_s
-  end
+  #def get_operation_name
+  #  return resource[:operation].to_s
+  #end
 
   # Method to create vm guestcustomization spec
-  def getguestcustomization_spec ( vm_adaptercount )
-    guest_hostname = resource[:guesthostname]
-    if guest_hostname
-      temp_vmname = guest_hostname
-    else
-      temp_vmname = resource[:name]
-    end
+  def getguestcustomization_spec(vm_adaptercount)
+    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => resource[:name])
 
-    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => temp_vmname )
-
-    dns_domain = resource[:dnsdomain]
-
-    guesttypeflag = resource[:guesttype]
     guesttypeflag = guesttypeflag.to_s
-    if guesttypeflag.eql?('windows')
-      # Creating custom specification for windows
+    case resource[:guesttype]
+    when :windows
       cust_prep = get_cs_win (custom_host_name)
-    else
-      # for linux
-      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(:domain => dns_domain,
-      :hostName => custom_host_name,
-      :timeZone => resource[:linuxtimezone])
+    when :linux
+      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(
+        :domain => resource[:dnsdomain],
+        :hostName => custom_host_name,
+        :timeZone => resource[:linuxtimezone]
+      )
     end
 
     customization_global_settings = RbVmomi::VIM.CustomizationGlobalIPSettings
@@ -65,10 +56,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     #Creating NIC specification
     cust_adapter_mapping_arr = get_nics(vm_adaptercount)
 
-    customization_spec = RbVmomi::VIM.CustomizationSpec(:identity => cust_prep,
-    :globalIPSettings => customization_global_settings,
-    :nicSettingMap=> cust_adapter_mapping_arr)
-    return customization_spec
+    customization_spec = RbVmomi::VIM.CustomizationSpec(
+      :identity => cust_prep,
+      :globalIPSettings => customization_global_settings,
+      :nicSettingMap=> cust_adapter_mapping_arr
+    )
   end
 
   # Get Custom Spec for windows
@@ -484,24 +476,20 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     port_group =  resource[:portgroup]
 
     backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => port_group)
-    nic_type = resource[:nic_type].to_s
 
-    if nic_type.eql?("E1000")
+    nic = RbVmomi::Vim.send(resource[:nic_type].to_sym,
+      {
+        :key => count,
+        :backing => backing,
+        :deviceInfo => {
+          :label => "Network Adapter",
+          :summary => port_group }
+      })
 
-      nic = RbVmomi::VIM.VirtualE1000({
-        :key => count, :backing => backing ,
-        :deviceInfo => {:label => "Network Adapter",:summary => port_group }})
-    elsif nic_type.eql?("VMXNET 3")
-      nic = RbVmomi::VIM.VirtualVmxnet3({
-        :key => count,:backing => backing ,
-        :deviceInfo => { :label => "Network Adapter", :summary => port_group }})
-    else
-      nic = RbVmomi::VIM.VirtualVmxnet2({
-        :key => count,:backing => backing ,
-        :deviceInfo => {:label => "Network Adapter", :summary => port_group}})
-    end
-
-    nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(:device => nic, :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
+    nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(
+      :device => nic,
+      :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+    )
 
     return nic_config
   end
@@ -523,8 +511,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise Puppet::Error, "Unable to retrieve the specification required to relocate the Virtual Machine."
     end
 
-    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
-    :numCPUs => resource[:numcpu])
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
+      :name => vm_name,
+      :memoryMB => resource[:memorymb],
+      :numCPUs => resource[:numcpu]
+    )
 
     guestcustomizationflag = resource[:guestcustomization]
     guestcustomizationflag = guestcustomizationflag.to_s
@@ -554,9 +545,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     dc = vim.serviceInstance.find_datacenter(dc_name)
-    virtualmachine_obj.CloneVM_Task( :folder => dc.vmFolder, :name => vm_name ,
-    :spec => spec).wait_for_completion
-
+    virtualmachine_obj.CloneVM_Task(
+      :folder => dc.vmFolder,
+      :name => vm_name,
+      :spec => spec
+    ).wait_for_completion
   end
 
   private
