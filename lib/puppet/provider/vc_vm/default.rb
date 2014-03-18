@@ -1,68 +1,48 @@
 # Copyright (C) 2013 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
-require 'rbvmomi'
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Manages vCenter Virtual Machines."
+  @doc = 'Manages vCenter Virtual Machines.'
   # Method to create new VM
   def create
     flag = 0
-    begin
 
-      operation_name = get_operation_name
-      # Calling create_vm functionality
-
-      create_vm if operation_name.eql?('create')
-      clone_vm if operation_name.eql?('clone')
-
-    rescue Exception => exc
-      flag = 1
-      Puppet.err(exc.message)
+    case resource[:operation]
+    when :create
+      create_vm
+    when :clone
+      clone_vm
+    else
+      raise Puppet::Error, "Invalid operation: #{resource[:operation]}"
     end
-    check_vm(flag)
+  ensure
+    check_vm
   end
 
-  def check_vm(flag)
+  def check_vm
     vm_name = resource[:name]
-    if flag != 1
-      # Validate if VM is cloned successfully.
-      if vm
-        Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
-      else
-        Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
-      end
-
+    if vm
+      Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
+    else
+      Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
     end
-  end
-
-  def get_operation_name
-    return resource[:operation].to_s
   end
 
   # Method to create vm guestcustomization spec
-  def getguestcustomization_spec ( vm_adaptercount )
-    guest_hostname = resource[:guesthostname]
-    if guest_hostname
-      temp_vmname = guest_hostname
-    else
-      temp_vmname = resource[:name]
-    end
+  def getguestcustomization_spec(vm_adaptercount)
+    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => resource[:name])
 
-    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => temp_vmname )
-
-    dns_domain = resource[:dnsdomain]
-
-    guesttypeflag = resource[:guesttype]
     guesttypeflag = guesttypeflag.to_s
-    if guesttypeflag.eql?('windows')
-      # Creating custom specification for windows
+    case resource[:guesttype]
+    when :windows
       cust_prep = get_cs_win (custom_host_name)
-    else
-      # for linux
-      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(:domain => dns_domain,
-      :hostName => custom_host_name,
-      :timeZone => resource[:linuxtimezone])
+    when :linux
+      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(
+        :domain => resource[:dnsdomain],
+        :hostName => custom_host_name,
+        :timeZone => resource[:linuxtimezone]
+      )
     end
 
     customization_global_settings = RbVmomi::VIM.CustomizationGlobalIPSettings
@@ -70,10 +50,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     #Creating NIC specification
     cust_adapter_mapping_arr = get_nics(vm_adaptercount)
 
-    customization_spec = RbVmomi::VIM.CustomizationSpec(:identity => cust_prep,
-    :globalIPSettings => customization_global_settings,
-    :nicSettingMap=> cust_adapter_mapping_arr)
-    return customization_spec
+    customization_spec = RbVmomi::VIM.CustomizationSpec(
+      :identity => cust_prep,
+      :globalIPSettings => customization_global_settings,
+      :nicSettingMap=> cust_adapter_mapping_arr
+    )
   end
 
   # Get Custom Spec for windows
@@ -418,10 +399,16 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       vm_devices.push( get_network_config(count))
     end
 
-    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => resource[:name], :memoryMB => resource[:memorymb],
-    :numCPUs => resource[:numcpu] , :guestId => resource[:guestid], :files => { :vmPathName => ds_path },
-    :memoryHotAddEnabled => resource[:memory_hot_add_enabled], :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
-    :deviceChange => vm_devices  )
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec({
+      :name => resource[:name],
+      :memoryMB => resource[:memorymb],
+      :numCPUs => resource[:numcpu] ,
+      :guestId => resource[:guestid],
+      :files => { :vmPathName => ds_path },
+      :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
+      :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
+      :deviceChange => vm_devices 
+    })
 
     cluster_name = resource[:cluster]
     if cluster_name and cluster_name.strip.length != 0
@@ -438,7 +425,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     dc.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
-
+  
+    # power_state= did not work.  
+    self.send(:power_state=, resource[:power_state].to_sym)
   end
 
   #    # create virtual device config spec for controller
@@ -489,24 +478,20 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     port_group =  resource[:portgroup]
 
     backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => port_group)
-    nic_type = resource[:nic_type].to_s
 
-    if nic_type.eql?("E1000")
+    nic = RbVmomi::VIM.send(resource[:nic_type].to_sym,
+      {
+        :key => count,
+        :backing => backing,
+        :deviceInfo => {
+          :label => "Network Adapter",
+          :summary => port_group }
+      })
 
-      nic = RbVmomi::VIM.VirtualE1000({
-        :key => count, :backing => backing ,
-        :deviceInfo => {:label => "Network Adapter",:summary => port_group }})
-    elsif nic_type.eql?("VMXNET 3")
-      nic = RbVmomi::VIM.VirtualVmxnet3({
-        :key => count,:backing => backing ,
-        :deviceInfo => { :label => "Network Adapter", :summary => port_group }})
-    else
-      nic = RbVmomi::VIM.VirtualVmxnet2({
-        :key => count,:backing => backing ,
-        :deviceInfo => {:label => "Network Adapter", :summary => port_group}})
-    end
-
-    nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(:device => nic, :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
+    nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(
+      :device => nic,
+      :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+    )
 
     return nic_config
   end
@@ -528,8 +513,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise Puppet::Error, "Unable to retrieve the specification required to relocate the Virtual Machine."
     end
 
-    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(:name => vm_name, :memoryMB => resource[:memorymb],
-    :numCPUs => resource[:numcpu])
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
+      :name => vm_name,
+      :memoryMB => resource[:memorymb],
+      :numCPUs => resource[:numcpu]
+    )
 
     guestcustomizationflag = resource[:guestcustomization]
     guestcustomizationflag = guestcustomizationflag.to_s
@@ -542,17 +530,28 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       if customization_spec_info.nil?
         raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
       end
-      spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
-      :template => false, :customization => customization_spec_info, :config => config_spec)
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(
+        :location => relocate_spec,
+        :powerOn => (resource[:power_state] == :poweredOn),
+        :template => false,
+        :customization => customization_spec_info,
+        :config => config_spec
+      )
     else
-      spec = RbVmomi::VIM.VirtualMachineCloneSpec(:location => relocate_spec, :powerOn => false,
-      :template => false, :config => config_spec)
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(
+        :location => relocate_spec,
+        :powerOn => (resource[:power_state] == :poweredOn),
+        :template => false,
+        :config => config_spec
+      )
     end
 
     dc = vim.serviceInstance.find_datacenter(dc_name)
-    virtualmachine_obj.CloneVM_Task( :folder => dc.vmFolder, :name => vm_name ,
-    :spec => spec).wait_for_completion
-
+    virtualmachine_obj.CloneVM_Task(
+      :folder => dc.vmFolder,
+      :name => vm_name,
+      :spec => spec
+    ).wait_for_completion
   end
 
   private
