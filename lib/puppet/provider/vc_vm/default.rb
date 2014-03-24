@@ -395,7 +395,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_devices.push(controller_vm_dev_conf_spec, disk_vm_dev_conf_spec)
 
     # Getting nic specification for each nic
-    1.upto(resource[:nic_count]) do |count|
+    1.upto(resource[:network_interfaces].count) do |count|
       vm_devices.push( get_network_config(count))
     end
 
@@ -474,12 +474,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # get network configuration
   def get_network_config(count)
-
-    port_group =  resource[:portgroup]
+    port_group =  resource[:network_interfaces][count-1]['portgroup']
 
     backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => port_group)
-
-    nic = RbVmomi::VIM.send(resource[:nic_type].to_sym,
+    
+    nic = RbVmomi::VIM.send("Virtual#{PuppetX::VMware::Util.camelize(resource[:network_interfaces][count-1]['nic_type'])}".to_sym,
       {
         :key => count,
         :backing => backing,
@@ -487,12 +486,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           :label => "Network Adapter",
           :summary => port_group }
       })
-
+    
     nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(
       :device => nic,
       :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
     )
-
     return nic_config
   end
 
@@ -588,4 +586,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # findvm(datacenter.vmFolder,resource[:name])
     @vm ||= findvm(datacenter.vmFolder, resource[:name])
   end
+  
+  def network_interfaces
+    resource['network_interfaces']
+  end
+
 end
