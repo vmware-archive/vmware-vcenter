@@ -97,27 +97,9 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto('otherGuest')
   end
 
-  newparam(:portgroup) do
-    desc 'Name of the port group to which the vNIC is to be attached.'
-    dvalue = 'VM Network'
-    defaultto(dvalue)
-  end
-
-  newparam(:nic_type) do
-    desc 'vNIC type to be created.'
-    newvalues('e1000', 'vmxnet2', 'vmxnet3')
-    defaultto('e1000')
-    munge do |value|
-      "Virtual#{PuppetX::VMware::Util.camelize(value)}"
-    end
-  end
-
-  newparam (:nic_count) do
-    desc 'Nic Count that needs to be added in the new Virtual Machine. This parameter is required only in case of create'
-    defaultto(1)
-    munge do |value|
-      Integer(value)
-    end
+  newproperty(:network_interfaces, :parent => Puppet::Property::VMware_Array_Hash, :key => 'portgroup', :array_matching => :all ) do
+    desc 'Network Interfaces consist of a portgroup and nic_type'
+    defaultto([])
   end
 
   newparam(:scsi_controller_type) do
