@@ -37,9 +37,9 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
           chap_extension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
         end
         if resource[:disable_hw_iscsi].to_s.eql?('true')
-          cmd = "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
+          cmd = "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
         else
-          cmd =  "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
+          cmd =  "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
         end
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
       end
@@ -65,7 +65,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
   def install_mem=(value)
     flag = esx_main_enter_exists("enter")
     if flag.eql?(0)
-      cmd = "#{resource[:script_executable_path]} #{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]} --reboot"
+      cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]} --reboot"
 
       error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
       log_filename = "/tmp/installmem_log.#{Process.pid}"
@@ -163,7 +163,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
   def mem
     flag = 0
 
-    cmd = "#{resource[:script_executable_path]} #{resource[:setup_script_filepath]} --query --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]}"
+    cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]} --query --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]}"
 
     error_log_filename = "/tmp/err_log.#{Process.pid}"
     log_filename = "/tmp/log.#{Process.pid}"
