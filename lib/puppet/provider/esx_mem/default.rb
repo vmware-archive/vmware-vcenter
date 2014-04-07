@@ -15,7 +15,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
     script_executable_path = resource[:script_executable_path]
     setup_script_filepath = resource[:setup_script_filepath]
     host_username = resource[:host_username]
-    host_password = resource[get_host_password ]
+    host_password = get_host_password 
     host_ip = resource[:name ]
     vnics = resource[:vnics]
     vnics_ipaddress = resource[:vnics_ipaddress]
@@ -73,6 +73,8 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
       flag = execute_system_cmd(cmd , log_filename , error_log_filename)
 
       if flag.eql?(0)
+        # [TODO] Should be replaced by a function to check if host is back up
+        sleep 450
         # Exiting from maintenance mode
         esx_main_enter_exists("exit")
       end
