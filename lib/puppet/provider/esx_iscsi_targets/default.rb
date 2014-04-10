@@ -91,10 +91,7 @@ Puppet::Type.type(:esx_iscsi_targets).provide(:default, :parent => Puppet::Provi
       fail "required properties missing - #{@properties_reqd.inspect}"
     end
     # create RbVmomi objects with properties in place of hashes with keys
-    Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
-    Puppet.debug "'should' is #{config_should.inspect}'}"
     spec = map.objectify config_should
-    Puppet.debug "'object' is #{spec.inspect}'}"
     spec
   end
 

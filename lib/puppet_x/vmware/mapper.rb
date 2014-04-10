@@ -202,8 +202,6 @@ module PuppetX
             Puppet.debug "node #{node.path_should.join('.')}: checking #{node.inspect}"
             data = PuppetX::VMware::Util::nested_value(obj_tree, node.path_should)
             if data
-              Puppet.debug "node #{node.path_should.join('.')}: found #{data.inspect}"
-
               # If this node is a concrete type, the type is in node.node_type
               # If it's an abstract type,
               #   ABSTRACT  requires the type be the value for a key in data
@@ -256,7 +254,6 @@ module PuppetX
 
                 begin
                   vso = RbVmomi::VIM.const_get(node_type).new data
-                  Puppet.debug "node #{node.path_should.join('.')}: created #{vso.inspect}"
                 rescue RuntimeError => e
                   # Check for invalid properties that can occur with abstract types.
                   # See for example ClusterDasAdmissionControlPolicy at
