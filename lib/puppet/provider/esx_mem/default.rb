@@ -2,7 +2,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
-Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcenter) do
   @doc = "Configure and install MEM on ESX server"
   def configure_mem
     return false
@@ -15,7 +15,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     script_executable_path = resource[:script_executable_path]
     setup_script_filepath = resource[:setup_script_filepath]
     host_username = resource[:host_username]
-    host_password = resource[:host_password ]
+    host_password = get_host_password 
     host_ip = resource[:name ]
     vnics = resource[:vnics]
     vnics_ipaddress = resource[:vnics_ipaddress]
@@ -25,7 +25,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     iscsi_netmask = resource[:iscsi_netmask]
     storage_groupip = resource[:storage_groupip]
     iscsi_chapuser = resource[:iscsi_chapuser]
-    iscsi_chapsecret = resource[:iscsi_chapsecret]
+    iscsi_chapsecret = get_iscsi_chapsecret
     if validate_configure_param.eql?(1)
       return 1
     end
@@ -37,9 +37,9 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
           chap_extension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
         end
         if resource[:disable_hw_iscsi].to_s.eql?('true')
-          cmd = "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
+          cmd = "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
         else
-          cmd =  "#{script_executable_path} #{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
+          cmd =  "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
         end
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
       end
@@ -65,7 +65,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
   def install_mem=(value)
     flag = esx_main_enter_exists("enter")
     if flag.eql?(0)
-      cmd = "#{resource[:script_executable_path]} #{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:name ]} --reboot"
+      cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]} --reboot"
 
       error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
       log_filename = "/tmp/installmem_log.#{Process.pid}"
@@ -73,6 +73,8 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
       flag = execute_system_cmd(cmd , log_filename , error_log_filename)
 
       if flag.eql?(0)
+        # [TODO] Should be replaced by a function to check if host is back up
+        sleep 450
         # Exiting from maintenance mode
         esx_main_enter_exists("exit")
       end
@@ -88,7 +90,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     error_log_filename = "/tmp/err_#{host_ip}_state.#{Process.pid}"
     log_filename = "/tmp/log.#{host_ip}_state.#{Process.pid}"
     ENV['PERL_LWP_SSL_VERIFY_HOSTNAME']= '0' ;
-    cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation info"
+    cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{get_host_password} --operation info"
     system(cmd , :out => [log_filename, 'a'], :err => [error_log_filename, 'a'])
     if $? != 0
       flag = 1
@@ -135,9 +137,9 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     else
 
       if operation.eql?('enter')
-        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation enter"
+        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{get_host_password } --operation enter"
       else
-        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{resource[:host_password ]} --operation exit"
+        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{get_host_password } --operation exit"
       end
 
       flag = execute_system_cmd(cmd , log_filename , error_log_filename)
@@ -163,7 +165,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
   def mem
     flag = 0
 
-    cmd = "#{resource[:script_executable_path]} #{resource[:setup_script_filepath]} --query --username #{resource[:host_username]} --password #{resource[:host_password ]} --server=#{resource[:name ]}"
+    cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]} --query --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]}"
 
     error_log_filename = "/tmp/err_log.#{Process.pid}"
     log_filename = "/tmp/log.#{Process.pid}"
@@ -236,7 +238,7 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
       Puppet.err "Unable to configure MEM, because the 'vnics_ipaddress' value is not provided."
     elsif resource[:vnics].nil?
       Puppet.err "Unable to configure MEM, because the 'vnics' value is not provided."
-    elsif !resource[:iscsi_chapuser].nil? and resource[:iscsi_chapsecret].nil?
+    elsif !resource[:iscsi_chapuser].nil? and get_iscsi_chapsecret.nil?
       Puppet.err "Unable to configure MEM, because the 'iscsi_chapsecret' value is not provided."
     else
       flag = 0
@@ -244,4 +246,13 @@ Puppet::Type.type(:esx_mem).provide(:esx_mem, :parent => Puppet::Provider::Vcent
     end
     return flag
   end
+  
+  def get_host_password
+    resource[:host_password]
+  end
+
+  def get_iscsi_chapsecret
+    resource[:iscsi_chapsecret]
+  end
+
 end
