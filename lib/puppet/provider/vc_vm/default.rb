@@ -213,7 +213,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # Method to create VM relocate spec
   def createrelocate_spec
     dc = vim.serviceInstance.find_datacenter(resource[:datacenter_name])
-
     cluster_name = resource[:cluster]
     host_ip = resource[:host]
     target_datastore = resource[:target_datastore]
@@ -381,12 +380,28 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     datacenter = resource[:datacenter_name]
     dc = vim.serviceInstance.find_datacenter(datacenter)
-    vm_devices = []
-    target_datastore = resource['target_datastore']
-    if !dc.find_datastore(target_datastore)
-      raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist."
+
+    cluster_name = resource[:cluster]
+    if cluster_name and cluster_name.strip.length != 0
+      # Getting the pool information from cluster
+      cluster = dc.find_compute_resource(cluster_name)
+      raise Puppet::Error, "Unable to find the cluster '#{cluster_name}' because the cluster is either invalid or does not exist." if !cluster
+      resource_pool = cluster.resourcePool
+      ds = cluster.datastore.first
+      raise Puppet::Error, "No datastores exist for the cluster '#{cluster_name}'" if ds.nil?
+    else
+      # Getting the pool from host view
+      host_ip = resource[:host]
+      host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip , :vmSearch => false)
+      raise Puppet::Error, "Unable to find the host '#{host_ip}' because the host is either invalid or does not exist." if !host_view
+      resource_pool = host_view.parent.resourcePool
+      ds = host_view.datastore.first
+      raise Puppet::Error, "No datastores exist for the host '#{host_ip}'" if ds.nil?
     end
-    ds_path = "[#{target_datastore}]"
+
+    ds_path = "[#{ds.name}]"
+
+    vm_devices = []
 
     # calling controller_vm_dev_conf_spec method to create controller vm dev conf spec
     controller_vm_dev_conf_spec = create_conf_spec
@@ -407,22 +422,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :files => { :vmPathName => ds_path },
       :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
       :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
-      :deviceChange => vm_devices 
+      :deviceChange => vm_devices
     })
-
-    cluster_name = resource[:cluster]
-    if cluster_name and cluster_name.strip.length != 0
-      # Getting the pool information from cluster
-      cluster = dc.find_compute_resource(cluster_name)
-      raise Puppet::Error, "Unable to find the cluster '#{cluster_name}' because the cluster is either invalid or does not exist." if !cluster
-      resource_pool = cluster.resourcePool
-    else
-      # Getting the pool from host view
-      host_ip = resource[:host]
-      host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip , :vmSearch => false)
-      raise Puppet::Error, "Unable to find the host '#{host_ip}' because the host is either invalid or does not exist." if !host_view
-      resource_pool = host_view.parent.resourcePool
-    end
 
     dc.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
   
