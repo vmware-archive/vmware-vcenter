@@ -9,16 +9,16 @@ transport { 'vcenter':
 }
 
 vcenter::host { $esx1['hostname']:
-  path      => $dc1['path'],
-  username  => $esx1['username'],
-  password  => $esx1['password'],
+  path           => $dc1['path'],
+  username       => $esx1['username'],
+  password       => $esx1['password'],
   dateTimeConfig => {
     'ntpConfig' => {
       'server' => 'ntp.puppetlabs.lan',
     },
-    'timeZone' => {
+    'timeZone'  => {
       'key' => 'UTC',
     },
   },
-  transport => Transport['vcenter'],
+  transport      => Transport['vcenter'],
 }

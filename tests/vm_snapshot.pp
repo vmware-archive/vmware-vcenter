@@ -9,9 +9,9 @@ transport { 'vcenter':
 }
 
 vm_snapshot { 'name':
-  vm_name            => "testvm",
-  name               => "testsnapshot",
+  vm_name            => 'testvm',
+  name               => 'testsnapshot',
   snapshot_operation => create,
-  datacenter         => "DC1",
+  datacenter         => 'DC1',
   transport          => Transport['vcenter'],
 }

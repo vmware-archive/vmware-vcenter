@@ -57,7 +57,6 @@ vc_host { $esx1['hostname']:
 }
 
 esx_vswitch { 'name':
-  require        => Vc_host[$esx1['hostname']],
   name           => "vSwitch2",
   ensure         => present,
   host           => $esx1['hostname'],
@@ -69,11 +68,11 @@ esx_vswitch { 'name':
   },
   mtu            => 5000,
   checkbeacon    => true,
+  require        => Vc_host[$esx1['hostname']],
   transport      => Transport['vcenter'],
 }
 
 esx_portgroup { 'name':
-  require                => Esx_vswitch['name'],
   name                   => "demoportgroup",
   ensure                 => present,
   portgrouptype          => "VMkernel",
@@ -82,8 +81,7 @@ esx_portgroup { 'name':
   overridefailoverorder  => "Disabled",
   nicorderpolicy         => {
     activenic => ["vmnic1"],
-  }
-  ,
+  },
   checkbeacon            => true,
   vmotion                => "Enabled",
   ipsettings             => "dhcp",
@@ -95,41 +93,42 @@ esx_portgroup { 'name':
   host                   => $esx1['hostname'],
   path                   => "${dc_path}/asmcluster",
   vlanid                 => 151,
+  require                => Esx_vswitch['name'],
   transport              => Transport['vcenter'],
 }
 
 esx_mem { $esx1['hostname']:
-  require                   => Esx_portgroup['name'],
-  configure_mem		        => "true",
-  install_mem               => "true",
-  script_executable_path    => $mem['script_executable_path'],
-  setup_script_filepath     => $mem['setup_script_filepath'],
-  host_username             => $esx1['username'],
-  host_password             => $esx1['password'],
-  storage_groupip           => $configure_mem['storage_groupip'],
-  iscsi_vmkernal_prefix     => $configure_mem['iscsi_vmkernal_prefix'],
-  vnics_ipaddress           => $configure_mem['vnics_ipaddress'],
-  iscsi_vswitch             => $configure_mem['iscsi_vswitch'],
-  iscsi_netmask             => $configure_mem['iscsi_netmask'],
-  vnics                     => $configure_mem['vnics'],
-  iscsi_chapuser            => $configure_mem['iscsi_chapuser'],
-  iscsi_chapsecret          => $configure_mem['iscsi_chapsecret'],
-  disable_hw_iscsi          => $configure_mem['disable_hw_iscsi'],
-  transport => Transport['vcenter'],
+  configure_mem          => "true",
+  install_mem            => "true",
+  script_executable_path => $mem['script_executable_path'],
+  setup_script_filepath  => $mem['setup_script_filepath'],
+  host_username          => $esx1['username'],
+  host_password          => $esx1['password'],
+  storage_groupip        => $configure_mem['storage_groupip'],
+  iscsi_vmkernal_prefix  => $configure_mem['iscsi_vmkernal_prefix'],
+  vnics_ipaddress        => $configure_mem['vnics_ipaddress'],
+  iscsi_vswitch          => $configure_mem['iscsi_vswitch'],
+  iscsi_netmask          => $configure_mem['iscsi_netmask'],
+  vnics                  => $configure_mem['vnics'],
+  iscsi_chapuser         => $configure_mem['iscsi_chapuser'],
+  iscsi_chapsecret       => $configure_mem['iscsi_chapsecret'],
+  disable_hw_iscsi       => $configure_mem['disable_hw_iscsi'],
+  require                => Esx_portgroup['name'],
+  transport              => Transport['vcenter'],
 }
 
 esx_rescanallhba { 'host':
-  require   => Esx_mem[$esx1['hostname']],
-  host      => "${esx1['hostname']}",
   ensure    => present,
+  host      => "${esx1['hostname']}",
+  require   => Esx_mem[$esx1['hostname']],
   transport => Transport['vcenter'],
 }
 
 esx_datastore { "${esx1['hostname']}:vmfs_datastore":
-  require   => Esx_rescanallhba['host'],
-  ensure    => present,
-  type      => "${esx_ds['type']}",
+  ensure     => present,
+  type       => "${esx_ds['type']}",
   target_iqn => "${esx_ds['target_iqn']}",
   path       => "${dc_path}/asmcluster",
-  transport => Transport['vcenter'],
+  require    => Esx_rescanallhba['host'],
+  transport  => Transport['vcenter'],
 }

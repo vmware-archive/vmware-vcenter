@@ -2,25 +2,25 @@
 import 'data.pp'
 
 transport { 'vcenter':
-  username => "${vcenter['username']}",
-  password => "${vcenter['password']}",
-  server   => "${vcenter['server']}",
+  username => $vcenter['username'],
+  password => $vcenter['password'],
+  server   => $vcenter['server'],
   options  => $vcenter['options'],
 }
 
-vc_datacenter { "${dc1['path']}":
-  path      => "${dc1['path']}",
+vc_datacenter { $dc1['path']:
   ensure    => present,
+  path      => $dc1['path'],
   transport => Transport['vcenter'],
 }
 
 vcenter::dvswitch{ "${dc1['path']}/dvs1":
-  ensure => present,
+  ensure    => present,
   transport => Transport['vcenter'],
-  spec => {}
+  spec      => {},
 }
 
 vc_dvswitch_nioc{ "${dc1['path']}/dvs1":
   network_resource_management_enabled => false,
-  transport => Transport['vcenter'],
+  transport                           => Transport['vcenter'],
 }

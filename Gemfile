@@ -9,6 +9,7 @@ group :development, :test do
   gem 'mocha', "~> 0.10.5", :require => false
   gem 'puppetlabs_spec_helper', :require => false
   gem 'rspec-puppet', :require => false
+  gem 'puppet-lint', :require => false
 end
 
 facterversion = ENV['GEM_FACTER_VERSION']
