@@ -15,8 +15,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     else
       create_vm
     end
-  #ensure
-  #  raise(Puppet::Error, "Unable to create VM: '#{resource[:name]}'") unless vm
+  ensure
+    raise(Puppet::Error, "Unable to create VM: '#{resource[:name]}'") unless vm
   end
 
   def destroy
@@ -221,87 +221,57 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # Method to create VM relocate spec
   def createrelocate_spec
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
     cluster_name = resource[:cluster]
     host_ip = resource[:host]
     target_datastore = resource[:datastore]
 
-    checkfor_ds = "true"
-    relocate_spec = nil
-    if cluster_name and cluster_name.strip.length != 0
-      relocate_spec = rs_cluster(dc,cluster_name)
-
-    elsif host_ip and host_ip.strip.length != 0
-      relocate_spec = rs_host(dc,host_ip)
-
+    if cluster_name
+      relocate_spec = rs_cluster
+    elsif host_ip
+      relocate_spec = rs_host(host_ip)
     else
-      checkfor_ds = "false"
-      # Neither host not cluster name is provided. Getting the relocate specification
-      # from VM view
-      relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec
+      raise Puppet::Error, 'invalid'
     end
-    if checkfor_ds.eql?('true') and !relocate_spec.nil?
-      relocate_spec = rs_datastore(dc,target_datastore,relocate_spec)
-    end
+    relocate_spec = rs_datastore(target_datastore, relocate_spec) if target_datastore
+    relocate_spec
+  end
 
-    return relocate_spec
+  def cluster(name=resource[:cluster])
+    cluster = datacenter.find_compute_resource(name)
+    raise Puppet::Error, "Unable to find the cluster '#{name}'" unless cluster
+    cluster
   end
 
   # Method to create vm relocate spec if cluster name is provided
-  def rs_cluster(dc,cluster_name)
-    cluster_relocate_spec = nil
-    cluster ||= dc.find_compute_resource(cluster_name)
-    if !cluster
-      raise Puppet::Error, "Unable to find the cluster '#{cluster_name}' because the cluster is either invalid or does not exist."
-    else
-      cluster_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:pool => cluster.resourcePool)
-    end
-    return cluster_relocate_spec
-
+  def rs_cluster
+    RbVmomi::VIM.VirtualMachineRelocateSpec(
+      :pool => cluster.resourcePool
+    )
   end
 
   # Method to update vm relocate spec if target datastore name is provided
-  def rs_datastore(dc,target_datastore, relocate_spec)
-    if target_datastore and target_datastore.strip.length != 0
-      ds ||= dc.find_datastore(target_datastore)
-      if !ds
-        raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist."
-        relocate_spec = nil
-      else
-        relocate_spec.datastore = ds
-      end
-    end
-    return relocate_spec
-
+  def rs_datastore(target_datastore,relocate)
+    ds ||= datacenter.find_datastore(target_datastore)
+    raise(Puppet::Error, "Unable to find the target datastore '#{target_datastore}'") unless ds
+    relocate.datastore 
   end
 
-  # Method to create vm relocate spec if host ip is provided
-  def rs_host(dc,host_ip)
-    host_relocate_spec = nil
-
-    host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip, :vmSearch => false)
-
-    if !host_view
-      raise Puppet::Error, "Unable to find the host '#{host_ip}' because the host is either invalid or does not exist."
+  def rs_host
+    if resource[:disk_format].to_s == 'thin'
+      diskformat = 'sparse'
     else
-
-      disk_format =  resource[:diskformat]
-      updated_diskformat = "sparse"
-      # Need to update updated_diskformat value if disk_format is set to thick
-      updated_diskformat = "flat" if disk_format.eql?('thick')
-      transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(updated_diskformat);
-      host_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view, :pool => host_view.parent.resourcePool,
-      :transform => transform)
+      diskformat = 'flat'
     end
-    return host_relocate_spec
+
+    transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(diskformat);
+
+    host_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(
+      :host => host,
+      :pool => host.parent.resourcePool,
+      :transform => transform
+    )
   end
 
-
-  def power_state(vm)
-    vm.runtime.powerState
-  end
-
-  # Get the power state.
   def power_state
     Puppet.debug 'Retrieving the power state of the virtual machine.'
     @power_state = vm.runtime.powerState
@@ -348,21 +318,17 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # This method creates a new virtual machine,instead of cloning a virtual machine from an existing one.
 
-  def create_vm
-    datacenter = resource[:datacenter]
-    dc = vim.serviceInstance.find_datacenter(datacenter)
+  def host
+    @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}'")
+  end
 
+  def create_vm
     cluster_name = resource[:cluster]
     host_name = resource[:host]
     if cluster_name
-      # Getting the pool information from cluster
-      cluster = dc.find_compute_resource(cluster_name)
-      raise(Puppet::Error, "Unable to find the cluster '#{cluster_name}'.") unless cluster
       resource_pool = cluster.resourcePool
       ds = cluster.datastore.first
     elsif host_name
-      host = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_name, :vmSearch => false)
-      raise(Puppet::Error, "Unable to find the host '#{host_name}'") unless host
       resource_pool = host.parent.resourcePool
       ds = host.datastore.first
     else
@@ -388,7 +354,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :deviceChange => vm_devices
     })
 
-    dc.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
+    datacenter.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
   
     # power_state= did not work.  
     self.send(:power_state=, resource[:power_state].to_sym)
@@ -476,11 +442,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # is allcoated based on the "numcpu" and "memorymb" parameter values, that are speicfied in the input file.
   def clone_vm
     dc_name = resource[:datacenter]
-    goldvm_dc_name = resource[:goldvm_datacenter]
     vm_name = resource[:name]
-    source_dc = vim.serviceInstance.find_datacenter(goldvm_dc_name)
-    virtualmachine_obj = source_dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
-    goldvm_adapter = virtualmachine_obj.summary.config.numEthernetCards
+
+    dc = vim.serviceInstance.find_datacenter(resource[:template_datacenter])
+    template = findvm(dc.vmFolder, resource[:template]) or abort "Unable to find template." 
+    goldvm_adapter = template.summary.config.numEthernetCards
     # Calling createrelocate_spec method
     relocate_spec = createrelocate_spec
     if relocate_spec.nil?
@@ -493,14 +459,14 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :numCPUs => resource[:num_cpus]
     )
 
-    guestcustomizationflag = resource[:guestcustomization]
+    guestcustomizationflag = resource[:guest_customization]
     guestcustomizationflag = guestcustomizationflag.to_s
 
     if guestcustomizationflag.eql?('true')
       Puppet.notice "Customizing the guest OS."
       # Calling getguestcustomization_spec method in case guestcustomization
       # parameter is specified with value true
-      customization_spec_info = getguestcustomization_spec ( goldvm_adapter )
+      customization_spec_info = getguestcustomization_spec(goldvm_adapter)
       if customization_spec_info.nil?
         raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
       end
@@ -520,9 +486,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       )
     end
 
-    dc = vim.serviceInstance.find_datacenter(dc_name)
-    virtualmachine_obj.CloneVM_Task(
-      :folder => dc.vmFolder,
+    template.CloneVM_Task(
+      :folder => datacenter.vmFolder,
       :name => vm_name,
       :spec => spec
     ).wait_for_completion
@@ -546,20 +511,17 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           end
         end
       else
-        Puppet.err
-        "unknown child type found: #{f.class}"
-        exit
+        raise(Puppet::Error, "unknown child type found: #{f.class}")
       end
     end
     @vm_obj
   end
 
   def datacenter(name=resource[:datacenter])
-    vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
+    @datacenter ||= vim.serviceInstance.find_datacenter(name) or raise(Puppet::Error, "datacenter '#{name}' not found.")
   end
 
   def vm
-    # findvm(datacenter.vmFolder,resource[:name])
     @vm ||= findvm(datacenter.vmFolder, resource[:name])
   end
   

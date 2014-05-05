@@ -116,7 +116,7 @@ Puppet::Type.newtype(:vc_vm) do
   newparam(:template) do
     desc 'Template to clone from'
     munge do |value|
-      if value.include('/')
+      if value.include?('/')
         datacenter, template = value.split('/')
       else
         template = value
