@@ -23,19 +23,12 @@ Puppet::Type.newtype(:vc_vm) do
     newvalues(/.+/)
   end
 
-  newparam(:operation) do
-    desc 'whether to create a new VM or clone an existing VM.'
-    newvalues(:create, :clone)
-    defaultto(:create)
-  end
-
-  # common parameters required for both operations
-  newparam(:datacenter_name) do
+  newparam(:datacenter) do
     desc 'Name of the datacenter.'
     newvalues(/.+/)
   end
 
-  newparam(:memorymb) do
+  newparam(:memory_mb) do
     desc 'Amount of memory to be assigned to provisioned VM.'
     defaultto(1024)
     munge do |value|
@@ -43,7 +36,7 @@ Puppet::Type.newtype(:vc_vm) do
     end
   end
 
-  newparam(:numcpu) do
+  newparam(:num_cpus) do
     desc "Number of CPU's assigned to the new Virtual Machine."
     defaultto(1)
     munge do |value|
@@ -61,16 +54,28 @@ Puppet::Type.newtype(:vc_vm) do
 
   newparam(:target_datastore) do
     desc 'Name of the target datastore.'
+    munge do |value|
+      resource[:datastore] = value
+      Puppet.warn('target_datastore parameter deprecated')
+      value
+    end
   end
 
-  newparam(:diskformat) do
+  newparam(:datastore) do
+  end
+
+  newparam(:datastore_cluster) do
+  end
+
+
+  newparam(:disk_format) do
     desc 'Name of the target datastore.'
     newvalues(:thin, :thick)
     defaultto(:thin)
   end
 
   # parameters for create vm operation
-  newparam(:disksize) do
+  newparam(:disk_size) do
     desc 'Capacity of the virtual disk (in KB).'
     defaultto(4096)
     munge do |value|
@@ -93,7 +98,6 @@ Puppet::Type.newtype(:vc_vm) do
   newparam(:guestid) do
     desc 'Guest operating system identifier. User can get the guestid from following url +
     http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.vm.GuestOsDescriptor.GuestOsIdentifier.html'
-    dvalue = 'otherGuest'
     defaultto('otherGuest')
   end
 
@@ -109,30 +113,27 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   # parameters for clone vm operation
-
-  newparam(:goldvm) do
-    desc 'The gold virtual machine name.'
-    validate do |value|
-      if value.strip.length == 0
-        raise ArgumentError, "Invalid gold Virtual Machine name."
-      end
-    end
-  end
-
-  newparam(:goldvm_datacenter) do
-    desc "Name of the gold vm datacenter."
-    defaultto('')
+  newparam(:template) do
+    desc 'Template to clone from'
     munge do |value|
-      if value.strip.length == 0
-        value = @resource[:datacenter_name]
+      if value.include('/')
+        datacenter, template = value.split('/')
       else
-        value
+        template = value
       end
+
+      resource[:template_datacenter] ||= datacenter || resource[:datacenter]
+
+      template
     end
   end
 
-  newparam(:dnsdomain) do
-    desc 'DNS domain name.'
+  newparam(:template_datacenter) do
+    desc "Template datacenter."
+  end
+
+  newparam(:domain) do
+    desc 'domain name.'
   end
 
   newparam(:nicspec) do
@@ -144,102 +145,93 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   # Guest Customization params
-  newparam(:guestcustomization ) do
-    desc 'Flag for guest customization'
+  newparam(:guest_customization ) do
+    desc 'Enable guest customization'
     newvalues(:true, :false)
     defaultto(:false)
   end
 
-  newparam(:guesttype) do
-    desc 'Name of Guest OS type of Clone VM.'
+  newparam(:guest_type) do
+    desc 'Guest VM OS type'
     newvalues(:windows, :linux)
     defaultto(:windows)
   end
 
-  # name is already namevar, this should not be used.
-  #newparam(:guesthostname) do
-  #  desc 'Computer name for provisioned VM.'
-  #end
-
-  newparam(:linuxtimezone) do
-    desc 'Time zone for Linux guest OS.'
-    defaultto('GMT')
+  newparam(:timezone) do
+    desc 'Guest timezone, use integer value for Windows and name for Linux.'
+    defaultto(:GMT)
     munge do |value|
-      value.upcase
+      case resource[:guest_type]
+      when :windows
+        case value
+        when :GMT
+          35
+        else
+          Integer(value)
+        end
+      when :linux
+        case value
+        when :GMT
+          'GMT'
+        else
+          value.upcase
+        end
+      end
     end
   end
 
-  newparam(:windowstimezone) do
-    desc 'Time zone for Windows guest OS.'
-    dvalue = '035'
-    defaultto(dvalue)
-    munge do |value|
-      Integer(value)
-    end
-  end
-
-  newparam(:guestwindowsdomain) do
-    desc 'Guest domain name for Windows.'
+  # Windows Customization
+  newparam(:domain_admin) do
+    desc 'Windows: guest domain administrator username'
     defaultto('')
   end
 
-  newparam(:guestwindowsdomainadministrator) do
-    desc 'Guest domain administrator user name for Windows.'
+  newparam(:domain_password) do
+    desc 'Windows: guest domain administrator password'
     defaultto('')
   end
 
-  newparam(:guestwindowsdomainadminpassword) do
-    desc 'Guest domain administrator password for Windows.'
+  newparam(:admin_password) do
+    desc 'Windows: local administrator password'
     defaultto('')
   end
 
-  newparam(:windowsadminpassword) do
-    desc 'Guest administrator password for Windows.'
-    defaultto('')
+  newparam(:product_id) do
+    desc 'Windows: product ID'
   end
 
-  newparam(:productid) do
-    desc 'Product ID for Windows.'
+  newparam(:full_name) do
+    desc 'Windows: product owner name'
   end
 
-  newparam(:windowsguestowner) do
-    desc 'Owner name for Windows.'
-    dvalue = 'TestOwner'
-    defaultto(dvalue)
-  end
-
-  newparam(:windowsguestorgnization) do
-    desc 'Organization name for Windows.'
+  newparam(:org_name) do
+    desc 'Windows: product organization name'
     dvalue = 'TestOrg'
     defaultto(dvalue)
   end
 
-  newparam(:customizationlicensedatamode ) do
-    desc 'Flag for guest customization license data mode.'
+  newparam(:license_mode) do
+    desc 'Windows: product license mode (perSeat or perServer)'
     newvalues(:perSeat, :perServer)
     defaultto(:perServer)
   end
 
-  newparam(:autologon ) do
+  newparam(:license_users) do
+    desc 'This key is valid only if customizationlicensedatamode = perServer. The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. '
+    defaultto(1)
+    munge{ |value| Integer(value) }
+  end
+
+  newparam(:autologon) do
     desc 'Flag to determine whether or not the machine automatically logs on as Administrator.'
     newvalues(:true, :false)
     defaultto(:true)
   end
 
-  newparam(:autologoncount ) do
+  newparam(:autologon_count) do
     desc 'If the AutoLogon flag is set, then the AutoLogonCount property specifies the number of times the machine should automatically log on as Administrator.'
     defaultto(1)
-    munge do |value|
-      Integer(value)
-    end
-  end
-
-  newparam(:autousers ) do
-    desc 'This key is valid only if customizationlicensedatamode = perServer. The integer value indicates the number of client licenses purchased for the VirtualCenter server being installed. '
-    defaultto(1)
-    munge do |value|
-      Integer(value)
-    end
+    munge{ |value| Integer(value) }
   end
 
   newparam(:graceful_shutdown) do
