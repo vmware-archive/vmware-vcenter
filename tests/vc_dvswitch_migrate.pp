@@ -9,23 +9,21 @@ transport { 'vcenter':
 }
 
 vc_datacenter { "${dc1['path']}":
-  path      => "${dc1['path']}",
   ensure    => present,
+  path      => "${dc1['path']}",
   transport => Transport['vcenter'],
 }
 
 vcenter::dvswitch{ "${dc1['path']}/dvs1:create":
-  ensure => present,
+  ensure    => present,
   transport => Transport['vcenter'],
-
-  spec => {}
+  spec      => {},
 } ->
 
 vcenter::dvswitch{ "${dc1['path']}/dvs1:configure":
-  ensure => present,
+  ensure    => present,
   transport => Transport['vcenter'],
-
-  spec => {
+  spec      => {
     defaultPortConfig => {
       lacpPolicy => {
         inherited => false,
@@ -48,7 +46,6 @@ vcenter::dvswitch{ "${dc1['path']}/dvs1:configure":
 vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg-esx":
   ensure    => present,
   transport => Transport['vcenter'],
-
   spec      => {
     type              => 'earlyBinding',
     autoExpand        => true,
@@ -84,10 +81,9 @@ vcenter::dvportgroup{ "${dc1['path']}/dvs1:dvpg-esx":
 } ->
 
 vcenter::dvswitch{ "${dc1['path']}/dvs1:add_host":
-  ensure => present,
+  ensure    => present,
   transport => Transport['vcenter'],
-
-  spec => {
+  spec      => {
     host => [{
       host      => "${esx1['hostname']}",
       operation => 'add'

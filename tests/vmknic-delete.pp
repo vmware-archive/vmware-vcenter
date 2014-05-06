@@ -8,7 +8,7 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-vcenter::vmknic { "${esx1['hostname']}:vmk1":  
-  ensure => absent,  
+vcenter::vmknic { "${esx1['hostname']}:vmk1":
+  ensure    => absent,
   transport => Transport['vcenter'],
 }

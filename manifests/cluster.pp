@@ -34,18 +34,16 @@ define vcenter::cluster (
     das_config_enabled                => nested_value($spec, ['dasConfig', 'enabled']),
     host_monitoring                   => nested_value($spec, ['dasConfig', 'hostMonitoring']),
     das_config_vm_monitoring          => nested_value($spec, ['dasConfig', 'vmMonitoring']),
-    #
-    transport => $transport,
-    require   => Vc_cluster[$path],
-    before    => Anchor[$path],
+    transport                         => $transport,
+    require                           => Vc_cluster[$path],
+    before                            => Anchor[$path],
   }
 
   vc_cluster_evc { $path:
     evc_mode_key => $currentEVCModeKey,
-    #
-    transport => $transport,
-    require   => Vc_cluster_ha[$path],
-    before    => Anchor[$path],
+    transport    => $transport,
+    require      => Vc_cluster_ha[$path],
+    before       => Anchor[$path],
   }
 
   anchor { $path: }

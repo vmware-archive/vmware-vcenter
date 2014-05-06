@@ -4,120 +4,129 @@ require File.join(provider_path, 'vcenter')
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
   @doc = 'Manages vCenter Virtual Machines.'
-  # Method to create new VM
-  def create
-    flag = 0
 
-    case resource[:operation]
-    when :create
-      create_vm
-    when :clone
-      clone_vm
-    else
-      raise Puppet::Error, "Invalid operation: #{resource[:operation]}"
-    end
-  ensure
-    check_vm
+  def exists?
+    vm
   end
 
-  def check_vm
-    vm_name = resource[:name]
-    if vm
-      Puppet.notice "Successfully cloned the Virtual Machine '#{vm_name}'."
+  def create
+    if resource[:template]
+      clone_vm
     else
-      Puppet.err "Unable to clone the Virtual Machine '#{vm_name}'."
+      create_vm
     end
+  ensure
+    raise(Puppet::Error, "Unable to create VM: '#{resource[:name]}'") unless vm
+  end
+
+  def destroy
+    if power_state == 'poweredOn'
+      Puppet.notice "Powering off VM #{resource[:name]} prior to removal."
+      vm.PowerOffVM_Task.wait_for_completion
+    else
+      Puppet.debug "Virtual machine state: #{state}"
+    end
+    vm.Destroy_Task.wait_for_completion
   end
 
   # Method to create vm guestcustomization spec
   def getguestcustomization_spec(vm_adaptercount)
-    custom_host_name = RbVmomi::VIM.CustomizationFixedName(:name => resource[:name])
+    host_name = RbVmomi::VIM.CustomizationFixedName(:name => resource[:name])
 
-    guesttypeflag = guesttypeflag.to_s
-    case resource[:guesttype]
-    when :windows
-      cust_prep = get_cs_win (custom_host_name)
-    when :linux
-      cust_prep = RbVmomi::VIM.CustomizationLinuxPrep(
-        :domain => resource[:dnsdomain],
-        :hostName => custom_host_name,
-        :timeZone => resource[:linuxtimezone]
+    case resource[:guest_type].to_s
+    when 'windows'
+      identity = windows_sysprep(host_name)
+    when 'linux'
+      identity = RbVmomi::VIM.CustomizationLinuxPrep(
+        :domain => resource[:domain],
+        :hostName => host_name,
+        :timeZone => resource[:timezone]
       )
     end
 
-    customization_global_settings = RbVmomi::VIM.CustomizationGlobalIPSettings
-
     #Creating NIC specification
-    cust_adapter_mapping_arr = get_nics(vm_adaptercount)
+    nic_setting = get_nics(vm_adaptercount)
 
-    customization_spec = RbVmomi::VIM.CustomizationSpec(
-      :identity => cust_prep,
-      :globalIPSettings => customization_global_settings,
-      :nicSettingMap=> cust_adapter_mapping_arr
+    RbVmomi::VIM.CustomizationSpec(
+      :identity => identity,
+      :globalIPSettings => RbVmomi::VIM.CustomizationGlobalIPSettings,
+      :nicSettingMap => nic_setting
     )
   end
 
-  # Get Custom Spec for windows
-  def get_cs_win (custom_host_name)
-    guestwindowsdomain_administrator = resource[:guestwindowsdomainadministrator]
-    guestwindowsdomain_adminpassword = resource[:guestwindowsdomainadminpassword]
-    dns_domain = resource[:dnsdomain]
-    product_id = resource[:productid]
+  def windows_sysprep(computer_name)
+    raise(Puppet::Error, 'Windows Product ID cannot be blank.') unless resource[:product_id]
+    domain_admin = resource[:domain_admin]
+    domain_admin_pass = resource[:domain_password]
+    domain = resource[:domain]
 
-    if dns_domain.strip.length > 0 and
-    guestwindowsdomain_administrator.strip.length > 0 and
-    guestwindowsdomain_adminpassword.strip.length > 0
+    if domain_admin && domain_admin_pass && domain
 
-      if product_id.strip.length == 0
-        raise Puppet::Error, "Product ID cannot be blank."
-        return nil
-      end
-
-      domain_adminpassword = RbVmomi::VIM.CustomizationPassword(:plainText=>true,
-      :value=> guestwindowsdomain_adminpassword)
-      cust_identification = RbVmomi::VIM.CustomizationIdentification(:domainAdmin => guestwindowsdomain_administrator,
-      :domainAdminPassword => domain_adminpassword ,
-      :joinDomain => dns_domain)
+      password = RbVmomi::VIM.CustomizationPassword(
+        :plainText => true,
+        :value     => domain_admin_pass
+      )
+      identification = RbVmomi::VIM.CustomizationIdentification(
+        :domainAdmin         => domain_admin,
+        :domainAdminPassword => password,
+        :joinDomain          => domain
+      )
     else
-      cust_identification = RbVmomi::VIM.CustomizationIdentification
+      identification = RbVmomi::VIM.CustomizationIdentification
     end
 
-    windows_adminpassword = resource[:windowsadminpassword]
+    admin_password = resource[:admin_password]
 
-    win_timezone = resource[:windowstimezone]
+    timezone = resource[:timezone]
     autologon = resource[:autologon]
-    autologoncount = resource[:autologoncount]
+    autologon_count = resource[:autologon_count]
 
-    if windows_adminpassword.strip.length > 0
-      admin_password =  RbVmomi::VIM.CustomizationPassword(:plainText=>true, :value=> windows_adminpassword )
-      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => autologon,
-      :password => admin_password, :autoLogonCount => autologoncount, :timeZone => win_timezone)
+    if admin_password
+      password =  RbVmomi::VIM.CustomizationPassword(
+        :plainText => true,
+        :value     => admin_password, 
+      )
+      gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(
+        :autoLogon      => autologon,
+        :autoLogonCount => autologon_count,
+        :password       => password,
+        :timeZone       => timezone
+      )
     else
-      cust_gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(:autoLogon => autologon,
-      :autoLogonCount => autologoncount, :timeZone => win_timezone)
+      gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(
+        :autoLogon      => autologon,
+        :autoLogonCount => autologon_count,
+        :timeZone       => timezone
+      )
     end
 
-    cust_user_data = RbVmomi::VIM.CustomizationUserData(:computerName => custom_host_name,
-    :fullName => resource[:windowsguestowner], :orgName => resource[:windowsguestorgnization],
-    :productId => product_id)
+    user_data = RbVmomi::VIM.CustomizationUserData(
+      :computerName => computer_name,
+      :fullName     => resource[:full_name],
+      :orgName      => resource[:org_name],
+      :productId    => resource[:product_id]
+    )
 
-    customlicensedatamode = resource[:customizationlicensedatamode]
-    customlicense_datamode = RbVmomi::VIM.CustomizationLicenseDataMode(customlicensedatamode);
+    license_mode = resource[:license_mode]
+    mode = RbVmomi::VIM.CustomizationLicenseDataMode(license_mode);
 
-    if customlicensedatamode.eql?('perServer')
-      autousers = resource[:autousers]
-      licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode,
-      :autoUsers => autousers)
+    if license_mode.to_s == 'perServer'
+      license = RbVmomi::VIM.CustomizationLicenseFilePrintData(
+        :autoMode => mode,
+        :autoUsers => resource[:license_users],
+      )
     else
-      licensefile_printdata = RbVmomi::VIM.CustomizationLicenseFilePrintData(:autoMode => customlicense_datamode)
+      license = RbVmomi::VIM.CustomizationLicenseFilePrintData(
+        :autoMode => mode,
+      )
     end
 
-    cust_prep = RbVmomi::VIM.CustomizationSysprep(:guiUnattended => cust_gui_unattended,
-    :identification => cust_identification, :licenseFilePrintData => licensefile_printdata,
-    :userData => cust_user_data)
-
-    return cust_prep
-
+    RbVmomi::VIM.CustomizationSysprep(
+      :guiUnattended => gui_unattended,
+      :identification => identification, 
+      :licenseFilePrintData => license,
+      :userData => user_data
+    )
   end
 
   # Get Nic Specification
@@ -211,213 +220,123 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # Method to create VM relocate spec
-  def createrelocate_spec
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter_name])
-    cluster_name = resource[:cluster]
-    host_ip = resource[:host]
-    target_datastore = resource[:target_datastore]
-
-    checkfor_ds = "true"
-    relocate_spec = nil
-    if cluster_name and cluster_name.strip.length != 0
-      relocate_spec = rs_cluster(dc,cluster_name)
-
-    elsif host_ip and host_ip.strip.length != 0
-      relocate_spec = rs_host(dc,host_ip)
-
+  def relocate_spec
+    if resource[:cluster]
+      spec = RbVmomi::VIM.VirtualMachineRelocateSpec(
+        :pool => cluster.resourcePool,
+        :transform => transform
+      )
+    elsif resource[:host]
+      spec = RbVmomi::VIM.VirtualMachineRelocateSpec(
+        :host => host,
+        :pool => host.parent.resourcePool,
+        :transform => transform
+      )
     else
-      checkfor_ds = "false"
-      # Neither host not cluster name is provided. Getting the relocate specification
-      # from VM view
-      relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec
-    end
-    if checkfor_ds.eql?('true') and !relocate_spec.nil?
-      relocate_spec = rs_datastore(dc,target_datastore,relocate_spec)
+      raise(Puppet::Error, 'Must provider cluster or host for VM deployment')
     end
 
-    return relocate_spec
+    datastore = resource[:datastore]
+    if datastore
+      ds = datacenter.find_datastore(datastore)
+      raise(Puppet::Error, "Unable to find the target datastore '#{datastore}'") unless ds
+      spec.datastore = ds
+    end
+
+    spec
   end
 
-  # Method to create vm relocate spec if cluster name is provided
-  def rs_cluster(dc,cluster_name)
-    cluster_relocate_spec = nil
-    cluster ||= dc.find_compute_resource(cluster_name)
-    if !cluster
-      raise Puppet::Error, "Unable to find the cluster '#{cluster_name}' because the cluster is either invalid or does not exist."
+  def cluster(name=resource[:cluster])
+    cluster = datacenter.find_compute_resource(name)
+    raise Puppet::Error, "Unable to find the cluster '#{name}'" unless cluster
+    cluster
+  end
+
+  def transform
+    # TODO: This appears to be deprecated
+    if resource[:disk_format].to_s == 'thin'
+      diskformat = 'sparse'
     else
-      cluster_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:pool => cluster.resourcePool)
+      diskformat = 'flat'
     end
-    return cluster_relocate_spec
 
+    RbVmomi::VIM.VirtualMachineRelocateTransformation(diskformat)
   end
 
-  # Method to update vm relocate spec if target datastore name is provided
-  def rs_datastore(dc,target_datastore, relocate_spec)
-    if target_datastore and target_datastore.strip.length != 0
-      ds ||= dc.find_datastore(target_datastore)
-      if !ds
-        raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist."
-        relocate_spec = nil
-      else
-        relocate_spec.datastore = ds
-      end
-    end
-    return relocate_spec
 
-  end
-
-  # Method to create vm relocate spec if host ip is provided
-  def rs_host(dc,host_ip)
-    host_relocate_spec = nil
-
-    host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip, :vmSearch => false)
-
-    if !host_view
-      raise Puppet::Error, "Unable to find the host '#{host_ip}' because the host is either invalid or does not exist."
-    else
-
-      disk_format =  resource[:diskformat]
-      updated_diskformat = "sparse"
-      # Need to update updated_diskformat value if disk_format is set to thick
-      updated_diskformat = "flat" if disk_format.eql?('thick')
-      transform = RbVmomi::VIM.VirtualMachineRelocateTransformation(updated_diskformat);
-      host_relocate_spec = RbVmomi::VIM.VirtualMachineRelocateSpec(:host => host_view, :pool => host_view.parent.resourcePool,
-      :transform => transform)
-    end
-    return host_relocate_spec
-  end
-
-  # Method to delete VM from vCenter
-  def destroy
-    vm_name = resource[:name]
-    virtualmachine_obj = get_vm_from_datacenter
-    Puppet.err("Unable to find Virtual Machine.") if virtualmachine_obj.eql?(nil)
-    vmpower_state = get_power_state(virtualmachine_obj)
-    Puppet.notice "Virtual Machine is already in powered Off state." if vmpower_state.eql?('poweredOff')
-    Puppet.notice "Virtual Machine is in suspended state." if vmpower_state.eql?('suspended')
-    delete_vm(virtualmachine_obj)
-  end
-
-  def get_power_state(virtualmachine_obj)
-    return virtualmachine_obj.runtime.powerState
-  end
-
-  def delete_vm(virtualmachine_obj)
-    vmpower_state = get_power_state(virtualmachine_obj)
-    if vmpower_state.eql?('poweredOn')
-      Puppet.notice "Virtual Machine is in powered On state. Need to power it Off."
-      virtualmachine_obj.PowerOffVM_Task.wait_for_completion
-    end
-    virtualmachine_obj.Destroy_Task.wait_for_completion
-  end
-
-  def get_vm_from_datacenter
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter_name])
-    return  dc.find_vm(resource[:name])
-  end
-
-  def exists?
-    vm
-  end
-
-  # Get the power state.
   def power_state
-    Puppet.debug "Retrieving the power state of the virtual machine."
-    begin
-      # Did not use '.guest.powerState' since it only works if vmware tools are running.
-      vm.runtime.powerState
-    rescue Exception => excep
-      Puppet.err excep.message
-    end
+    Puppet.debug 'Retrieving the power state of the virtual machine.'
+    @power_state = vm.runtime.powerState
+  rescue Exception => e
+    Puppet.err e.message
   end
 
   # Set the power state.
   def power_state=(value)
-    Puppet.debug "Setting the power state of the virtual machine."
-    begin
+    Puppet.debug 'Setting the power state of the virtual machine.'
 
-      # Perform operations if desired power_state=:poweredOff
-      if value == :poweredOff
-        if ((vm.guest.toolsStatus != 'toolsNotInstalled') or (vm.guest.toolsStatus != 'toolsNotRunning')) and resource[:graceful_shutdown] == :true
-          vm.ShutdownGuest
-          # Since vm.ShutdownGuest doesn't return a task we need to poll the VM powerstate before returning.
-          attempt = 5  # let's check 5 times (1 min 15 seconds) before we forcibly poweroff the VM.
-          while power_state != "poweredOff" and attempt > 0
-            sleep 15
-            attempt -= 1
-          end
-          vm.PowerOffVM_Task.wait_for_completion if power_state != "poweredOff"
-        else
-          vm.PowerOffVM_Task.wait_for_completion
+    case value
+    when :poweredOff
+      if (vm.guest.toolsStatus == 'toolsNotInstalled') or
+        (vm.guest.toolsStatus == 'toolsNotRunning') or
+        (resource[:graceful_shutdown] == :false)
+        vm.PowerOffVM_Task.wait_for_completion unless power_state == 'poweredOff'
+      else
+        vm.ShutdownGuest
+        # Since vm.ShutdownGuest doesn't return a task we need to poll the VM powerstate before returning.
+        attempt = 5  # let's check 5 times (1 min 15 seconds) before we forcibly poweroff the VM.
+        while power_state != 'poweredOff' and attempt > 0
+          sleep 15
+          attempt -= 1
         end
-        # Perform operations if desired power_state=:poweredOn
-      elsif value == :poweredOn
-        vm.PowerOnVM_Task.wait_for_completion
-        # Perform operations if desired power_state=:suspend
-      elsif value == :suspended
-        if power_state == "poweredOn"
-          vm.SuspendVM_Task.wait_for_completion
-        else
-          raise Puppet::Error, "Unable to suspend the virtual machine because the virtual machine is in powered Off state."
-        end
-        # Perform operations if desired power_state=:reset
-      elsif value == :reset
-        if power_state !~ /poweredOff|suspended/i
-          vm.ResetVM_Task.wait_for_completion
-        else
-          raise Puppet::Error, "Unable to reset the virtual machine because the virtual machine is powered Off or suspended. Make sure that the virtual machine is powered On."
-        end
+        vm.PowerOffVM_Task.wait_for_completion unless power_state == 'poweredOff'
       end
-    rescue Exception => excep
-      Puppet.err "Unable to perform the operation because the following exception occurred."
-      Puppet.err excep.message
+    when :poweredOn
+      vm.PowerOnVM_Task.wait_for_completion
+    when :suspended
+      if @power_state == 'poweredOn'
+        vm.SuspendVM_Task.wait_for_completion
+      else
+        raise(Puppet::Error, 'Unable to suspend the virtual machine unless in powered on state.')
+      end
+    when :reset
+      if @power_state !~ /poweredOff|suspended/i
+        vm.ResetVM_Task.wait_for_completion
+      else
+        raise(Puppet::Error, "Unable to reset the virtual machine because the system is in #{@power_state} state.")
+      end
     end
   end
 
-  # This method creates a new virtual machine,instead of cloning a virtual machine from an existing one.
+  def host
+    @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}'")
+  end
 
   def create_vm
-
-    datacenter = resource[:datacenter_name]
-    dc = vim.serviceInstance.find_datacenter(datacenter)
-
     cluster_name = resource[:cluster]
-    if cluster_name and cluster_name.strip.length != 0
-      # Getting the pool information from cluster
-      cluster = dc.find_compute_resource(cluster_name)
-      raise Puppet::Error, "Unable to find the cluster '#{cluster_name}' because the cluster is either invalid or does not exist." if !cluster
+    host_name = resource[:host]
+    if cluster_name
       resource_pool = cluster.resourcePool
       ds = cluster.datastore.first
-      raise Puppet::Error, "No datastores exist for the cluster '#{cluster_name}'" if ds.nil?
+    elsif host_name
+      resource_pool = host.parent.resourcePool
+      ds = host.datastore.first
     else
-      # Getting the pool from host view
-      host_ip = resource[:host]
-      host_view = vim.searchIndex.FindByIp(:datacenter => dc , :ip => host_ip , :vmSearch => false)
-      raise Puppet::Error, "Unable to find the host '#{host_ip}' because the host is either invalid or does not exist." if !host_view
-      resource_pool = host_view.parent.resourcePool
-      ds = host_view.datastore.first
-      raise Puppet::Error, "No datastores exist for the host '#{host_ip}'" if ds.nil?
+      raise(Puppet::Error, 'Must provider cluster or host for VM deployment')
     end
+
+    raise(Puppet::Error, 'No datastores exist for the host') unless ds
 
     ds_path = "[#{ds.name}]"
 
     vm_devices = []
-
-    # calling controller_vm_dev_conf_spec method to create controller vm dev conf spec
-    controller_vm_dev_conf_spec = create_conf_spec
-    # calling disk_vm_dev_conf_spec method to create disk vm dev conf spec
-    disk_vm_dev_conf_spec = create_virtual_disk(ds_path)
-    vm_devices.push(controller_vm_dev_conf_spec, disk_vm_dev_conf_spec)
-
-    # Getting nic specification for each nic
-    1.upto(resource[:network_interfaces].count) do |count|
-      vm_devices.push( get_network_config(count))
-    end
+    vm_devices.push(scsi_controller_spec, disk_spec(ds_path))
+    vm_devices.push(*network_specs)
 
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec({
       :name => resource[:name],
-      :memoryMB => resource[:memorymb],
-      :numCPUs => resource[:numcpu] ,
+      :memoryMB => resource[:memory_mb],
+      :numCPUs => resource[:num_cpus] ,
       :guestId => resource[:guestid],
       :files => { :vmPathName => ds_path },
       :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
@@ -425,74 +344,86 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :deviceChange => vm_devices
     })
 
-    dc.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
+    datacenter.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
   
     # power_state= did not work.  
     self.send(:power_state=, resource[:power_state].to_sym)
   end
 
-  #    # create virtual device config spec for controller
-  def create_conf_spec
+  def controller_map
+    {
+      'VMware Paravirtual' => :ParaVirtualSCSIController,
+      'LSI Logic Parallel' => :VirtualLsiLogicController,
+      'LSI Logic SAS' => :VirtualLsiLogicSASController,
+      'BusLogic Parallel' => :VirtualBusLogicController,
+    }
+  end
 
-    contoller_type = resource[:scsi_controller_type].to_s
-    if contoller_type.eql?("VMware Paravirtual")
-      controller = RbVmomi::VIM.ParaVirtualSCSIController(:key => 0,:device => [0], :busNumber => 0,
-      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
-    elsif contoller_type.eql?("LSI Logic Parallel")
-      controller = RbVmomi::VIM.VirtualLsiLogicController(:key => 0,:device => [0], :busNumber => 0,
-      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
-    elsif contoller_type.eql?("LSI Logic SAS")
-      controller = RbVmomi::VIM.VirtualLsiLogicSASController(:key => 0,:device => [0], :busNumber => 0,
-      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
-    elsif contoller_type.eql?("BusLogic Parallel")
-      controller = RbVmomi::VIM.VirtualBusLogicController(:key => 0,:device => [0], :busNumber => 0,
-      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing'))
-    end
+  def scsi_controller_spec
+    type = resource[:scsi_controller_type].to_s
 
-    controller_vm_dev_conf_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(:device => controller,
-    :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
+    controller = RbVmomi::VIM.send(
+      controller_map[type], 
+      :key => 0,
+      :device => [0],
+      :busNumber => 0,
+      :sharedBus => RbVmomi::VIM.VirtualSCSISharing('noSharing')
+    )
 
-    return controller_vm_dev_conf_spec
+    RbVmomi::VIM.VirtualDeviceConfigSpec(
+      :device => controller,
+      :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+    )
   end
 
   #  create virtual device config spec for disk
-  def create_virtual_disk(ds_path)
+  def disk_spec(file_name)
+    thin = (resource[:disk_format].to_s == 'thin')
 
-    thin_provisioning = true
-    # Need to set the value to false if user has provided diskformat value as thick
-    thin_provisioning = false if resource[:diskformat].eql?('thick')
-    disk_backing_info = RbVmomi::VIM.VirtualDiskFlatVer2BackingInfo(:diskMode => 'persistent',
-    :fileName => ds_path , :thinProvisioned => thin_provisioning )
+    backing = RbVmomi::VIM.VirtualDiskFlatVer2BackingInfo(
+      :diskMode => 'persistent',
+      :fileName => file_name,
+      :thinProvisioned => thin
+    )
 
-    disk = RbVmomi::VIM.VirtualDisk(:backing => disk_backing_info, :controllerKey => 0,
-    :key => 0, :unitNumber => 0, :capacityInKB => resource[:disksize])
+    disk = RbVmomi::VIM.VirtualDisk(
+      :backing => backing,
+      :controllerKey => 0,
+      :key => 0,
+      :unitNumber => 0,
+      :capacityInKB => resource[:disk_size]
+    )
 
-    disk_vm_dev_conf_spec =  RbVmomi::VIM.VirtualDeviceConfigSpec(:device => disk,
-    :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
-    :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'))
-    return disk_vm_dev_conf_spec
+    RbVmomi::VIM.VirtualDeviceConfigSpec(
+      :device => disk,
+      :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
+      :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+    )
   end
 
   # get network configuration
-  def get_network_config(count)
-    port_group =  resource[:network_interfaces][count-1]['portgroup']
-
-    backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => port_group)
-    
-    nic = RbVmomi::VIM.send("Virtual#{PuppetX::VMware::Util.camelize(resource[:network_interfaces][count-1]['nic_type'])}".to_sym,
-      {
-        :key => count,
-        :backing => backing,
-        :deviceInfo => {
-          :label => "Network Adapter",
-          :summary => port_group }
-      })
-    
-    nic_config = RbVmomi::VIM.VirtualDeviceConfigSpec(
-      :device => nic,
-      :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
-    )
-    return nic_config
+  def network_specs
+    nics = []
+    resource[:network_interfaces].each_with_index do |nic, index|
+      portgroup = nic['portgroup']
+      backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => portgroup)
+      nic =  RbVmomi::VIM.send(
+        "Virtual#{PuppetX::VMware::Util.camelize(nic['nic_type'])}".to_sym,
+        {
+          :key => index,
+          :backing => backing,
+          :deviceInfo => {
+            :label => "Network Adapter",
+            :summary => portgroup
+          }
+        }
+      )
+      nics << RbVmomi::VIM.VirtualDeviceConfigSpec(
+        :device => nic,
+        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+      )
+    end
+    nics
   end
 
   # This method creates a VMware Virtual Machine instance based on the specified base image
@@ -500,32 +431,23 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # on a shared data-store and must be visible on all ESX hosts. The Virtual Machine capacity
   # is allcoated based on the "numcpu" and "memorymb" parameter values, that are speicfied in the input file.
   def clone_vm
-    dc_name = resource[:datacenter_name]
-    goldvm_dc_name = resource[:goldvm_datacenter]
     vm_name = resource[:name]
-    source_dc = vim.serviceInstance.find_datacenter(goldvm_dc_name)
-    virtualmachine_obj = source_dc.find_vm(resource[:goldvm]) or abort "Unable to find Virtual Machine."
-    goldvm_adapter = virtualmachine_obj.summary.config.numEthernetCards
-    # Calling createrelocate_spec method
-    relocate_spec = createrelocate_spec
-    if relocate_spec.nil?
-      raise Puppet::Error, "Unable to retrieve the specification required to relocate the Virtual Machine."
-    end
+
+    dc = vim.serviceInstance.find_datacenter(resource[:template_datacenter])
+    template = findvm(dc.vmFolder, resource[:template]) or raise(Puppet::Error, "Unable to find template #{resource[:template]}.")
 
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
       :name => vm_name,
-      :memoryMB => resource[:memorymb],
-      :numCPUs => resource[:numcpu]
+      :memoryMB => resource[:memory_mb],
+      :numCPUs => resource[:num_cpus]
     )
 
-    guestcustomizationflag = resource[:guestcustomization]
-    guestcustomizationflag = guestcustomizationflag.to_s
-
-    if guestcustomizationflag.eql?('true')
+    if resource[:guest_customization].to_s == 'true'
       Puppet.notice "Customizing the guest OS."
       # Calling getguestcustomization_spec method in case guestcustomization
       # parameter is specified with value true
-      customization_spec_info = getguestcustomization_spec ( goldvm_adapter )
+      goldvm_adapter = template.summary.config.numEthernetCards
+      customization_spec_info = getguestcustomization_spec(goldvm_adapter)
       if customization_spec_info.nil?
         raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
       end
@@ -545,9 +467,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       )
     end
 
-    dc = vim.serviceInstance.find_datacenter(dc_name)
-    virtualmachine_obj.CloneVM_Task(
-      :folder => dc.vmFolder,
+    template.CloneVM_Task(
+      :folder => datacenter.vmFolder,
       :name => vm_name,
       :spec => spec
     ).wait_for_completion
@@ -571,20 +492,17 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           end
         end
       else
-        Puppet.err
-        "unknown child type found: #{f.class}"
-        exit
+        raise(Puppet::Error, "unknown child type found: #{f.class}")
       end
     end
     @vm_obj
   end
 
-  def datacenter(name=resource[:datacenter_name])
-    vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{name}' not found."
+  def datacenter(name=resource[:datacenter])
+    @datacenter ||= vim.serviceInstance.find_datacenter(name) or raise(Puppet::Error, "datacenter '#{name}' not found.")
   end
 
   def vm
-    # findvm(datacenter.vmFolder,resource[:name])
     @vm ||= findvm(datacenter.vmFolder, resource[:name])
   end
   

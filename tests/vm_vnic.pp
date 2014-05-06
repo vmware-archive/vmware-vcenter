@@ -8,11 +8,11 @@ transport { 'vcenter':
 }
 
 vm_vnic { 'name':
-  name => 'Network adapter 1',
-  ensure => present,
-  vm_name => 'testVm',
-  portgroup => 'PortgroupName',
-  nic_type => 'E1000',
-  datacenter => "DatacenterName",
-  transport => Transport['vcenter'],
+  ensure     => present,
+  name       => 'Network adapter 1',
+  vm_name    => 'testVm',
+  portgroup  => 'PortgroupName',
+  nic_type   => 'E1000',
+  datacenter => 'DatacenterName',
+  transport  => Transport['vcenter'],
 }

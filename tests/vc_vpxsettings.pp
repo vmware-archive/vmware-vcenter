@@ -10,5 +10,5 @@ transport { 'vcenter':
 
 vc_vpxsettings { $vcenter['server']:
   vpx_settings => $vpx_settings,
-  transport => Transport['vcenter'],
+  transport    => Transport['vcenter'],
 }
