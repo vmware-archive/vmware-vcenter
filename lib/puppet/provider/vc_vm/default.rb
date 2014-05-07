@@ -29,8 +29,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm.Destroy_Task.wait_for_completion
   end
 
-  # Method to create vm guestcustomization spec
-  def getguestcustomization_spec(vm_adaptercount)
+  def network_interfaces
+    resource['network_interfaces']
+  end
+
+  def customization_spec(vm_adaptercount)
     host_name = RbVmomi::VIM.CustomizationFixedName(:name => resource[:name])
 
     case resource[:guest_type].to_s
@@ -206,17 +209,18 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     }
 
     if ip_address
-      customization_fixed_ip = RbVmomi::VIM.CustomizationFixedIp(:ipAddress => ip_address)
+      ip = RbVmomi::VIM.CustomizationFixedIp(:ipAddress => ip_address)
     else
-      customization_fixed_ip = RbVmomi::VIM.CustomizationDhcpIpGenerator
+      ip = RbVmomi::VIM.CustomizationDhcpIpGenerator
     end
 
-    cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(:ip => customization_fixed_ip ,
-    :subnetMask => subnet , :dnsServerList => dnsserver_arr , :gateway => gateway_arr,
-    :dnsDomain => resource[:dnsdomain] )
-
-    return cust_ip_settings
-
+    cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(
+      :ip => ip,
+      :subnetMask => subnet, 
+      :dnsServerList => dnsserver_arr,
+      :gateway => gateway_arr,
+      :dnsDomain => resource[:domain]
+    )
   end
 
   # Method to create VM relocate spec
@@ -402,9 +406,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   # get network configuration
-  def network_specs
-    nics = []
-    resource[:network_interfaces].each_with_index do |nic, index|
+  def network_specs(interfaces=resource[:network_interfaces], action='add')
+    interfaces.each_with_index.collect do |nic, index|
       portgroup = nic['portgroup']
       backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => portgroup)
       nic =  RbVmomi::VIM.send(
@@ -418,12 +421,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           }
         }
       )
-      nics << RbVmomi::VIM.VirtualDeviceConfigSpec(
+      RbVmomi::VIM.VirtualDeviceConfigSpec(
         :device => nic,
-        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation(action)
       )
     end
-    nics
   end
 
   # This method creates a VMware Virtual Machine instance based on the specified base image
@@ -436,26 +438,36 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     dc = vim.serviceInstance.find_datacenter(resource[:template_datacenter])
     template = findvm(dc.vmFolder, resource[:template]) or raise(Puppet::Error, "Unable to find template #{resource[:template]}.")
 
+    vm_devices=[]
+    if resource[:network_interfaces]
+      template_networks = template.config.hardware.device.collect{|x| x if x.class < RbVmomi::VIM::VirtualEthernetCard}.compact
+      delete_network_specs = template_networks.collect do |nic|
+        RbVmomi::VIM.VirtualDeviceConfigSpec(
+          :device => nic,
+          :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('remove')
+        )
+      end
+      vm_devices.push(*delete_network_specs)
+      vm_devices.push(*network_specs)
+    end
+
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
       :name => vm_name,
       :memoryMB => resource[:memory_mb],
-      :numCPUs => resource[:num_cpus]
+      :numCPUs => resource[:num_cpus],
+      :deviceChange => vm_devices
     )
 
     if resource[:guest_customization].to_s == 'true'
       Puppet.notice "Customizing the guest OS."
       # Calling getguestcustomization_spec method in case guestcustomization
       # parameter is specified with value true
-      goldvm_adapter = template.summary.config.numEthernetCards
-      customization_spec_info = getguestcustomization_spec(goldvm_adapter)
-      if customization_spec_info.nil?
-        raise Puppet::Error, "Unable to retrieve the specification required for Virtual Machine customization."
-      end
+      network_interfaces = template.summary.config.numEthernetCards
       spec = RbVmomi::VIM.VirtualMachineCloneSpec(
         :location => relocate_spec,
         :powerOn => (resource[:power_state] == :poweredOn),
         :template => false,
-        :customization => customization_spec_info,
+        :customization => customization_spec(network_interfaces),
         :config => config_spec
       )
     else
@@ -506,8 +518,4 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     @vm ||= findvm(datacenter.vmFolder, resource[:name])
   end
   
-  def network_interfaces
-    resource['network_interfaces']
-  end
-
 end

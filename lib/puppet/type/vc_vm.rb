@@ -101,7 +101,7 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto('otherGuest')
   end
 
-  newproperty(:network_interfaces, :parent => Puppet::Property::VMware_Array_Hash, :key => 'portgroup', :array_matching => :all ) do
+  newproperty(:network_interfaces, :parent => Puppet::Property::VMware_Array_Hash, :key => 'portgroup', :array_matching => :all) do
     desc 'Network Interfaces consist of a portgroup and nic_type'
     defaultto([])
   end
