@@ -41,7 +41,7 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
         host.configManager.advancedOption.UpdateOptions(:changedValue => @changed_value)
       end
     rescue Exception => e
-      raise Puppet::Error, "UpdateOptions failed: #{e.backtrace.join("\n")}"
+      raise Puppet::Error, "UpdateOptions failed: #{e.message}"
     end
   end
 
