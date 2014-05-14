@@ -1,6 +1,8 @@
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
+require 'resolv'
+require 'net/ssh'
 
 Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcenter) do
   @doc = "Configure and install MEM on ESX server"
@@ -65,7 +67,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
   def install_mem=(value)
     flag = esx_main_enter_exists("enter")
     if flag.eql?(0)
-      cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]} --reboot"
+      cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]}"
 
       error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
       log_filename = "/tmp/installmem_log.#{Process.pid}"
@@ -73,10 +75,16 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
       flag = execute_system_cmd(cmd , log_filename , error_log_filename)
 
       if flag.eql?(0)
-        # [TODO] Should be replaced by a function to check if host is back up
-        sleep 450
         # Exiting from maintenance mode
         esx_main_enter_exists("exit")
+        # wait till we actually exit maintenance mode
+        sleep(150)
+        # restart hostd rather than reboot the entire machine
+        toggle_ssh
+        Net::SSH.start(resource[:name], resource[:host_username], :password=>get_host_password) do |ssh|
+          ssh.exec('/etc/init.d/hostd restart')
+        end
+        reset_ssh
       end
     end
     return flag
@@ -255,4 +263,36 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
     resource[:iscsi_chapsecret]
   end
 
+  # Turn TSM-SSH on if it is off
+  def toggle_ssh
+    if !ssh_state
+      host.configManager.serviceSystem.StartService(:id=>'TSM-SSH')
+    end
+  end
+
+  # Let's turn TSM-SSH off it we had to turn it on
+  def reset_ssh
+    if !ssh_state
+      host.configManager.serviceSystem.StopService(:id=>'TSM-SSH')
+    end
+  end
+
+  def ssh_state
+    @ssh_state ||= ssh_svc.running ? :true : :false 
+  end
+
+  def ssh_svc
+    @ssh_svc ||= 
+        host.config.service.service.find{|x| x.key == "TSM-SSH"} || 
+        fail("service TSM-SSH not found")
+  end
+
+
+  def host 
+    if resource[:name] =~ Resolv::IPv4::Regex
+      @host ||= vim.searchIndex.FindByIp(:ip => resource[:name], :vmSearch => false)
+    else
+      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name],:vmSearch => false)
+    end
+  end
 end
