@@ -79,7 +79,6 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
         Puppet.debug("VMFS volume create failure: #{e.message}")
         false
       end
-    end
   end
 
   def destroy
