@@ -14,8 +14,8 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
   def migratevm_host
     begin
       vm.runtime.host.name
-    rescue Exception => exception
-      Puppet.err exception.message
+    rescue Exception => e
+      fail e.message
     end
 
   end
@@ -24,8 +24,8 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
   def migratevm_datastore
     begin
       vm.storage.perDatastoreUsage[0].datastore.name
-    rescue Exception => exception
-      Puppet.err exception.message
+    rescue Exception => e
+      fail e.message
     end
 
   end
@@ -37,8 +37,8 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
       source_datastore = vm.storage.perDatastoreUsage[0].datastore.name
       source = source_host, source_datastore
     end
-  rescue Exception => exception
-    Puppet.err exception.message
+  rescue Exception => e
+    fail e.message
   end
 
   # Set methods
@@ -50,8 +50,8 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
       ds_view = get_ds_view(value)
       raise Puppet::Error, "Unable to find the target datastore '#{value}' because the target datastore is either invalid or does not exist." unless ds_view
       relocate_vm(:ds_view => ds_view)
-    rescue Exception => excep
-      Puppet.err "Unable to perform the Virtual Machine migration operation because of the following error:\n #{excep.message}"
+    rescue Exception => e
+      fail "Unable to perform the Virtual Machine migration operation because of the following error:\n #{e.message}"
     end
 
   end
@@ -64,8 +64,8 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
       raise Puppet::Error, "Unable to find the host '#{value}' because the host is either invalid or does not exist." unless host_view
       relocate_vm(:host_view => host_view)
 
-    rescue Exception => excep
-      Puppet.err "Unable to perform the Virtual Machine migration operation because of the following error:\n #{excep.message}"
+    rescue Exception => e
+      fail "Unable to perform the Virtual Machine migration operation because of the following error:\n #{e.message}"
     end
 
   end
@@ -83,8 +83,8 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
       ds_view = get_ds_view(target_datastore)
       raise Puppet::Error, "Unable to find the target datastore '#{target_datastore}' because the target datastore is either invalid or does not exist." unless ds_view
       relocate_vm(:ds_view => ds_view , :host_view => host_view )
-    rescue Exception => excep
-      Puppet.err "Unable to perform the Virtual Machine migration operation because of the following error:\n #{excep.message}"
+    rescue Exception => e
+      fail "Unable to perform the Virtual Machine migration operation because of the following error:\n #{e.message}"
     end
   end
 

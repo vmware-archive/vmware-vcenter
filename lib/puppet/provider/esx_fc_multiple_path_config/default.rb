@@ -11,9 +11,8 @@ Puppet::Type.type(:esx_fc_multiple_path_config).provide(:esx_fc_multiple_path_co
       else
         change_policy
       end
-    rescue Exception => ex
-      Puppet.err "Unable to perform the operation because an unknown exception occurred. Verify the troubleshooting logs. If the issue persists, contact your service provider."
-      Puppet.err ex.message
+    rescue Exception => e
+      fail "Unable to perform the operation because an unknown exception occurred. Verify the troubleshooting logs. If the issue persists, contact your service provider: -\n #{e.message}"
     end
   end
 
@@ -40,9 +39,8 @@ Puppet::Type.type(:esx_fc_multiple_path_config).provide(:esx_fc_multiple_path_co
         raise Puppet::Error, "Unable to find any FC or FCoE resources for multipath policy changes."
       end
     end
-  rescue Exception => ex
-    Puppet.err "Unable to change the policy to #{resource[:policyname]} because an unknown exception occurred. Verify the troubleshooting logs. If the issue persists, contact your service provider."
-    Puppet.err ex.message
+  rescue Exception => e
+    fail "Unable to change the policy to #{resource[:policyname]} because an unknown exception occurred. Verify the troubleshooting logs. If the issue persists, contact your service provider: -\n #{e.message}"
   end
 
   def exists?

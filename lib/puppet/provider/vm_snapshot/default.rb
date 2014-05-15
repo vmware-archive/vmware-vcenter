@@ -23,12 +23,12 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
       else
         vmsnapshot = vm.snapshot
         if vmsnapshot == nil
-          raise Puppet::Error, "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
+          fail "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
         end
         snapshot_list = vmsnapshot.rootSnapshotList
         snapshot = find_node(snapshot_list, ss_name)
         if snapshot == nil
-          raise Puppet::Error, "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
+          fail "Unable to find the Virtual Machine snapshot because the snapshot does not exist."
         end
         if value == :revert
           Puppet.info "Reverting a Virtual Machine snapshot."
@@ -39,8 +39,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
         end
       end
     rescue Exception => e
-      Puppet.err "Unable to perform the operation because the following exception occurred."
-      Puppet.err e.message
+      fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -65,8 +64,7 @@ Puppet::Type.type(:vm_snapshot).provide(:vm_snapshot, :parent => Puppet::Provide
       end
       return snapshot
     rescue Exception => e
-      puts "Unable to perform the operation because the following exception occurred."
-      puts e.message
+      fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
     end
   end
 

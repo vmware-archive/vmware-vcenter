@@ -9,9 +9,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Entered in create portgroup method."
     begin
       create_port_group
-    rescue Exception => excep
-      Puppet.err "Unable to create a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to create a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -19,9 +18,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Entered in destroy portgroup method."
     begin
       remove_port_group
-    rescue Exception => excep
-      Puppet.err "Unable to remove a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to remove a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -39,8 +37,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       portg=find_portgroup
       vlanid=portg.spec.vlanId
       return vlanid.to_s
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve a vlanId because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -56,9 +54,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       end
       hostportgroupspec = RbVmomi::VIM.HostPortGroupSpec(:name => resource[:portgrp], :policy => portg.spec.policy, :vlanId => resource[:vlanid], :vswitchName => resource[:vswitch])
       @networksystem.UpdatePortGroup(:pgName => resource[:portgrp], :portgrp => hostportgroupspec)
-    rescue Exception => excep
-      Puppet.err "Unable to configure a VLAN Id on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure a VLAN Id on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -78,8 +75,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       end
       return resource[:mtu]
 
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve a portgroup mtu because the following exception occured: -\n #{e.message}"
     end
   end
 
@@ -89,9 +86,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def mtu=(value)
     begin
       setupmtu
-    rescue Exception => excep
-      Puppet.err "Unable to configure an MTU on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure an MTU on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -124,8 +120,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         Puppet.debug "checkbeacon is nil on pg so need to change"
         return "disabled"
       end
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve checkbeacon on the portgroup: -\n #{e.message}"
     end
   end
 
@@ -133,9 +129,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Updating checkbeacon flag of specified portgroup."
     begin
       set_checkbeacon
-    rescue Exception => excep
-      Puppet.err "Unable to configure a checkbeacon on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure a checkbeacon on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -160,8 +155,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       else
         return "disabled"
       end
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve failback on portgroup because the following exception occured: -\n #{e.message}"
     end
 
   end
@@ -170,9 +165,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Updating failback status flag of specified portgroup."
     begin
       set_failback
-    rescue Exception => excep
-      Puppet.err "Unable to configure failback on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure failback on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -201,8 +195,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       else
         return nil
       end
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve the override failover order on portgroup because the following exception occured: -\n #{e.message}"
     end
 
   end
@@ -211,9 +205,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Updating override failover order of specified portgroup."
     begin
       setoverridepolicy
-    rescue Exception => excep
-      Puppet.err "Unable to configure the override failover order on a port group because the following exception occurred:-"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure the override failover order on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -238,8 +231,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         end
 
       end
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve vmotion status flag of the specified portgroup because the following excption occurred: -\n #{e.message}"
     end
   end
 
@@ -248,9 +241,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Updating vmotion status flag of specified portgroup."
     begin
       setupvmotion
-    rescue Exception => excep
-      Puppet.err "Unable to configure the  vMotion on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure the  vMotion on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -285,8 +277,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         end
       end
       return resource[:ipsettings]
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve ip configuration of the specified portgroup because the following exception occured: -\n #{e.message}"
     end
   end
 
@@ -325,15 +317,14 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         end
       end
       return "true"
-    rescue Exception => excep
-      Puppet.err "Unable to configure the IP settings on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure the IP settings on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
   # Get the traffic shapping policy.
   def traffic_shaping_policy
-    Puppet.debug "Retrieving the traffic shaping policy of specified port group."
+    Puppet.debug "Retrieving the traffic shaping policy of the specified port group."
     begin
       find_host
       @networksystem=@host.configManager.networkSystem
@@ -358,8 +349,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
           return "enabled"
         end
       end
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve the traffic shaping policy of the specified port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -369,9 +360,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     begin
       traffic_shaping
       return true
-    rescue Exception => excep
-      Puppet.err "Unable to configure the traffic shaping policy on a port group because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure the traffic shaping policy on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -385,8 +375,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         raise Puppet::Error, "No datacenter  in path: #{path}" unless @datacenter
       end
       @datacenter
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail e.message  # Generic exception message
     end
   end
 
@@ -406,8 +396,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       end
       #return false if portgroup not found
       return false
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to check the portgroup's existence because the folowing exception occurred: -\n #{e.message}"
     end
   end
 
@@ -517,9 +507,9 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         hostvirtualnicspec =  RbVmomi::VIM.HostVirtualNicSpec(:ip => upip)
         @networksystem.AddVirtualNic(:portgroup => resource[:portgrp], :nic => hostvirtualnicspec)
       end
-    rescue Exception => excep
+    rescue Exception => e
       @networksystem.RemovePortGroup(:pgName => resource[:portgrp])
-      Puppet.err excep.message
+      fail e.message
     end
   end
 
@@ -628,7 +618,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
             @virtualNicManager.DeselectVnicForNicType(:nicType => "vmotion" , :device => vnicdevice)
           end
         end
-      rescue Exception => excep
+      rescue Exception => e
 =begin
         Exception is handled here to just log a debug message because there is no way to retrieve vMotion current status and if puupet tries to disable vMotion when it is already disabled,
         it throws an exception - just a workaround to handle this scenario.

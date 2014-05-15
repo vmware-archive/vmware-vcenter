@@ -13,8 +13,8 @@ Puppet::Type.type(:vc_vm_ovf).provide(:vc_vm_ovf, :parent => Puppet::Provider::V
       else
         Puppet.err "Unable to import the OVF file #{resource[:ovffilepath]}."
       end
-    rescue Exception => exc
-      Puppet.err(exc.message)
+    rescue Exception => e
+      fail "Unable to create the virtual machine #{resource[:name]} because the following exception occurred: -\n #{e.message}" 
     end   
   end
 
@@ -27,8 +27,8 @@ Puppet::Type.type(:vc_vm_ovf).provide(:vc_vm_ovf, :parent => Puppet::Provider::V
       else
         Puppet.err "Unable to export the Virtual Machine #{resource[:name]} OVF file."
       end
-    rescue Exception => exc     
-      Puppet.err(exc.message)
+    rescue Exception => e
+      fail e.message
     end
 end
 
@@ -72,8 +72,8 @@ puts cmd
     begin
       dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
       @vmObj ||= dc.find_vm(resource[:name])
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail e.message
     end
     return @vmObj
   end

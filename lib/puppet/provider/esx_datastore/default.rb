@@ -38,9 +38,8 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
           raise("LUN '#{resource[:lun]}' not detected.") unless exists?
         end
       end
-    rescue Exception => excep
-      Puppet.err "Unable to perform the operation because the following exception occurred - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to perform the operation because the following exception occurred:- \n #{e.message}"
     end
   end
 
@@ -73,21 +72,21 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     else
       false
     end
-  rescue RbVmomi::VIM::DuplicateName, RbVmomi::VIM::HostConfigFault => e
-    if exists?
-      true
-    else
-      Puppet.debug("VMFS volume create failure: #{e.message}")
-      false
+    rescue RbVmomi::VIM::DuplicateName, RbVmomi::VIM::HostConfigFault => e
+      if exists?
+        true
+      else
+        Puppet.debug("VMFS volume create failure: #{e.message}")
+        false
+      end
     end
   end
 
   def destroy
     begin
       host.configManager.datastoreSystem.RemoveDatastore(:datastore => host.datastore.find{|d|d.name==resource[:datastore]})
-    rescue Exception => excep
-      Puppet.err "Unable to perform the operation because the following exception occurred - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to perform the operation because the following exception occurred - \n #{e.message}"
     end
   end
 

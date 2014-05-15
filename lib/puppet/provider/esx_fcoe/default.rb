@@ -13,9 +13,8 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
       # discover fcoe HBA
       host.configManager.storageSystem.DiscoverFcoeHbas(:fcoeSpec => spec)
       Puppet.notice("Successfully added the FCoE software adapter to the host.")
-    rescue Exception => exc
-      Puppet.err "Unable to add FCoE software adapter because an unknown exception occurred.  Make sure the specified physical network interface card (NIC), which needs to be associated with the FCoE, is valid, and then try again the operation. If the issue persists, verify the troubleshooting logs or contact your service provider."
-      Puppet.err(exc.message)
+    rescue Exception => e
+      fail "Unable to add FCoE software adapter because an unknown exception occurred.  Make sure the specified physical network interface card (NIC), which needs to be associated with the FCoE, is valid, and then try again the operation. If the issue persists, verify the troubleshooting logs or contact your service provider: -\n #{e.message}"
     end
   end
 
@@ -28,9 +27,8 @@ Puppet::Type.type(:esx_fcoe).provide(:esx_fcoe, :parent => Puppet::Provider::Vce
       #remove fcoe HBA
       host.configManager.storageSystem.MarkForRemoval(:hbaName => fcoe_hba.device, :remove => true)
       Puppet.notice("Successfully removed the FCoE software adapter from the host. Reboot the host for the changes to take effect.")
-    rescue Exception => exc
-      Puppet.err "Unable to remove FCoE software adapter because the following exception occurred - "
-      Puppet.err(exc.message)
+    rescue Exception => e
+      fail "Unable to remove FCoE software adapter because the following exception occurred: - \n #{e.message}"
     end
   end
 

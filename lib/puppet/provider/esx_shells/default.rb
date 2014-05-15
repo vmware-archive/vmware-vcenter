@@ -49,7 +49,7 @@ Puppet::Type.type(:esx_shells).provide(:esx_shells, :parent => Puppet::Provider:
       begin
         host.configManager.advancedOption.UpdateOptions(:changedValue => @changed_value)
       rescue Exception => e
-        raise Puppet::Error, "UpdateOptions failed: #{e.message}"
+        fail "UpdateOptions failed: #{e.message}"
       end
     end
   end

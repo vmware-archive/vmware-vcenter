@@ -38,9 +38,8 @@ Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcent
         retry_attempt += 1
         retry if retry_attempt <= 1
       end
-    rescue Exception => excep
-      Puppet.err "Unable to perform the operation because the following exception occurred."
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -61,9 +60,8 @@ Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcent
         # remove host from datacenter
         @host.parent.Destroy_Task.wait_for_completion
       end
-    rescue Exception => excep
-      Puppet.err "Unable to perform the operation because the following exception occurred."
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
     end
   end
 

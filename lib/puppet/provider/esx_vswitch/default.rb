@@ -11,9 +11,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Entered in create"
     begin
       create_vswitch
-    rescue Exception => excep
-      Puppet.err "Unable to create vSwitch because the following exception occurred: -"
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to create vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -22,9 +21,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Entered in destroy"
     begin
       remove_vswitch
-    rescue Exception => excep
-      Puppet.err "Unable to remove vSwitch because the following exception occurred: - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to remove vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -39,8 +37,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retreiving nics associated with vSwitch"
     begin
       retrieve_vswitch_pnic_objects
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve nics associated with vSwitch: -\n #{e.message}"
     end
   end
 
@@ -55,9 +53,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
         vswitchspec = RbVmomi::VIM::HostVirtualSwitchSpec(:bridge => nil, :numPorts => resource[:num_ports])
       end
       update_vswitch(vswitchspec)
-    rescue Exception => excep
-      Puppet.err "Unable to configure nics on vSwitch because the following exception occurred: - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure nics on vSwitch because the following exception occurred: - #{e.message}"
     end
   end
 
@@ -66,8 +63,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retreiving num_ports associated with vSwitch"
     begin
       retreive_numports
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve num_ports associated with vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -78,9 +75,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec
       actualspec.numPorts = value
       update_vswitch(actualspec)
-    rescue Exception => excep
-      Puppet.err "Unable to set the num_ports on vSwitch because the following exception occurred: - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to set the num_ports on vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -100,9 +96,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec
       actualspec.policy.nicTeaming.nicOrder = hostnicorderpolicy
       update_vswitch(actualspec)
-    rescue Exception => excep
-      Puppet.err "Unable to configure nicorderpolicy on vSwitch because the following exception occurred: - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure nicorderpolicy on vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -113,8 +108,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       existing_activenic = retrieve_vswitch_nicorder_policy.activeNic
       existing_standbynic = retrieve_vswitch_nicorder_policy.standbyNic
       {"activenic" => existing_activenic, "standbynic" => existing_standbynic}
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve nicorderpolicy associated with vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -125,9 +120,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec
       actualspec.mtu = value
       update_vswitch(actualspec)
-    rescue Exception => excep
-      Puppet.err "Unable to set mtu on vSwitch because the following exception occurred: - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to set mtu on vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -136,8 +130,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retrieving MTU associated with vSwitch"
     begin
       retrieve_vswitch_mtu
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve MTU associated with vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -146,8 +140,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
     Puppet.debug "Retrieving checkbeacon flag associated with vSwitch"
     begin
       retreive_checkbeacon
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to retrieve checkbeacon flag associated with vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -158,9 +152,8 @@ Puppet::Type.type(:esx_vswitch).provide(:esx_vswitch, :parent => Puppet::Provide
       actualspec = retrieve_vswitch_spec
       actualspec.policy.nicTeaming.failureCriteria.checkBeacon = value
       update_vswitch(actualspec)
-    rescue Exception => excep
-      Puppet.err "Unable to configure checkbeacon on vSwitch because the following exception occurred: - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to configure checkbeacon on vSwitch because the following exception occurred: -\n #{e.message}"
     end
   end
 

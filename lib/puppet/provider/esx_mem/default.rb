@@ -43,17 +43,12 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
         end
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
       end
-    rescue Exception => exc
-      flag = 1
-      Puppet.err(exc.message)
+    rescue Exception => e
+      Puppet.err "Unable to configure MEM on the server '#{name}' because the following exception occurred: -\n #{e.message}"
     end
     esx_main_enter_exists("exit")
 
-    if flag.eql?(0)
-      Puppet.notice "Successfully configured MEM on the server '#{name}'."
-    else
-      Puppet.err "Unable to configure MEM on the server '#{name}'."
-    end
+    Puppet.notice "Successfully configured MEM on the server '#{name}'."
     return flag
   end
 

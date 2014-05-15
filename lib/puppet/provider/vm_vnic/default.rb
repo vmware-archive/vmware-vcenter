@@ -12,8 +12,8 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
         :device => device_spec}]})
 	  Puppet.notice "Adding vnic "
       vm.ReconfigVM_Task(:spec => spec).wait_for_completion
-    rescue Exception => exc
-      Puppet.err(exc.message)
+    rescue Exception => e
+      Puppet.err(e.message)
     end
   end
 
@@ -28,8 +28,8 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
       })
       Puppet.notice "Removing vnic " + resource[:name]
       vm.ReconfigVM_Task(:spec => spec).wait_for_completion
-    rescue Exception => exc
-      Puppet.err(exc.message)
+    rescue Exception => e
+      Puppet.err(e.message)
     end
   end
 
@@ -111,8 +111,8 @@ Puppet::Type.type(:vm_vnic).provide(:vm_vnic, :parent => Puppet::Provider::Vcent
     begin
       dc = vim.serviceInstance.find_datacenter(resource[:datacenter]) or  raise Puppet::Error, "Unable to find the data center. The data center with the specified name does not exist."
       @vmObj ||= dc.find_vm(resource[:vm_name]) or raise Puppet::Error, "Unable to find the Virtual Machine because the Virtual Machine does not exist."
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      Puppet.err e.message
     end
   end
 

@@ -18,8 +18,8 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
   def create
     begin
       enterMaintenanceMode
-    rescue
-      Puppet.err 'Could not find Host system.Either Host is not exist or disconnected'
+    rescue Exception => e
+      fail "Could not enter maintenance mode because the following exception occured: -\n #{e.message}"
     end
   end
 
@@ -27,16 +27,16 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
   def destroy
     begin
       exitMaintenanceMode
-    rescue
-      Puppet.err 'Could not find Host system.Either Host is not exist or disconnected'
+    rescue Exception => e
+      fail "Could not exit maintenance mode because the following exception occurred: -\n #{e.message}" 
     end
   end
 
   def exists?
     begin
       host.runtime.inMaintenanceMode
-    rescue
-      Puppet.err 'Host is not available'
+    rescue Exception => e
+      fail "Host is not available: -\n #{e.message}"
     end
   end
 
@@ -45,8 +45,8 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
   def host
     begin
       @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-    rescue
-      Puppet.err 'Could not find Host system.Either Host is not exist or disconnected'
+    rescue Exception => e
+      fail "Could not find Host system.Either Host is not exist or disconnected: #{e.message}"
     end
   end
 end
