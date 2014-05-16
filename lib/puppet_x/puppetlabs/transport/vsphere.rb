@@ -17,7 +17,13 @@ module PuppetX::Puppetlabs::Transport
     end
 
     def connect
-      @vim ||= RbVmomi::VIM.connect(@options)
+      @vim ||= begin
+        Puppet.debug("#{self.class} opening connection to #{@options[:host]}")
+        RbVmomi::VIM.connect(@options)
+      rescue Exception => e
+        Puppet.warning("#{self.class} connection to #{@options[:host]} failed; retrying once...")
+        RbVmomi::VIM.connect(@options)
+      end
     end
 
     def close
