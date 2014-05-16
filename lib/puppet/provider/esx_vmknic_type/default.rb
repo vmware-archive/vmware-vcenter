@@ -71,7 +71,7 @@ Puppet::Type.type(:esx_vmknic_type).provide(:esx_vmknic_type, :parent => Puppet:
           # rbvmomi 1.6, we ignore the error
         else
           # invalidProperty == "nic type" for misspelled types, for example
-          raise e
+          fail e.message
         end
       end
     end

@@ -109,7 +109,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     begin
       dvswitch.ReconfigureDvs_Task(:spec => spec).wait_for_completion
     rescue Exception => e
-      fail "#{e.inspect}"
+      fail "#{e.message}"
     end
   end
 

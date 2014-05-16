@@ -272,7 +272,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     Puppet.debug 'Retrieving the power state of the virtual machine.'
     @power_state = vm.runtime.powerState
   rescue Exception => e
-    Puppet.err e.message
+    fail "Unable to retrive the power state of the virtual machine because the following exception occurred: -\n #{e.message}"
   end
 
   # Set the power state.

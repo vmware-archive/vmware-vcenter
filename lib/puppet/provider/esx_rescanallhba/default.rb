@@ -17,9 +17,8 @@ Puppet::Type.type(:esx_rescanallhba).provide(:esx_rescanallhba, :parent => Puppe
         host.configManager.storageSystem.RefreshStorageSystem()
       end
     end
-  rescue Exception => ex
-    Puppet.err "Unable to perform the operation because the following exception occurred."
-    Puppet.err ex.message
+  rescue Exception => e
+    fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
   end
 
   def exists?

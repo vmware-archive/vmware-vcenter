@@ -22,14 +22,14 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:default, :parent => Puppet::
 
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
 
-      rescue Exception => exc
-        flag = 1
-        Puppet.err(exc.message)
+      rescue Exception => e
+        flag = 1  # [XXX] the status handling should be simpler
+        Puppet.err(e.message)
       end
       if flag.eql?(0)
         Puppet.notice "HBA '#{resource[:vmhba]}' is bind to VMkernel nic '#{each_vmk_nic}'."
       else
-        Puppet.err "Unable to bind HBA '#{resource[:vmhba]}' to VMkernel nic '#{each_vmk_nic}'."
+        fail "Unable to bind HBA '#{resource[:vmhba]}' to VMkernel nic '#{each_vmk_nic}'."
       end
     end
   end
@@ -51,14 +51,14 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:default, :parent => Puppet::
 
         flag = execute_system_cmd(cmd , log_filename , error_log_filename)
 
-      rescue Exception => exc
+      rescue Exception => e
         flag = 1
-        Puppet.err(exc.message)
+        Puppet.err(e.message)
       end
       if flag.eql?(0)
         Puppet.notice "HBA '#{resource[:vmhba]}' is unbind from VMkernel nic '#{each_vmk_nic}'."
       else
-        Puppet.err "Unable to unbind HBA '#{resource[:vmhba]}' from VMkernel nic '#{each_vmk_nic}'."
+        fail "Unable to unbind HBA '#{resource[:vmhba]}' from VMkernel nic '#{each_vmk_nic}'."
       end
     end
   end

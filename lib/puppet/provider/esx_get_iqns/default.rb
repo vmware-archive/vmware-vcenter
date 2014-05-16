@@ -19,9 +19,8 @@ Puppet::Type.type(:esx_get_iqns).provide(:esx_get_iqns, :parent => Puppet::Provi
         Puppet.err "Unable to find iqns from host: #{resource[:host]}  "
       end
       return iqnlist
-    rescue Exception => excep
-      Puppet.err "Unable to perform the operation because the following exception occurred - "
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
     end
 
   end
@@ -43,9 +42,9 @@ Puppet::Type.type(:esx_get_iqns).provide(:esx_get_iqns, :parent => Puppet::Provi
         end
       end
       return hbalist
-    rescue Exception => excep
-      puts excep.message
-      return nil
+    rescue Exception => e
+      Puppet.debug e.message
+      return nil # not failing, will call get_iqn() instead
     end
   end
 

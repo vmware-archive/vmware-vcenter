@@ -19,9 +19,8 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
         vm_register
       end
 
-    rescue Exception => excep
-      Puppet.err "Unable to register virtual machine because the following exception occurred."
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to register virtual machine because the following exception occurred: -\n #{e.message}"
     end
 
   end
@@ -30,9 +29,8 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
 
     begin
       power_off_vm_unregister
-    rescue Exception => excep
-      Puppet.err "Unable to remove virtual machine from inventory because the following exception occurred."
-      Puppet.err excep.message
+    rescue Exception => e
+      fail "Unable to remove virtual machine from inventory because the following exception occurred: -\n #{e.message}"
     end
 
   end
@@ -84,8 +82,8 @@ Puppet::Type.type(:vc_vm_register).provide(:vc_vm_register, :parent => Puppet::P
       @dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
       @vmfolder = @dc.vmFolder
       @vmObj = @dc.find_vm(resource[:name])
-    rescue Exception => excep
-      Puppet.err excep.message
+    rescue Exception => e
+      fail e.message
     end
   end
 end
