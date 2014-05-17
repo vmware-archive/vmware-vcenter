@@ -32,8 +32,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def vlanid
     Puppet.debug "Retrieving vlan Id associated to the specified portgroup."
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       portg=find_portgroup
       vlanid=portg.spec.vlanId
       return vlanid.to_s
@@ -46,8 +45,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def vlanid=(value)
     Puppet.debug "Updating vlan Id associated to the specified portgroup."
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       portg=find_portgroup
       if (find_vswitch == false)
         raise Puppet::Error, "Unable to find the vSwitch " + resource[:vswitch]
@@ -63,8 +61,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def mtu
     Puppet.debug "Retrieving mtu on portgroup"
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       vnics=@networksystem.networkInfo.vnic
 
       vnics.each do |vnic|
@@ -94,8 +91,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def overridecheckbeacon
     Puppet.debug "Retrieving checkbeacon on portgroup"
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.failureCriteria != nil)
         checkbeaconpg = mypg.spec.policy.nicTeaming.failureCriteria.checkBeacon
@@ -137,8 +133,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def overridefailback
     Puppet.debug "Retrieving failback on portgroup"
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.rollingOrder != nil)
         failbackorderonpg = mypg.spec.policy.nicTeaming.rollingOrder
@@ -173,8 +168,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def overridefailoverorder
     Puppet.debug "Retrieving override failover order on port group"
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       mypg=find_portgroup
       if (mypg.spec.policy.nicTeaming.nicOrder != nil)
         nicorderonpg = mypg.spec.policy.nicTeaming.nicOrder
@@ -250,8 +244,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def ipsettings
     Puppet.debug "Retrieving ip configuration of specified portgroup."
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
 
       vnics=@networksystem.networkInfo.vnic
 
@@ -286,8 +279,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def ipsettings=(value)
     Puppet.debug "Updating ip configuration of specified port group"
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       vnics=@networksystem.networkInfo.vnic
       vnicdevice = nil
 
@@ -326,8 +318,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def traffic_shaping_policy
     Puppet.debug "Retrieving the traffic shaping policy of the specified port group."
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       portg=find_portgroup
       enabled = portg.computedPolicy.shapingPolicy.enabled
       avgbw = portg.computedPolicy.shapingPolicy.averageBandwidth
@@ -367,25 +358,11 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   private
 
-  # Private method to find the datacenter.
-  def walk_dc(path=resource[:path])
-    begin
-      @datacenter = walk(path, RbVmomi::VIM::Datacenter)
-      if @datacenter.nil?
-        raise Puppet::Error, "No datacenter  in path: #{path}" unless @datacenter
-      end
-      @datacenter
-    rescue Exception => e
-      fail e.message  # Generic exception message
-    end
-  end
-
   # Private method to find the portgroup.
   def check_portgroup_existance
     Puppet.debug "Entering find_port_group"
     begin
-      find_host
-      @networksystem=@host.configManager.networkSystem
+      @networksystem=host.configManager.networkSystem
       @pg = @networksystem.networkInfo.portgroup
 
       @pg.each do |portg|
@@ -404,8 +381,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Private method to set the traffic shaping policy on the port group.
   def traffic_shaping
     Puppet.debug "Entering traffic_shaping"
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     portg=find_portgroup
     if ( resource[:traffic_shaping_policy] == :enabled )
       avgbandwidth = resource[:averagebandwidth].to_i * 1000
@@ -434,8 +410,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   # Private method to find the vSwitch
   def find_vswitch
-    find_host
-    networksystem=@host.configManager.networkSystem
+    networksystem=host.configManager.networkSystem
     vswitches = networksystem.networkInfo.vswitch
 
     vswitches.each do |vswitch|
@@ -451,8 +426,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Private method to create the portgroup.
   def create_port_group
     Puppet.debug "Entering Create Port Group method."
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     if (find_vswitch == false)
       raise Puppet::Error, "Unable to find the vSwitch " + resource[:vswitch]
     end
@@ -516,9 +490,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def set_failback
     # Private method to set the failback on the port group.
     Puppet.debug "Entering set_failback"
-    find_host
     mypg=find_portgroup
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
 
     if (resource[:overridefailback] != nil && resource[:overridefailback] == :enabled)
       if ( resource[:failback] != nil)
@@ -554,9 +527,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   def set_checkbeacon
     # Private method to set the checkbeacon flag on the port group.
     Puppet.debug "Entering set_checkbeacon"
-    find_host
     mypg=find_portgroup
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
 
     if (resource[:overridecheckbeacon] != nil && resource[:overridecheckbeacon] == :enabled)
       if ( resource[:checkbeacon] != nil)
@@ -590,12 +562,11 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Private method to enable/disable the vmotion on vmkernel type port group.
   def setupvmotion
     Puppet.debug "Entering setup vmotion method."
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     vnicdevice = nil
 
     if (resource[:portgrouptype] == :VMkernel)
-      @virtualNicManager = @host.configManager.virtualNicManager
+      @virtualNicManager = host.configManager.virtualNicManager
 
       vnics=@networksystem.networkInfo.vnic
 
@@ -631,8 +602,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
 
   def setupmtu
     Puppet.debug "Entering setupmtu"
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     vnics=@networksystem.networkInfo.vnic
     vnicdevice = nil
 
@@ -661,8 +631,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.debug "Entering setoverridepolicy"
     activenic = nil
     standbynic = nil
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     mypg=find_portgroup
     actualspec = mypg.spec
 
@@ -672,7 +641,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         if(nicorderpolicy['activenic'] != nil &&  nicorderpolicy['activenic'].length > 0)
           activenic = nicorderpolicy ['activenic']
         end
-        if(nicorderpolicy ['standbynic'] != nil && nicorderpolicy ['standbynic'].length > 0)
+        if(nicorderpolicy ['standbynic'] != nil && nicorderpolicy['standbynic'].length > 0)
           standbynic = nicorderpolicy ['standbynic']
         end
       end
@@ -701,8 +670,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
   # Private method to remove the portgroup.
   def remove_port_group
     Puppet.debug "Entering remove_port_group"
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     vnicdevice = nil
 
     if (resource[:portgrouptype] == :VMkernel)
@@ -722,19 +690,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     Puppet.notice "Successfully removed the portgroup {" + resource[:portgrp] + "}"
   end
 
-  # Private method to find the host.
-  def find_host
-    #begin
-    @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    if @host.nil?
-      raise Puppet::Error, "Host not found in datacenter #{walk_dc}" unless @host
-    end
-    @host
-  end
-
   def find_portgroup
-    find_host
-    @networksystem=@host.configManager.networkSystem
+    @networksystem=host.configManager.networkSystem
     @pg = @networksystem.networkInfo.portgroup
     @pg.each do |portg|
       availablepgs = portg.spec.name

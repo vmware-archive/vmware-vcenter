@@ -40,13 +40,4 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
     end
   end
 
-  private
-
-  def host
-    begin
-      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-    rescue Exception => e
-      fail "Could not find Host system.Either Host is not exist or disconnected: #{e.message}"
-    end
-  end
 end

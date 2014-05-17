@@ -195,17 +195,6 @@ Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
     @migrating_pnic ||= []
   end
 
-  def host
-    @host ||= find_host
-  end
-
-  def find_host
-    result = vim.searchIndex.FindByDnsName(
-      :dnsName => resource[:host], :vmSearch => false
-    )
-    result or fail "host \"#{resource[:host]}\" not found"
-  end
-
   def proxyswitch
     # find proxyswitch corresponding to dvswitch being configured
     @proxySwitch ||= find_proxyswitch dvs_name

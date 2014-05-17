@@ -177,8 +177,7 @@ Puppet::Type.type(:esx_vmknic).provide(:esx_vmknic, :parent => Puppet::Provider:
   end
 
   def esxhost
-    @esxhost ||= vim.searchIndex.FindByDnsName(:dnsName => @resource[:esxi_host],
-      :vmSearch => false)
+    host(@resource[:esxi_host])
   end
 
   def find_parent_of_class (child, target_class)

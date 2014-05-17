@@ -50,17 +50,5 @@ Puppet::Type.type(:esx_fc_multiple_path_config).provide(:esx_fc_multiple_path_co
   def destroy
   end
 
-  private
-
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-  end
-
-  #traverse dc
-  def walk_dc(path=resource[:path])
-    datacenter = walk(path, RbVmomi::VIM::Datacenter)
-    raise Puppet::Error.new( "No datacenter in path: #{path}") unless datacenter
-    datacenter
-  end
 end
 

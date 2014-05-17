@@ -28,17 +28,5 @@ Puppet::Type.type(:esx_rescanallhba).provide(:esx_rescanallhba, :parent => Puppe
   def destroy
   end
 
-  private
-
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-  end
-
-  #traverse dc
-  def walk_dc(path=resource[:path])
-    datacenter = walk(path, RbVmomi::VIM::Datacenter)
-    raise Puppet::Error.new( "No datacenter in path: #{path}") unless datacenter
-    datacenter
-  end
 end
 

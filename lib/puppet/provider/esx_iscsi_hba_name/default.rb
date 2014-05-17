@@ -16,8 +16,7 @@ Puppet::Type.type(:esx_iscsi_hba_name).provide(:esx_iscsi_hba_name, :parent => P
 
   private
   def esxhost
-    @esxhost ||= vim.searchIndex.FindByDnsName(:dnsName => @resource[:esx_host],
-      :vmSearch => false)
+    host(@resource[:esx_host])
   end
 
   def hba

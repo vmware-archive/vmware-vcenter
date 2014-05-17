@@ -49,10 +49,5 @@ Puppet::Type.type(:esx_advanced_options).provide(:esx_advanced_options, :parent 
     end
   end
 
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false) ||
-        fail("host #{resource[:host]} not found")
-  end
-
 end
 

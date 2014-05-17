@@ -36,8 +36,4 @@ Puppet::Type.type(:esx_dnsconfig).provide(:esx_dnsconfig, :parent => Puppet::Pro
     @host_dns ||= {}.merge(host.config.network.dnsConfig.props)
   end
 
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-  end
-
 end

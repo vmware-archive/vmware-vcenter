@@ -261,14 +261,14 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
   # Turn TSM-SSH on if it is off
   def toggle_ssh
     if !ssh_state
-      host.configManager.serviceSystem.StartService(:id=>'TSM-SSH')
+      host(resource[:name]).configManager.serviceSystem.StartService(:id=>'TSM-SSH')
     end
   end
 
   # Let's turn TSM-SSH off it we had to turn it on
   def reset_ssh
     if !ssh_state
-      host.configManager.serviceSystem.StopService(:id=>'TSM-SSH')
+      host(resource[:name]).configManager.serviceSystem.StopService(:id=>'TSM-SSH')
     end
   end
 
@@ -278,16 +278,8 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
 
   def ssh_svc
     @ssh_svc ||= 
-        host.config.service.service.find{|x| x.key == "TSM-SSH"} || 
+        host(resource[:name]).config.service.service.find{|x| x.key == "TSM-SSH"} ||
         fail("service TSM-SSH not found")
   end
 
-
-  def host 
-    if resource[:name] =~ Resolv::IPv4::Regex
-      @host ||= vim.searchIndex.FindByIp(:ip => resource[:name], :vmSearch => false)
-    else
-      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:name],:vmSearch => false)
-    end
-  end
 end

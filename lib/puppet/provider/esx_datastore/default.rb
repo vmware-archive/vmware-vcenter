@@ -111,20 +111,6 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
 
   private
 
-  def host
-    if resource[:path]
-      @host ||= vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:host], :vmSearch => false)
-    else
-      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-    end
-
-    if @host
-      return @host
-    else
-      fail "An invalid host name or IP address is entered. Enter the correct host name and IP address."
-    end
-  end
-
   def scsi_lun(uuid)
     adapters = host.configManager.storageSystem.storageDeviceInfo.scsiTopology.adapter
     result = adapters.collect{|a| a.target.collect{|t| t.lun}}.flatten.find{|lun| lun.key =~ /#{uuid}/}
@@ -182,13 +168,6 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
       end
     }
     iscsi_name unless iscsi_name.nil?
-  end
-
-  # To support the multiple datacenter in same vCenter.
-  def walk_dc(path=resource[:path])
-    datacenter = walk(path, RbVmomi::VIM::Datacenter)
-    raise Puppet::Error.new( "Unable to find datacenter path: #{path}") unless datacenter
-    datacenter
   end
 
 end

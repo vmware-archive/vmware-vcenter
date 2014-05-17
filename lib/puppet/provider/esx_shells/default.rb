@@ -65,8 +65,5 @@ Puppet::Type.type(:esx_shells).provide(:esx_shells, :parent => Puppet::Provider:
     result = Hash[* subset.collect{ |x| [x.key.to_sym, x.value] }.flatten ]
   end
 
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-  end
 end
 
