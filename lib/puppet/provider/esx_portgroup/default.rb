@@ -318,7 +318,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       end
       return "true"
     rescue Exception => e
-      fail "Unable to configure the IP settings on a port group because the following exception occurred: -\n #{e.message}"
+      # Not failing here as this happens when we configure the management network
+      Puppet.err "Unable to configure the IP settings on a port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
@@ -350,7 +351,8 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         end
       end
     rescue Exception => e
-      fail "Unable to retrieve the traffic shaping policy of the specified port group because the following exception occurred: -\n #{e.message}"
+      # Not failing here as this happens when we configure the management network
+      Puppet.err "Unable to retrieve the traffic shaping policy of the specified port group because the following exception occurred: -\n #{e.message}"
     end
   end
 
