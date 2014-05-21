@@ -51,12 +51,5 @@ Puppet::Type.type(:esx_service).provide(:esx_service, :parent => Puppet::Provide
         fail("service #{resource[:service]} not found")
   end
 
-  def host
-    if resource[:host] =~ Resolv::IPv4::Regex
-      @host ||= vim.searchIndex.FindByIp(:ip => resource[:host], :vmSearch => false)
-     else
-      @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-     end
-  end
 end
 

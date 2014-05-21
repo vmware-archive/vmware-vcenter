@@ -56,7 +56,4 @@ Puppet::Type.type(:esx_syslog).provide(:esx_syslog, :parent => Puppet::Provider:
     result = Hash[* subset.collect{ |x| [x.key.gsub(/^#{Regexp.escape(prefix)}/,'').to_sym, x.value] }.flatten ]
   end
 
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-  end
 end

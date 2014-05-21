@@ -52,13 +52,13 @@ Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcent
     Puppet.debug "Removing host from Vcenter/cluster."
 
     begin
-      parentFolder = @host.parent
+      parentFolder = host.parent
       if parentFolder.to_s =~ /ClustercomputeResource/i
         # remove host from cluster
-        @host.Destroy_Task.wait_for_completion
+        host.Destroy_Task.wait_for_completion
       else
         # remove host from datacenter
-        @host.parent.Destroy_Task.wait_for_completion
+        host.parent.Destroy_Task.wait_for_completion
       end
     rescue Exception => e
       fail "Unable to perform the operation because the following exception occurred: -\n #{e.message}"
@@ -79,14 +79,8 @@ Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcent
 
   private
 
-  def walk_dc(path=resource[:path])
-    @datacenter = walk(path, RbVmomi::VIM::Datacenter)
-    raise Puppet::Error.new( "No datacenter in path: #{path}") unless @datacenter
-    @datacenter
-  end
-
   def find_host
-    @host = vim.searchIndex.FindByDnsName(:datacenter => walk_dc, :dnsName => resource[:name], :vmSearch => false)
+    host(resource[:name], resource[:path], false)
   end
-end
 
+end

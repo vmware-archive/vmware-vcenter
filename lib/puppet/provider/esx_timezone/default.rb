@@ -14,10 +14,5 @@ Puppet::Type.type(:esx_timezone).provide(:esx_timezone, :parent => Puppet::Provi
     host.configManager.dateTimeSystem.UpdateDateTimeConfig(:config => dtconfig)
   end
 
-  private
-
-  def host
-    @host ||= vim.searchIndex.FindByDnsName(:dnsName => resource[:host], :vmSearch => false)
-  end
 end
 

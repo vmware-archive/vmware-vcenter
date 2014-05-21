@@ -123,8 +123,7 @@ Puppet::Type.type(:esx_iscsi_targets).provide(:default, :parent => Puppet::Provi
   end
 
   def esxhost
-    @esxhost ||= vim.searchIndex.FindByDnsName(:dnsName => @resource[:esx_host],
-      :vmSearch => false)
+    host(@resource[:esx_host])
   end
 
   def hba
