@@ -244,4 +244,9 @@ Puppet::Type.newtype(:vc_vm) do
     desc 'set the powerstate for the vm to either poweredOn/poweredOff/reset/suspended, for poweredOff, if tools is running a shutdownGuest will be issued, otherwise powerOffVM_TASK'
     newvalues(:poweredOn, :poweredOff, :reset, :suspended)
   end
+
+  newparam(:inclusive) do
+    newvalues(:true, :false)
+    defaultto(true)
+  end
 end
