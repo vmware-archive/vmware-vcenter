@@ -73,7 +73,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
         # Exiting from maintenance mode
         esx_main_enter_exists("exit")
         # wait till we actually exit maintenance mode
-        sleep(150)
+        sleep(300)
         # restart hostd rather than reboot the entire machine
         toggle_ssh
         Net::SSH.start(resource[:name], resource[:host_username], :password=>get_host_password) do |ssh|
