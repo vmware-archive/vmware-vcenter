@@ -9,6 +9,78 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm
   end
 
+  def network_interfaces
+    @vm.config.hardware.device.collect do |x| 
+      {'portgroup'=>x.backing.deviceName, 'nic_type'=>x.class.to_s.sub(/\AVirtual/, '').downcase} if x.class < RbVmomi::VIM::VirtualEthernetCard
+    end.compact
+  end
+
+  def network_interfaces=(config)
+    existing_networks = network_interfaces
+    new_networks = resource[:network_interfaces]
+    network_spec = []
+    #networks to remove
+    vm_networks = @vm.config.hardware.device.find_all{|x| x if x.class < RbVmomi::VIM::VirtualEthernetCard}
+    network_spec.concat(shift_networks(vm_networks, (existing_networks - new_networks)))
+    network_spec.concat(network_specs(new_networks-existing_networks))
+    if(network_spec.size != 0)
+      vm_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
+        :name => resource[:name],
+        :deviceChange => network_spec
+      )
+      @vm.ReconfigVM_Task(
+        :spec => vm_spec
+        ).wait_for_completion
+      #need to give vcenter a chance to reconfigure before rebooting
+      sleep 15
+      @vm.ResetVM_Task.wait_for_completion
+    end
+  end
+
+  def shift_networks(current_networks, networks_to_remove)
+    network_spec = []
+    if(networks_to_remove.size != 0)
+      new_networks = current_networks.clone
+      devices_left = current_networks.find_all do |network|
+        networks_to_remove.index{|n| n['portgroup'] == network.backing.deviceName}.nil?
+      end
+      #go through and edit the existing network
+      new_networks.each_index do |i|
+        if(i > devices_left.size-1)
+          break
+        else
+          if(new_networks[i] != devices_left[i])
+            new_networks[i].deviceInfo.summary = devices_left[i].deviceInfo.summary
+            new_networks[i].backing = devices_left[i].backing
+          else
+            #set to nil, so later we know there's nothing to edit
+            new_networks[i] = nil
+          end
+        end
+      end
+      network_spec.concat(
+        new_networks[0...devices_left.size].each_index.collect do |i|
+          if(!new_networks[i].nil?)
+            RbVmomi::VIM.VirtualDeviceConfigSpec(
+                :device => new_networks[i],
+                :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('edit')
+              )
+          end
+        end.compact
+      )
+      network_spec.concat(
+        new_networks[devices_left.size..-1].collect do |network|
+          RbVmomi::VIM.VirtualDeviceConfigSpec(
+              :device => network,
+              :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('remove')
+            )
+        end.compact
+      )
+    end
+    return network_spec
+  end
+
+
   def create
     if resource[:template]
       clone_vm
@@ -27,10 +99,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       Puppet.debug "Virtual machine state: #{state}"
     end
     vm.Destroy_Task.wait_for_completion
-  end
-
-  def network_interfaces
-    resource['network_interfaces']
   end
 
   def customization_spec(vm_adaptercount)
