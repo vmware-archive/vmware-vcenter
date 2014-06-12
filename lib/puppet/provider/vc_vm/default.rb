@@ -31,9 +31,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       @vm.ReconfigVM_Task(
         :spec => vm_spec
         ).wait_for_completion
-      #need to give vcenter a chance to reconfigure before rebooting
-      sleep 15
-      @vm.ResetVM_Task.wait_for_completion
+      if(power_state == "poweredOn")
+        #need to give vcenter a chance to reconfigure before rebooting
+        sleep 15
+        @vm.ResetVM_Task.wait_for_completion
+      end
     end
   end
 
@@ -79,7 +81,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
     return network_spec
   end
-
 
   def create
     if resource[:template]
