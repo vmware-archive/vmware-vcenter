@@ -502,6 +502,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # on a shared data-store and must be visible on all ESX hosts. The Virtual Machine capacity
   # is allcoated based on the "numcpu" and "memorymb" parameter values, that are speicfied in the input file.
   def clone_vm
+    
+    resource[:network_interfaces] = resource[:network_interfaces].reject do |n|
+      n['portgroup']== 'VM Network'
+    end
+
     vm_name = resource[:name]
 
     dc = vim.serviceInstance.find_datacenter(resource[:template_datacenter])
