@@ -51,23 +51,16 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
         if(i > devices_left.size-1)
           break
         else
-          if(new_networks[i] != devices_left[i])
-            new_networks[i].deviceInfo.summary = devices_left[i].deviceInfo.summary
-            new_networks[i].backing = devices_left[i].backing
-          else
-            #set to nil, so later we know there's nothing to edit
-            new_networks[i] = nil
-          end
+          new_networks[i].deviceInfo.summary = devices_left[i].deviceInfo.summary
+          new_networks[i].backing = devices_left[i].backing
         end
       end
       network_spec.concat(
         new_networks[0...devices_left.size].each_index.collect do |i|
-          if(!new_networks[i].nil?)
-            RbVmomi::VIM.VirtualDeviceConfigSpec(
-                :device => new_networks[i],
-                :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('edit')
-              )
-          end
+          RbVmomi::VIM.VirtualDeviceConfigSpec(
+              :device => new_networks[i],
+              :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('edit')
+            )
         end.compact
       )
       network_spec.concat(
