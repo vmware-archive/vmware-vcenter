@@ -83,7 +83,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
         end
         # restart hostd rather than reboot the entire machine
         toggle_ssh
-        Net::SSH.start(resource[:name], resource[:host_username], :password=>get_host_password) do |ssh|
+        Net::SSH.start(resource[:name], resource[:host_username], :password=>get_host_password, :paranoid => Net::SSH::Verifiers::Null.new, :global_known_hosts_file=>"/dev/null") do |ssh|
           ssh.exec('/etc/init.d/hostd restart')
         end
         reset_ssh
