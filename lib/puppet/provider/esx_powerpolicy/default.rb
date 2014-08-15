@@ -33,12 +33,9 @@ Puppet::Type.type(:esx_powerpolicy).provide(:esx_powerpolicy, :parent => Puppet:
   private
  
   def powerPolicyKeyLookup
-    #value = host.configManager.powerSystem.capability.availablePolicy.find do |policy|
     host.configManager.powerSystem.capability.availablePolicy.find do |policy|
       policy.shortName == @short_name.to_s
     end.key
-    #Puppet.debug("found policy #{value.inspect}using #{@short_name.inspect}")
-    #value.key
   end
 
   def host
