@@ -1,57 +1,71 @@
 # Copyright (C) 2014 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
-
-Puppet::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppet::Provider::Vcenter) do
+::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter VMs' vApp Properties."
 
-  def create
-   # Puppet.debug "VM => #{vm_name}, Property ID => #{property.id}"
-    Puppet.debug "Starting create method"
-    resource.eachproperty do |puppetproperty|
-      if puppetproperty.to_s != 'ensure' && resource[puppetproperty.to_s]
-        case puppetproperty.to_s
-        when 'defaultvalue'
-          method_name = 'defaultValue'
-        when 'classid'
-          method_name = 'classId'
-        when 'instanceid'
-          method_name = 'instanceId'
-        when 'userconfigurable'
-          method_name = 'userConfigurable'
-        else
-          method_name = puppetproperty.to_s
-        end
+  Puppet::Type.type(:vm_vapp_property).properties.collect{|x| x.name}.each do |prop|
+    camel_prop = PuppetX::VMware::Util.camelize(prop, :lower).to_sym
 
-        newproperty.method("#{method_name}=").call(resource[puppetproperty.to_s])
+    define_method(prop) do
+      value = current[camel_prop]
+      case value
+      when TrueClass  then :true
+      when FalseClass then :false
+      else value
+      end
+    end
+
+    define_method("#{prop}=") do |value|
+      @update = true
+      newproperty[camel_prop] = value
+    end
+  end
+
+  def create
+    Puppet.debug "Starting create method for #{resource}"
+    resource.eachproperty do |puppetproperty|
+      puppetproperty = puppetproperty.to_s
+      if puppetproperty != 'ensure' && resource[puppetproperty]
+        camel_prop = PuppetX::VMware::Util.camelize(puppetproperty, :lower).to_sym
+        newproperty[camel_prop] = resource[puppetproperty]
       end
     end
     newproperty.key = new_key
-    vm.ReconfigVM_Task(:spec => virtualmachineconfigspec(:add)).wait_for_completion
+    vm.ReconfigVM_Task(
+        :spec => virtualMachineConfigSpec(
+            :add
+        )
+    ).wait_for_completion
   end
   
   def destroy
-    vm.ReconfigVM_Task(:spec => virtualmachineconfigspec(:remove)).wait_for_completion
+    Puppet.debug "Starting destroy method for #{resource}"
+    vm.ReconfigVM_Task(
+        :spec => virtualMachineConfigSpec(
+            :remove
+        )
+    ).wait_for_completion
   end
 
   def exists?
-    property
+    current
   end
 
-  def virtualmachineconfigspec(operation)
+  def virtualMachineConfigSpec(operation)
     spec = {:operation => operation }
     if operation == :remove
-      spec['removeKey'] = property_key(property.key)
+      spec['removeKey'] = property_key(current.key)
     else
       spec['info'] = newproperty
     end
 
-    vapppropspec = RbVmomi::VIM::VAppPropertySpec(spec)
-    vminfo = [ vapppropspec ]
+    vappPropertySpec = RbVmomi::VIM::VAppPropertySpec(spec)
+    vappPropertyInfo = [ vappPropertySpec ]
 
-    @virtualmachineconfigspec = RbVmomi::VIM::VirtualMachineConfigSpec(
+    @virtualMachineConfigSpec = RbVmomi::VIM::VirtualMachineConfigSpec(
       :vAppConfig => RbVmomi::VIM::VmConfigSpec(
-        :property => vminfo
+        :property => vappPropertyInfo
       )
     )
   end
@@ -60,103 +74,14 @@ Puppet::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppe
     @newproperty ||= RbVmomi::VIM::VAppPropertyInfo.new
   end
 
-  def id
-    property.id
-  end
-
-  def id=(v)
-    newproperty.id = v
-    @update = true
-  end
-
-  def label
-    property.label
-  end
-
-  def label=(v)
-    newproperty.label = v
-    @update = true
-  end
-
-  def category
-    property.category
-  end
-
-  def category=(v)
-    newproperty.category = v
-    @update = true
-  end
-
-  def classid
-    property.classId
-  end
-
-  def classid=(v)
-    newproperty.classId = v
-    @update = true
-  end
-
-  def defaultvalue
-    property.defaultValue
-  end
-
-  def defaultvalue=(v)
-    newproperty.defaultValue = v
-    @update = true
-  end
-
-  def description
-    property.description
-  end
-
-  def description=(v)
-    newproperty.description = v
-    @update = true
-  end
-
-  def instanceid
-    property.instanceId
-  end
-
-  def instanceid=(v)
-    newproperty.instanceId = v
-    @update = true
-  end
-
-  def type
-    property.type
-  end
-
-  def type=(v)
-    newproperty.type = v 
-    @update = true
-  end
-
-  def userconfigurable
-    case property.userConfigurable
-      when TrueClass then :true
-      when FalseClass then :false
-    end
-  end
-
-  def userconfigurable=(v)
-    newproperty.userConfigurable = v
-    @update = true
-  end
-
-  def value
-    property.value
-  end
-
-  def value=(v)
-    newproperty.value = v
-    @update = true
-  end
-
   def flush
     if @update
-      newproperty.key = property.key
-      vm.ReconfigVM_Task(:spec => virtualmachineconfigspec(:edit)).wait_for_completion
+      newproperty.key = current.key
+      vm.ReconfigVM_Task(
+       :spec => virtualMachineConfigSpec(
+         :edit
+        )
+      ).wait_for_completion
     end
   end
 
@@ -169,13 +94,18 @@ Puppet::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppe
   end
 
   def new_key
-    @newkey ||= vm.config.vAppConfig.property[-1].key
-    if @newkey.nil?
-      @newkey = 0
-    else
-      @newkey += 1
+    keys = []
+    vm.config.vAppConfig.property.each do |p|
+      keys.push( p.key )
     end
-    property_key @newkey 
+    
+    if keys.max
+      newkey = keys.max + 1
+    else
+      newkey = 0
+    end
+
+    property_key newkey
   end
 
   def findvm(folder,vm_name)
@@ -201,8 +131,8 @@ Puppet::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppe
     @vm_obj
   end
 
-  def datacenter(name=resource[:datacenter_name])
-    vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{resource[:datacenter_name]}' not found."
+  def datacenter(name=resource[:datacenter])
+    vim.serviceInstance.find_datacenter(name) or raise Puppet::Error, "datacenter '#{resource[:datacenter]}' not found."
   end
 
   def vm
@@ -213,7 +143,8 @@ Puppet::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppe
     vm.config.vAppConfig.property.find {|p| p[:label] == resource[:label] }
   end
 
-  def property
-    @property ||= findproperty
+  def current
+    @current ||= findproperty
   end
+
 end

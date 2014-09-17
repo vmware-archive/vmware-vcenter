@@ -1,7 +1,4 @@
 # Copyright (C) 2014 VMware, Inc.
-provider_path = Pathname.new(__FILE__).parent.parent
-require File.join(provider_path, 'vcenter')
-
 Puppet::Type.newtype(:vm_vapp_property) do
 
   ensurable do
@@ -18,13 +15,17 @@ Puppet::Type.newtype(:vm_vapp_property) do
 
   newparam(:name) do
     desc 'The resource name'
+
+    munge do |value|
+      @resource[:label] = value
+    end
   end
 
   newparam(:vm_name) do
     desc "The VM that owns the property"
   end
 
-  newparam(:datacenter_name) do
+  newparam(:datacenter) do
     desc "The virtual datacenter in which the VM resides"
   end
 
@@ -32,7 +33,7 @@ Puppet::Type.newtype(:vm_vapp_property) do
     desc 'A user-visible description the category the property belongs to'
   end
 
-  newproperty(:classId) do
+  newproperty(:class_id) do
     desc 'Valid values for classId: Any string except any white-space characters'
     validate do |value|
       if value.match(/\s/)
@@ -41,7 +42,7 @@ Puppet::Type.newtype(:vm_vapp_property) do
     end
   end
 
-  newproperty(:defaultValue) do 
+  newproperty(:default_value) do 
     desc 'This either contains the default value of a field (used if value is empty string), or the expression if the type is "expression".'
   end
 
@@ -58,7 +59,7 @@ Puppet::Type.newtype(:vm_vapp_property) do
     end
   end
 
-  newproperty(:instanceId) do
+  newproperty(:instance_id) do
     desc 'Valid values for instanceId: Any string except any white-space characters'
     validate do |value|
       if value.match(/\s/)
@@ -87,7 +88,7 @@ Puppet::Type.newtype(:vm_vapp_property) do
     )
   end
 
-  newproperty(:userConfigurable) do
+  newproperty(:user_configurable) do
     desc 'Whether the property is user-configurable or a system property. This is not used if the type is expression.'
     newvalues(:true, :false)
   end
