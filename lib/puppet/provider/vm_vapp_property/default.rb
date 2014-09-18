@@ -1,7 +1,8 @@
 # Copyright (C) 2014 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
-::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppet::Provider::Vcenter) do
+
+Puppet::Type.type(:vm_vapp_property).provide(:vm_vapp_property, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter VMs' vApp Properties."
 
   Puppet::Type.type(:vm_vapp_property).properties.collect{|x| x.name}.each do |prop|
