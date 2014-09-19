@@ -14,19 +14,19 @@ Puppet::Type.newtype(:vm_vapp_property) do
   end
 
   newparam(:name) do
-    desc 'The resource name'
+    desc 'The datacenter, vm name and visible label of the property split by a colon (:). Format dc1:vm1:label'
 
     munge do |value|
-      @resource[:label] = value
+      @resource[:datacenter], @resource[:vm_name], @resource[:label] = value.split(':',3)
     end
   end
 
   newparam(:vm_name) do
-    desc "The VM that owns the property"
+    desc "Set by namevar. Format datacenter:vmname:label"
   end
 
   newparam(:datacenter) do
-    desc "The virtual datacenter in which the VM resides"
+    desc "Set by namevar. Format datacenter:vmname:label"
   end
 
   newproperty(:category) do
@@ -69,7 +69,7 @@ Puppet::Type.newtype(:vm_vapp_property) do
   end
 
   newproperty(:label) do
-    desc "The display name for the property"
+    desc "Set by namevar. Format datacenter:vmname:label"
   end
 
   newproperty(:type) do

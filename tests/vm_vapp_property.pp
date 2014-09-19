@@ -8,14 +8,13 @@ transport { 'vcenter':
   options  => $vcenter['options'],
 }
 
-vm_vapp_property { 'newProperty':
+# The datacenter, vm name and user visible property label will be extracted from the namevar for unique identification. This will allow for setting the same vApp property across multiple VMs while keeping unique puppet resource names.
+vm_vapp_property { "$dc:$vmname:$label": #'dc1:vm1:newProperty':
   ensure            => present,
-  datacenter        => 'dc1',
-  vm_name           => 'vm1',
   category          => 'Application',
   description       => 'A test property created by Puppet',
   id                => 'testproperty',
-  type              => 'string',
+  type              => 'string(5..10)',
   user_configurable => 'true',
   value             => 'new string',
   transport         => Transport['vcenter'],
