@@ -10,7 +10,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def network_interfaces
-    @vm.config.hardware.device.collect do |x| 
+    @vm.config.hardware.device.collect do |x|
       {'portgroup'=>x.backing.deviceName, 'nic_type'=>x.class.to_s.sub(/\AVirtual/, '').downcase} if x.class < RbVmomi::VIM::VirtualEthernetCard
     end.compact
   end
@@ -90,7 +90,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       Puppet.notice "Powering off VM #{resource[:name]} prior to removal."
       vm.PowerOffVM_Task.wait_for_completion
     else
-      Puppet.debug "Virtual machine state: #{state}"
+      Puppet.debug "Virtual machine state: #{power_state}"
     end
     vm.Destroy_Task.wait_for_completion
   end
@@ -149,7 +149,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if admin_password
       password =  RbVmomi::VIM.CustomizationPassword(
         :plainText => true,
-        :value     => admin_password, 
+        :value     => admin_password,
       )
       gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(
         :autoLogon      => autologon,
@@ -188,7 +188,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     RbVmomi::VIM.CustomizationSysprep(
       :guiUnattended => gui_unattended,
-      :identification => identification, 
+      :identification => identification,
       :licenseFilePrintData => license,
       :userData => user_data
     )
@@ -278,7 +278,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     cust_ip_settings = RbVmomi::VIM.CustomizationIPSettings(
       :ip => ip,
-      :subnetMask => subnet, 
+      :subnetMask => subnet,
       :dnsServerList => dnsserver_arr,
       :gateway => gateway_arr,
       :dnsDomain => resource[:domain]
@@ -411,8 +411,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     })
 
     datacenter.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
-  
-    # power_state= did not work.  
+
+    # power_state= did not work.
     self.send(:power_state=, resource[:power_state].to_sym)
   end
 
@@ -429,7 +429,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     type = resource[:scsi_controller_type].to_s
 
     controller = RbVmomi::VIM.send(
-      controller_map[type], 
+      controller_map[type],
       :key => 0,
       :device => [0],
       :busNumber => 0,
@@ -495,7 +495,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # on a shared data-store and must be visible on all ESX hosts. The Virtual Machine capacity
   # is allcoated based on the "numcpu" and "memorymb" parameter values, that are speicfied in the input file.
   def clone_vm
-    
+
     resource[:network_interfaces] = resource[:network_interfaces].reject do |n|
       n['portgroup']== 'VM Network'
     end
@@ -584,5 +584,5 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def vm
     @vm ||= findvm(datacenter.vmFolder, resource[:name])
   end
-  
+
 end
