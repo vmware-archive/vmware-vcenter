@@ -391,7 +391,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
     datastore_info = {}
     data.select { |d| d['summary.accessible'] }.sort_by { |d| d['info.url'] }.each do |d|
-      next if resource[:skip_local_datastore] and d['name'].match(/local-storage-\d+/)
+      next if resource[:skip_local_datastore] == :true and d['name'].match(/local-storage-\d+/)
       size = d['summary.capacity']
       free = d['summary.freeSpace']
       used = size - free
