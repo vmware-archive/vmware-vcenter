@@ -67,6 +67,10 @@ Puppet::Type.newtype(:vc_vm) do
   newparam(:datastore_cluster) do
   end
 
+  newparam(:skip_local_datastore) do
+   newvalues(:true,:false)
+   defaultto(:false)
+  end
 
   newparam(:disk_format) do
     desc 'Name of the target datastore.'
