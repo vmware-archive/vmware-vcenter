@@ -149,7 +149,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if admin_password
       password =  RbVmomi::VIM.CustomizationPassword(
         :plainText => true,
-        :value     => admin_password,
+        :value     => admin_password
       )
       gui_unattended = RbVmomi::VIM.CustomizationGuiUnattended(
         :autoLogon      => autologon,
@@ -178,11 +178,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if license_mode.to_s == 'perServer'
       license = RbVmomi::VIM.CustomizationLicenseFilePrintData(
         :autoMode => mode,
-        :autoUsers => resource[:license_users],
+        :autoUsers => resource[:license_users]
       )
     else
       license = RbVmomi::VIM.CustomizationLicenseFilePrintData(
-        :autoMode => mode,
+        :autoMode => mode
       )
     end
 
@@ -304,7 +304,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     datastore = resource[:datastore]
     if datastore
-      ds = datacenter.find_datastore(datastore)
+      ds = get_cluster_datastore
       raise(Puppet::Error, "Unable to find the target datastore '#{datastore}'") unless ds
       spec.datastore = ds
     end
@@ -378,12 +378,58 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}'")
   end
 
+  def get_cluster_datastore
+    requested_datastore = (resource[:datastore] || '')
+    
+    # Disk size is in KB and the information coming back from 
+    # API is in Bytes
+    requested_size = resource[:disk_size].to_i * 1024
+
+    paths = %w(name info.url info summary summary.accessible summary.capacity summary.freeSpace)
+    propSet = [{ :type => 'Datastore', :pathSet => paths }]
+    filterSpec = { :objectSet => cluster.datastore.map { |ds| { :obj => ds } }, :propSet => propSet }
+    data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
+    datastore_info = {}
+    data.select { |d| d['summary.accessible'] }.sort_by { |d| d['info.url'] }.each do |d|
+      next if resource[:skip_local_datastore] == :true and d['name'].match(/local-storage-\d+/)
+      size = d['summary.capacity']
+      free = d['summary.freeSpace']
+      used = size - free
+      pct_used = used*100.0/size
+      datastore_info[d['name']] = { 'size' => size, 'free' => free, 'used' => used, 'info' => d['info'], 'summary' => d['summary'] }
+    end
+    Puppet.debug("Datastore info: #{datastore_info}")
+    Puppet.debug("Requested size: #{requested_size}")
+    if !requested_datastore.empty?
+      raise("Datastore #{requested_datastore} not found") if
+      datastore_info.keys.include?(requested_datastore)
+
+      raise("In-sufficient space in datastore #{requested_datastore}") if
+      datastore_info[requested_datastore].free.to_i < requested_size
+
+      return requested_datastore
+    else
+      datastore_selected = nil
+      datastore_info.keys.each do |datastore|
+        if datastore_info[datastore]['free'].to_i > requested_size.to_i
+          datastore_selected = datastore
+          Puppet.debug("Selected datastore: #{datastore_selected}")
+          break
+        end
+      end
+      raise("No datastore found with sufficient free space") if datastore_selected.nil?
+      return "[#{datastore_selected}]"
+    end
+  end
+  
   def create_vm
     cluster_name = resource[:cluster]
     host_name = resource[:host]
+    ds_path = nil
+    
     if cluster_name
       resource_pool = cluster.resourcePool
-      ds = cluster.datastore.first
+      ds_path = get_cluster_datastore
     elsif host_name
       resource_pool = host.parent.resourcePool
       ds = host.datastore.first
@@ -391,14 +437,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise(Puppet::Error, 'Must provider cluster or host for VM deployment')
     end
 
-    raise(Puppet::Error, 'No datastores exist for the host') unless ds
-
-    ds_path = "[#{ds.name}]"
-
+    ds_path = "[#{ds.name}]" if ds_path.nil?
+    raise(Puppet::Error, 'No datastores exist for the host') if ds_path.nil?
     vm_devices = []
     vm_devices.push(scsi_controller_spec, disk_spec(ds_path))
     vm_devices.push(*network_specs)
-
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec({
       :name => resource[:name],
       :memoryMB => resource[:memory_mb],
@@ -409,7 +452,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
       :deviceChange => vm_devices
     })
-
     datacenter.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
 
     # power_state= did not work.
