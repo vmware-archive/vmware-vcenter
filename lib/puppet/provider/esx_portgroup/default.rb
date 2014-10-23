@@ -93,7 +93,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     begin
       @networksystem=host.configManager.networkSystem
       mypg=find_portgroup
-      if (mypg.spec.policy.nicTeaming.failureCriteria != nil)
+      if mypg.spec.policy.nicTeaming && mypg.spec.policy.nicTeaming.failureCriteria
         checkbeaconpg = mypg.spec.policy.nicTeaming.failureCriteria.checkBeacon
         if ( resource[:overridecheckbeacon] == :enabled)
           if (checkbeaconpg != nil)
@@ -170,7 +170,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     begin
       @networksystem=host.configManager.networkSystem
       mypg=find_portgroup
-      if (mypg.spec.policy.nicTeaming.nicOrder != nil)
+      if mypg.spec.policy.nicTeaming && mypg.spec.policy.nicTeaming.nicOrder
         nicorderonpg = mypg.spec.policy.nicTeaming.nicOrder
         if ( resource[:overridefailoverorder] == :enabled)
           acitvenicsonpg = mypg.spec.policy.nicTeaming.nicOrder.activeNic
