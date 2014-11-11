@@ -28,13 +28,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
         :name => resource[:name],
         :deviceChange => network_spec
       )
-      @vm.ReconfigVM_Task(
-        :spec => vm_spec
-        ).wait_for_completion
-      if(power_state == "poweredOn")
-        #need to give vcenter a chance to reconfigure before rebooting
-        sleep 15
-        @vm.ResetVM_Task.wait_for_completion
+       @vm.ReconfigVM_Task(
+         :spec => vm_spec
+         ).wait_for_completion
+      # No need to reset the VM in case existing and new network count is the same
+      # We are just changing the port-group mapping
+      if(power_state == "poweredOn" and (existing_networks || {}).size != (new_networks || {}).size)
+         #need to give vcenter a chance to reconfigure before rebooting
+         sleep 15
+         @vm.ResetVM_Task.wait_for_completion
       end
     end
   end
