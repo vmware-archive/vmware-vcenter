@@ -5,7 +5,7 @@ class vcenter::package (
   package { [
     'rest-client',
   ]:
-    ensure   => present,
+    ensure   => '1.6.7',
     provider => $::vcenter::params::provider,
   }
 
