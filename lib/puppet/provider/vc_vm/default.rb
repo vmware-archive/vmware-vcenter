@@ -21,8 +21,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     network_spec = []
     #networks to remove
     vm_networks = @vm.config.hardware.device.find_all{|x| x if x.class < RbVmomi::VIM::VirtualEthernetCard}
-    network_spec.concat(shift_networks(vm_networks, (existing_networks - new_networks)))
-    network_spec.concat(network_specs(new_networks-existing_networks))
+    if existing_networks.size == new_networks.size
+      network_spec.concat(shift_networks(vm_networks, new_networks))
+    else
+      network_spec.concat(shift_networks(vm_networks, (existing_networks - new_networks)))
+    end
+
+    Puppet.debug("Network spec after shift network: #{network_spec.inspect}")
+    network_spec.concat(network_specs(new_networks-existing_networks)) if existing_networks.size != new_networks.size
+    Puppet.debug("Network spec after specs : #{network_spec.inspect}")
     if(network_spec.size != 0)
       vm_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
         :name => resource[:name],
@@ -42,6 +49,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def shift_networks(current_networks, networks_to_remove)
+    Puppet.debug("Inside shift network: current network: #{current_networks.inspect}, networks to remove: #{networks_to_remove.inspect}")
     network_spec = []
     if(networks_to_remove.size != 0)
       new_networks = current_networks.clone
@@ -53,10 +61,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
         if(i > devices_left.size-1)
           break
         else
-          new_networks[i].deviceInfo.summary = devices_left[i].deviceInfo.summary
-          new_networks[i].backing = devices_left[i].backing
+          new_networks[i].backing[:deviceName] = networks_to_remove[i]['portgroup']
+          new_networks[i].deviceInfo.summary = networks_to_remove[i]['portgroup']
         end
       end
+      Puppet.debug("New network: #{new_networks.inspect}")
       network_spec.concat(
         new_networks[0...devices_left.size].each_index.collect do |i|
           RbVmomi::VIM.VirtualDeviceConfigSpec(
@@ -65,14 +74,19 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
             )
         end.compact
       )
-      network_spec.concat(
-        new_networks[devices_left.size..-1].collect do |network|
-          RbVmomi::VIM.VirtualDeviceConfigSpec(
-              :device => network,
-              :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('remove')
-            )
-        end.compact
-      )
+      Puppet.debug("Network Spec after edit: #{network_spec.inspect}")
+      if current_networks.size != networks_to_remove.size
+        network_spec.concat(
+            new_networks[devices_left.size..-1].collect do |network|
+              RbVmomi::VIM.VirtualDeviceConfigSpec(
+                  :device => network,
+                  :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation('edit')
+              )
+            end.compact
+        )
+      end
+
+      Puppet.debug("Network spec after remove block: #{network_spec.inspect}")
     end
     return network_spec
   end
