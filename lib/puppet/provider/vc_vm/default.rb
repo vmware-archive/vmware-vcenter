@@ -97,7 +97,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     else
       create_vm
     end
-  ensure
     raise(Puppet::Error, "Unable to create VM: '#{resource[:name]}'") unless vm
   end
 
