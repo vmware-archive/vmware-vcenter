@@ -28,6 +28,8 @@ Puppet::Type.newtype(:esx_reconfigureha) do
     end
   end
 
+  newparam(:force, :boolean => true, :parent => Puppet::Parameter::Boolean)
+
   autorequire(:vc_host) do
     # autorequire esx host.
     self[:host]
