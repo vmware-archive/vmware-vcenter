@@ -11,7 +11,7 @@ Puppet::Type.type(:esx_reconfigureha).provide(:esx_reconfigureha, :parent => Pup
       else
         Puppet.notice 'Reconfiguring HA Agent'
         connection_state = ( host.summary.runtime.dasHostState.state || '' )
-        if connection_state == 'fdmUnreachable'
+        if connection_state == 'fdmUnreachable' || resource[:force]
           task_status = host.ReconfigureHostForDAS_Task!
           while (task_status.info.state.match(/running|queued/i))
             sleep(10)
