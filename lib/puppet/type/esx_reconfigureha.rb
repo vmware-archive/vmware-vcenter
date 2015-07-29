@@ -1,4 +1,6 @@
 # Copyright (C) 2013 VMware, Inc.
+require 'puppet/parameter/boolean'
+
 Puppet::Type.newtype(:esx_reconfigureha) do
   @doc = "Rescan all HBA"
 
