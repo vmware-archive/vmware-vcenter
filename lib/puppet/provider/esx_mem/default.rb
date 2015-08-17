@@ -32,23 +32,21 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
       return 1
     end
     begin
-      flag = esx_main_enter_exists("enter")
-      if flag.eql?(0)
-        chap_extension = ""
-        if !iscsi_chapuser.nil?
-          chap_extension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
-        end
-        if resource[:disable_hw_iscsi].to_s.eql?('true')
-          cmd = "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
-        else
-          cmd =  "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
-        end
-        flag = execute_system_cmd(cmd , log_filename , error_log_filename)
+      enterMaintenanceMode
+      chap_extension = ""
+      if !iscsi_chapuser.nil?
+        chap_extension = "--chapuser #{iscsi_chapuser} --chapsecret #{iscsi_chapsecret}"
       end
+      if resource[:disable_hw_iscsi].to_s.eql?('true')
+        cmd = "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension} --enableswiscsi --nohwiscsi"
+      else
+        cmd =  "perl #{script_executable_path}/#{setup_script_filepath} --configure --username #{host_username} --password #{host_password} --server=#{host_ip} --nics #{vnics} --ips #{vnics_ipaddress} --vswitch #{iscsi_vswitch} --mtu #{mtu} --vmkernel #{iscsi_vmkernal_prefix} --netmask #{iscsi_netmask} --groupip #{storage_groupip} #{chap_extension}"
+      end
+      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
     rescue Exception => e
       Puppet.err "Unable to configure MEM on the server '#{name}' because the following exception occurred: -\n #{e.message}"
     end
-    esx_main_enter_exists("exit")
+    exitMaintenanceMode
 
     Puppet.notice "Successfully configured MEM on the server '#{name}'."
     return flag
@@ -60,36 +58,43 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
 
   # Intalling MEM
   def install_mem=(value)
-    flag = esx_main_enter_exists("enter")
+    enterMaintenanceMode
+    cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]}"
+
+    error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
+    log_filename = "/tmp/installmem_log.#{Process.pid}"
+
+    flag = execute_system_cmd(cmd , log_filename , error_log_filename)
+
     if flag.eql?(0)
-      cmd = "perl #{resource[:script_executable_path]}/#{resource[:setup_script_filepath]}  --install --username #{resource[:host_username]} --password #{get_host_password } --server=#{resource[:name ]}"
-
-      error_log_filename = "/tmp/installmem_err_log.#{Process.pid}"
-      log_filename = "/tmp/installmem_log.#{Process.pid}"
-
-      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
-
-      if flag.eql?(0)
-        # Exiting from maintenance mode
-        esx_main_enter_exists("exit")
-        # wait till we actually exit maintenance mode
-        timeout = 300
-        timer = 0
-        ret_val = nil
-        while ret_val != 3 and timer < timeout 
-          ret_val = get_esx_currentstate
-          sleep (30)
-          timer += 30
-        end
-        # restart hostd rather than reboot the entire machine
-        toggle_ssh
-        Net::SSH.start(resource[:name], resource[:host_username], :password=>get_host_password, :paranoid => Net::SSH::Verifiers::Null.new, :global_known_hosts_file=>"/dev/null") do |ssh|
-          ssh.exec('/etc/init.d/hostd restart')
-        end
-        reset_ssh
-      end
+      exitMaintenanceMode
+      # restart hostd rather than reboot the entire machine
+      toggle_ssh
+      restart_hostd
+      reset_ssh
     end
     return flag
+  end
+
+  def restart_hostd
+    Puppet.info('Restarting hostd...')
+    Net::SSH.start(resource[:name], resource[:host_username], :password=>get_host_password,
+                   :paranoid => Net::SSH::Verifiers::Null.new, :global_known_hosts_file=>"/dev/null") do |ssh|
+      ssh.exec('/etc/init.d/hostd restart')
+    end
+    #Need to ensure webclient and APIs are reachable, so we wait a bit, and then retry a call that will fail if they aren't completely running yet.
+    sleep 15
+    attempts = 1
+    begin
+      host(resource[:name]).RetrieveHardwareUptime
+    rescue => e
+      raise('ESXi Host remote management was not available after restarting hostd.') if attempts > 6
+      Puppet.debug("ESXi host did not respond after restarting hostd.  Retrying in 15 seconds...")
+      attempts += 1
+      sleep 15
+      retry
+    end
+    Puppet.info('hostd has been restarted successfully')
   end
 
   def get_esx_currentstate
@@ -126,36 +131,17 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
     return flag
   end
 
-  # Enter and exit ESX host in maintenance mode
-  def esx_main_enter_exists(operation)
-    flag = 0
+  def enterMaintenanceMode
+    host(resource[:name]).EnterMaintenanceMode_Task(:timeout => 600,
+                                   :evacuatePoweredOffVms => true).wait_for_completion
+  rescue Exception => e
+    fail "Could not enter maintenance mode because the following exception occured: -\n #{e.message}"
+  end
 
-    host_ip = resource[:name]
-    error_log_filename = "/tmp/err_#{host_ip}_#{operation}.#{Process.pid}"
-    log_filename = "/tmp/log.#{host_ip}_#{operation}.#{Process.pid}"
-
-    # Getting current state
-    ret_val = get_esx_currentstate
-
-    if ret_val == 2 and operation.eql?('enter')
-      Puppet.notice "The host '#{host_ip}' is already in maintenance mode."
-    elsif ret_val == 3 and operation.eql?('exit')
-      Puppet.notice "Exit operation is not to be performed because the host '#{host_ip}' is not in the maintenance mode."
-    elsif ret_val == 1
-      flag = 1
-
-    else
-
-      if operation.eql?('enter')
-        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{get_host_password } --operation enter"
-      else
-        cmd = "vicfg-hostops --server #{host_ip} --username #{resource[:host_username]} --password #{get_host_password } --operation exit"
-      end
-
-      flag = execute_system_cmd(cmd , log_filename , error_log_filename)
-    end
-
-    return flag
+  def exitMaintenanceMode
+    host(resource[:name]).ExitMaintenanceMode_Task(:timeout => 600).wait_for_completion
+  rescue Exception => e
+    fail "Could not exit maintenance mode because the following exception occured: -\n #{e.message}"
   end
 
   private
@@ -280,7 +266,7 @@ Puppet::Type.type(:esx_mem).provide(:default, :parent => Puppet::Provider::Vcent
   end
 
   def ssh_state
-    @ssh_state ||= ssh_svc.running ? :true : :false 
+    @ssh_state ||= ssh_svc.running
   end
 
   def ssh_svc
