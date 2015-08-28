@@ -405,36 +405,38 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     propSet = [{ :type => 'Datastore', :pathSet => paths }]
     filterSpec = { :objectSet => cluster.datastore.map { |ds| { :obj => ds } }, :propSet => propSet }
     data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
-    datastore_info = {}
-    data.select { |d| d['summary.accessible'] }.sort_by { |d| d['info.url'] }.each do |d|
-      next if resource[:skip_local_datastore] == :true and d['name'].match(/local-storage-\d+/)
+    datastore_info = data.map do |d|
       size = d['summary.capacity']
       free = d['summary.freeSpace']
       used = size - free
-      pct_used = used*100.0/size
-      datastore_info[d['name']] = { 'size' => size, 'free' => free, 'used' => used, 'info' => d['info'], 'summary' => d['summary'] }
+      is_local = d['name'].match(/local-storage-\d+/)
+      info = {
+          'name' => d['name'], 'size' => size, 'free' => free, 'used' => used,
+          'info' => d['info'], 'summary' => d['summary'], 'is_local' => is_local
+      }
+      info if d['summary.accessible'] && (resource[:skip_local_datastore] == :false || !is_local)
+    end.compact.sort do |a, b|
+      if a['is_local'] && !b['is_local']
+        1 # local storage at end
+      elsif !a['is_local'] && b['is_local']
+        -1 # remote storage at beginning
+      else
+        b['free'] <=> a['free'] # Descending order
+      end
     end
     Puppet.debug("Datastore info: #{datastore_info}")
     Puppet.debug("Requested size: #{requested_size}")
     if !requested_datastore.empty?
-      raise("Datastore #{requested_datastore} not found") if
-      datastore_info.keys.include?(requested_datastore)
-
-      raise("In-sufficient space in datastore #{requested_datastore}") if
-      datastore_info[requested_datastore].free.to_i < requested_size
-
-      return requested_datastore
+      info = datastore_info.find { |d| d['name'] == requested_datastore }
+      raise("Datastore #{requested_datastore} not found") unless info
+      raise("In-sufficient space in datastore #{requested_datastore}") unless free < requested_size
+      requested_datastore
     else
-      datastore_selected = nil
-      datastore_info.keys.each do |datastore|
-        if datastore_info[datastore]['free'].to_i > requested_size.to_i
-          datastore_selected = datastore
-          Puppet.debug("Selected datastore: #{datastore_selected}")
-          break
-        end
-      end
-      raise("No datastore found with sufficient free space") if datastore_selected.nil?
-      return "[#{datastore_selected}]"
+      datastore_selected = datastore_info.find { |d| d['free'] >= requested_size }
+      raise("No datastore found with sufficient free space") unless datastore_selected
+      Puppet.debug("Selected datastore: #{datastore_selected['name']}")
+      # Why are we putting [] around the name in this case??
+      "[#{datastore_selected['name']}]"
     end
   end
   
