@@ -17,7 +17,7 @@ Puppet::Type.type(:vc_cluster_evc).provide(:vc_cluster_evc, :parent => Puppet::P
       Puppet.warning "Unsupported EVC Mode Key: '#{value}'"
       Puppet.warning "Supported EVC Mode Keys are 'disabled' and cluster-specific values #{sem.map{|key| key.to_s}.inspect}."
     end
-    fail message
+    Puppet.warning "Current EVC mode: #{cluster.summary.currentEVCModeKey}"
   end
 
   private
