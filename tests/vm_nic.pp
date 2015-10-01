@@ -16,9 +16,7 @@ vm_nic { $vnic :
   portgroup_type       => $portgroup_type,
 #  start_connected      => $startConnected,
 #  wake_on_lan_enabled  => $wakeOnLan,
-#  status               => 'ok',
 #  allow_guest_control  => $guestControlled,
-#  connected            => 'true',
   transport            => Transport['vcenter'],
 }
 
