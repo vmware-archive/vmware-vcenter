@@ -82,8 +82,7 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
           end
         end
       else
-        puts "unknown child type found: #{f.class}"
-        exit
+        Puppet.warning "findvm: unknown child type found: #{f.class}"
       end
     end
     @vm_obj

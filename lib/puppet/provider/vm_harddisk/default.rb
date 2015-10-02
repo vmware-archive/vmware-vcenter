@@ -96,7 +96,7 @@ Puppet::Type.type(:vm_harddisk).provide(:vm_harddisk, :parent => Puppet::Provide
     when :low
       num_shares=500
     when :custom
-      raise Puppet::Error, "#{resource.inspect} must include propety 'shares' when setting 'level' to 'custom'" unless resource[:shares]
+      raise Puppet::Error, "#{resource.inspect} must include property 'shares' when setting 'level' to 'custom'" unless resource[:shares]
       num_shares=resource[:shares]
     end
     self.shares=num_shares
@@ -198,7 +198,7 @@ Puppet::Type.type(:vm_harddisk).provide(:vm_harddisk, :parent => Puppet::Provide
 
   def virtualDiskFlatVer2BackingInfo
     b = RbVmomi::VIM::VirtualDiskFlatVer2BackingInfo.new(:thinProvisioned => resource[:thin_provisioned].to_s, :fileName => fileName)
-    b.eagerScrub = resource[:eager_scrub] if resource.to_hash.has_key? :eager_scrub
+    b.eagerScrub = resource[:eager_scrub] unless resource[:eager_scrub].nil?
     b
   end
 
