@@ -109,9 +109,14 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     begin
       dvswitch.ReconfigureDvs_Task(:spec => spec).wait_for_completion
     rescue Exception => e
-      fail "#{e.message}"
+      if e.message.match(/AlreadyExists:/i)
+        Puppet.debug('Host already added to DVS')
+      else
+        fail "#{e.message}"
+      end
     end
   end
+
 
   # not private: used by insyncInheritablePolicy
   define_method(:map) do 
