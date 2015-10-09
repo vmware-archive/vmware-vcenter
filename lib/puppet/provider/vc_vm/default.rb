@@ -585,7 +585,22 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :deviceChange => vm_devices
     )
 
-    if resource[:guest_customization].to_s == 'true'
+    if resource[:guest_custom_spec]
+      # get the vm custom spec from the inventory
+      specManager = vim.serviceContent.customizationSpecManager
+      vm_custom_spec_name = resource[:guest_custom_spec]
+      customization = specManager.GetCustomizationSpec(:name => vm_custom_spec_name)
+      if customization.nil?
+        raise(Puppet::Error, "SpecManager could not find the guest customization spec, '#{vm_custom_spec_name}'")
+      end
+      spec = RbVmomi::VIM.VirtualMachineCloneSpec(
+        :location => relocate_spec,
+        :powerOn => (resource[:power_state] == :poweredOn),
+        :template => false,
+        :customization => customization.spec,
+        :config => config_spec
+      )
+    elsif resource[:guest_customization].to_s == 'true'
       Puppet.notice "Customizing the guest OS."
       # Calling getguestcustomization_spec method in case guestcustomization
       # parameter is specified with value true
