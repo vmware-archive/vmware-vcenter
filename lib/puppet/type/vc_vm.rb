@@ -149,6 +149,9 @@ Puppet::Type.newtype(:vc_vm) do
   end
 
   # Guest Customization params
+  newparam(:guest_custom_spec ) do
+    desc 'Name of the guest customization spec to select'
+  end
   newparam(:guest_customization ) do
     desc 'Enable guest customization'
     newvalues(:true, :false)
