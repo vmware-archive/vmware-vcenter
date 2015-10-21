@@ -99,26 +99,34 @@ def collect_datastore_attributes(ds)
   scsi_lun_uuid = host_scsi_disk.uuid
   topology_targets = host_config.storageDevice.scsiTopology.adapter.collect do |adapter|
     adapter.target.find_all do |target|
-      target.transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport) && target.lun.find{|lun| lun.key.include?(scsi_lun_uuid)}
+      (target.transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport) ||
+        target.transport.is_a?(RbVmomi::VIM::HostFibreChannelOverEthernetTargetTransport)) &&
+        target.lun.find{|lun| lun.key.include?(scsi_lun_uuid)}
     end
   end.flatten
   if topology_targets.empty?
     return attributes
   end
-  iscsi_name = topology_targets.first.transport.iScsiName
-  attributes[:iscsi_iqn] = iscsi_name
-
-  address = ''
-  host_storage_device.hostBusAdapter.each do |hba|
-    if hba.respond_to?('configuredStaticTarget')
-      target = hba.configuredStaticTarget.find{|target| target.iScsiName == iscsi_name}
-      unless target.nil?
-        address = target.address
-        break
+  #List of topology targets will have largely the same information that's necessary, so we'll just check the first one
+  transport = topology_targets.first.transport
+  if transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport)
+    iscsi_name = transport.iScsiName
+    attributes[:iscsi_iqn] = iscsi_name
+    address = ''
+    host_storage_device.hostBusAdapter.each do |hba|
+      if hba.respond_to?('configuredStaticTarget')
+        target = hba.configuredStaticTarget.find{|target| target.iScsiName == iscsi_name}
+        unless target.nil?
+          address = target.address
+          break
+        end
       end
     end
+    attributes[:iscsi_group_ip] = address
+  elsif transport.is_a?(RbVmomi::VIM::HostFibreChannelOverEthernetTargetTransport)
+    wwpn = transport.portWorldWideName.to_s(16)
+    attributes[:fcoe_wwpn] = wwpn
   end
-  attributes[:iscsi_group_ip] = address
   attributes
 end
 
