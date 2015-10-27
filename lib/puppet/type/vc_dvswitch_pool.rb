@@ -3,6 +3,15 @@ Puppet::Type.newtype(:vc_dvswitch_pool) do
   @doc = "Manages vCenter Distributed Virtual Switch "\
          "Network Resource Pool Management"
 
+  ensurable do
+    newvalue(:present) do
+      provider.create
+    end
+    newvalue(:absent) do
+      provider.destroy
+    end
+  end
+
   newparam(:name, :namevar => true) do
     desc "{path to dvswitch}:{network resource pool key}"
 
@@ -26,12 +35,16 @@ Puppet::Type.newtype(:vc_dvswitch_pool) do
   newparam(:dvswitch_name) do
   end
 
-  newproperty(:key) do
+  newparam(:key) do
     desc "pool identifier"
   end
 
+  newproperty(:description) do
+    desc "A string describing the network resource pool"
+  end
+
   newproperty(:limit) do
-    desc ""
+    desc "Maximum allowed usage for network clients belonging to this resource pool per host. To set to Unlimited set this to -1"
   end
 
   newproperty(:priority_tag) do

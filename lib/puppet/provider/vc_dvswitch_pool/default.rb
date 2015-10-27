@@ -25,20 +25,66 @@ Puppet::Type.type(:vc_dvswitch_pool).provide(:vc_dvswitch_pool, :parent => Puppe
       case prop_sym
       when :limit, :priorityTag
         config_spec.allocationInfo[prop_sym] = value
-      when :shares
+      when :shares, :level
+        config_spec.allocationInfo.shares ||= RbVmomi::VIM::SharesInfo.new
         config_spec.allocationInfo.shares[prop_sym] = value
-      when :level
-        config_spec.allocationInfo.shares[prop_sym] = RbVmomi::VIM::SharesLevel.new(value.to_sym)
       else
         config_spec[prop_sym] = value
       end
     end
   end
 
+  def create
+    @creating = true
+    @create_message ||= []
+    Puppet::Type.type(:vc_dvswitch_pool).properties.collect{|x| x.name }.each do |prop|
+      unless (value = @resource[prop]).nil?
+        self.send("#{prop}=".to_sym, value)
+        @create_message << "#{prop} => #{value.inspect}"
+      end 
+    end
+  end
+
+  def create_message
+    @create_message ||= []
+    "created using {#{@create_message.join ", "}}"
+  end
+
+  def destroy
+    dvswitch.RemoveNetworkResourcePool( :key => [resource_pool.key] )
+  end
+
+  def exists?
+    resource_pool
+  end
+
   def flush
     if @flush_required
-      dvswitch.UpdateNetworkResourcePool(:configSpec => [config_spec])
+      if @creating
+        dvswitch.AddNetworkResourcePool(:configSpec => [config_spec])
+      else
+        dvswitch.UpdateNetworkResourcePool(:configSpec => [config_spec])
+      end
     end
+  end
+
+  alias set_level level=
+  # Override level= to include setting the shares based off Enum SharesInfo http://pubs.vmware.com/vsphere-55/index.jsp#com.vmware.wssdk.apiref.doc/vim.SharesInfo.Level.html
+  def level=(value)
+    @flush_required = true
+    self.set_level value.to_s
+    case value
+    when :high
+      num_shares = networkResourcePoolHighShareValue
+    when :normal
+      num_shares = networkResourcePoolHighShareValue * 0.5
+    when :low
+      num_shares = networkResourcePoolHighShareValue * 0.25
+    when :custom
+      raise Puppet::Error, "#{resource.inspect} must include property 'shares' when setting 'level' to 'custom'" unless resource[:shares]
+      num_shares=resource[:shares]
+    end
+    self.shares=num_shares.to_i
   end
 
   private
@@ -59,20 +105,29 @@ Puppet::Type.type(:vc_dvswitch_pool).provide(:vc_dvswitch_pool, :parent => Puppe
   def config_spec
     @config_spec ||= begin
       spec = RbVmomi::VIM::DVSNetworkResourcePoolConfigSpec.new
-      spec.name = resource_pool.name.dup
-      spec.key = resource_pool.key.dup
-      spec.description = resource_pool.description.dup
-      spec.allocationInfo = resource_pool.allocationInfo.dup
-      spec.allocationInfo.shares = resource_pool.allocationInfo.shares.dup
-      spec.allocationInfo.shares.level = resource_pool.allocationInfo.shares.level.dup
+      if resource_pool
+        spec.name = resource_pool.name.dup
+        spec.key = resource_pool.key.dup
+        spec.description = resource_pool.description.dup if resource_pool.description
+        spec.allocationInfo = resource_pool.allocationInfo.dup
+        spec.allocationInfo.shares = resource_pool.allocationInfo.shares.dup
+        spec.allocationInfo.shares.level = resource_pool.allocationInfo.shares.level.dup
+      else
+        spec.name = resource[:key]
+        spec.key  = resource[:key]
+        spec.allocationInfo = RbVmomi::VIM::DVSNetworkResourcePoolAllocationInfo.new if resource[:limit] || resource[:priority_tag] || resource[:shares] || resources[:level]
+      end
       spec
     end
   end
 
+  def networkResourcePoolHighShareValue
+    @DvsFeatureCapability ||= vim.serviceContent.dvSwitchManager.QueryDvsFeatureCapability( :switchProductSpec => dvswitch.config.productInfo )
+    @DvsFeatureCapability.networkResourcePoolHighShareValue
+  end
+ 
   def resource_pool
-    @resource_pool ||= dvswitch.networkResourcePool.find{|nrp| nrp.key == @resource[:key]}
-    fail "resource pool #{@resource[:key]} not found." unless @resource_pool
-    @resource_pool
+    @resource_pool ||= dvswitch.networkResourcePool.find{|nrp| nrp.key == @resource[:key] || nrp.name == @resource[:key]}
   end
 
 end
