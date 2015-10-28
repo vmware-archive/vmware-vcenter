@@ -29,7 +29,7 @@ def collect_vcenter_facts(vim)
   }
 end
 
-def collect_inventory(obj)
+def collect_inventory(obj, parent=nil)
   hash = {:name => obj.name, :id => obj._ref, :type => obj.class, :attributes => {}, :children => []}
   case obj
     when RbVmomi::VIM::Folder
@@ -37,7 +37,7 @@ def collect_inventory(obj)
     when RbVmomi::VIM::Datacenter
       @datacenter_count += 1
       vds_children = obj.networkFolder.children.find_all{|x| x.is_a?(RbVmomi::VIM::VmwareDistributedVirtualSwitch)}
-      (obj.hostFolder.children + obj.datastoreFolder.children + vds_children).each { |resource| hash[:children] << collect_inventory(resource) }
+      (obj.hostFolder.children + vds_children).each { |resource| hash[:children] << collect_inventory(resource) }
     when RbVmomi::VIM::ClusterComputeResource
       @cluster_count += 1
       obj.host.each { |host| hash[:children] << collect_inventory(host) }
@@ -47,12 +47,12 @@ def collect_inventory(obj)
     when RbVmomi::VIM::HostSystem
       @host_count += 1
       hash[:attributes] = collect_host_attributes(obj)
-      obj.vm.each{ |vm| hash[:children] << collect_inventory(vm)}
+      (obj.vm + obj.datastore).each{ |vm| hash[:children] << collect_inventory(vm, obj)}
     when RbVmomi::VIM::VirtualMachine
       @vm_count += 1
       hash[:attributes] = collect_vm_attributes(obj)
     when RbVmomi::VIM::Datastore
-      hash[:attributes] = collect_datastore_attributes(obj)
+      hash[:attributes] = collect_datastore_attributes(obj, parent)
     when RbVmomi::VIM::VmwareDistributedVirtualSwitch
       obj.portgroup.each {|portgroup| hash[:children] << collect_inventory(portgroup)}
     when RbVmomi::VIM::DistributedVirtualPortgroup
@@ -72,7 +72,7 @@ def collect_host_attributes(host)
   attributes
 end
 
-def collect_datastore_attributes(ds)
+def collect_datastore_attributes(ds, parent=nil)
   attributes = {}
   #There seems to be some cases where a datastore has no hosts.  Seems like a case of bad data, but we don't want to break on this either way
   if ds.host.empty?
@@ -80,7 +80,11 @@ def collect_datastore_attributes(ds)
   end
   #Have to go through many steps in order to get the iscsi name and the iscsi group IP.  All the data doesn't seem to be in one place
   # so we have to get a piece of data from one place, and match it up to a different place to get all the data we want.
-  host = ds.host.first.key
+  if parent
+    host = ds.host.find{|host| host.key.name == parent.name}.key
+  else
+    host = ds.host.first.key
+  end
   host_config = get_host_config(host)
   mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
   attributes[:volume_name] = mount_info.volume.name
