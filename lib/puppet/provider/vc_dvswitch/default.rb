@@ -19,6 +19,10 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     create_spec = RbVmomi::VIM::DVSCreateSpec.new
     create_spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
     create_spec.configSpec.name = basename
+    if @dvswitch.nil? && resource[:vds_version]
+      create_spec.productInfo = RbVmomi::VIM::DistributedVirtualSwitchProductSpec.new
+      create_spec.productInfo.version = resource[:vds_version]
+    end
     # find the network folder and invoke the task
     dc = vim.serviceInstance.find_datacenter(parent)
     task_create_dvs = dc.networkFolder.CreateDVS_Task(:spec => create_spec)
@@ -133,10 +137,13 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     if type == VIM::HostSystem
       case scope
       when :datacenter
+        product_spec = RbVmomi::VIM::DistributedVirtualSwitchProductSpec.new
+        product_spec.version = host_version(name)
         list = vim.serviceInstance.content.
           dvSwitchManager.QueryCompatibleHostForNewDvs(
             :container => datacenter,
-            :recursive => true
+            :recursive => true,
+              :switchProductSpec => product_spec
           )
         raise 'No ESX hosts compatible for DVS found' if list.size == 0
       else
@@ -228,6 +235,11 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
                   end
     Puppet.debug "found dvswitch: #{@dvswitch.class} '#{@dvswitch.name}'" if @dvswitch
     @dvswitch
+  end
+
+  def host_version(host)
+    @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => host, :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{host}'")
+    @host.summary.config.product.version
   end
 
 end
