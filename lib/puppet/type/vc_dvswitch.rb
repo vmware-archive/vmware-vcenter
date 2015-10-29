@@ -42,6 +42,10 @@ Puppet::Type.newtype(:vc_dvswitch) do
     end
   end
 
+  newparam(:vds_version) do
+    desc "VDS Version that needs to be enforced for newly created VDS."
+  end
+
   map = PuppetX::VMware::Mapper.new_map('VMwareDVSConfigSpecMap')
   map.leaf_list.each do |leaf|
     option = {}
