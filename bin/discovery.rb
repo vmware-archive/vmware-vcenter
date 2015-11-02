@@ -64,10 +64,20 @@ end
 
 def collect_host_attributes(host)
   attributes = {}
-  #For blades, there are 2 service tags.  1 for chassis, and one for the blade itself, and there doesn't seem to be anything distinguishing the 2
+  # For blades, there are 2 service tags from this data.  1 for chassis, and one for the blade itself, and there doesn't seem to be anything distinguishing the 2
+  # Seems unreliable to rely on the ordering of the serviceTags, but the 2nd tag seems to always be the blade's tag
   service_tag_array = host.summary.hardware.otherIdentifyingInfo
-                         .select{|x| x.identifierType.key=='ServiceTag'}
-                         .collect{|x| x.identifierValue}
+                          .select{|x| x.identifierType.key=='ServiceTag'}
+                          .collect{|x| x.identifierValue}
+  #Sometimes vcenter inventory doesn't have the otherIdentifyingInfo populated as expected, so we try to get the data a different way in those cases
+  if service_tag_array.empty? && host.summary.runtime.connectionState == 'connected'
+    begin
+      #Even though we can get a single service tag from this query, it adds a little amount of time to discovery, which could potentially become huge in big environments.
+      service_tag_array = [host.esxcli.hardware.platform.get.SerialNumber]
+    rescue
+      logger.error("Could not query host #{host.name} for service tag")
+    end
+  end
   attributes[:service_tags] = service_tag_array
   attributes
 end
