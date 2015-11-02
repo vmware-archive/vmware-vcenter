@@ -64,10 +64,20 @@ end
 
 def collect_host_attributes(host)
   attributes = {}
-  #For blades, there are 2 service tags.  1 for chassis, and one for the blade itself, and there doesn't seem to be anything distinguishing the 2
+  # For blades, there are 2 service tags from this data.  1 for chassis, and one for the blade itself, and there doesn't seem to be anything distinguishing the 2
+  # Seems unreliable to rely on the ordering of the serviceTags, but the 2nd tag seems to always be the blade's tag
   service_tag_array = host.summary.hardware.otherIdentifyingInfo
-                         .select{|x| x.identifierType.key=='ServiceTag'}
-                         .collect{|x| x.identifierValue}
+                          .select{|x| x.identifierType.key=='ServiceTag'}
+                          .collect{|x| x.identifierValue}
+  #Sometimes vcenter inventory doesn't have the otherIdentifyingInfo populated as expected, so we try to get the data a different way in those cases
+  if service_tag_array.empty? && host.summary.runtime.connectionState == 'connected'
+    begin
+      #Even though we can get a single service tag from this query, it adds a little amount of time to discovery, which could potentially become huge in big environments.
+      service_tag_array = [host.esxcli.hardware.platform.get.SerialNumber]
+    rescue
+      logger.error("Could not query host #{host.name} for service tag")
+    end
+  end
   attributes[:service_tags] = service_tag_array
   attributes
 end
@@ -75,61 +85,57 @@ end
 def collect_datastore_attributes(ds, parent=nil)
   attributes = {}
   #There seems to be some cases where a datastore has no hosts.  Seems like a case of bad data, but we don't want to break on this either way
-  if ds.host.empty?
-    return attributes
-  end
-  #Have to go through many steps in order to get the iscsi name and the iscsi group IP.  All the data doesn't seem to be in one place
-  # so we have to get a piece of data from one place, and match it up to a different place to get all the data we want.
-  if parent
-    host = ds.host.find{|host| host.key.name == parent.name}.key
-  else
-    host = ds.host.first.key
-  end
-  host_config = get_host_config(host)
-  mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
-  attributes[:volume_name] = mount_info.volume.name
-  #TODO:  Handle HostNasVolume(or others), we don't handle currently
-  unless mount_info.volume.is_a?(RbVmomi::VIM::HostVmfsVolume)
-    return attributes
-  end
-  scsi_lun_disk_name = mount_info.volume.extent.first.diskName
-  host_storage_device = host_config.storageDevice
-
-  host_scsi_disk = host_storage_device.scsiLun.find{|lun| lun.canonicalName == scsi_lun_disk_name}
-  if host_scsi_disk.nil?
-    return attributes
-  end
-  attributes[:vendor] = host_scsi_disk.vendor
-  scsi_lun_uuid = host_scsi_disk.uuid
-  topology_targets = host_config.storageDevice.scsiTopology.adapter.collect do |adapter|
-    adapter.target.find_all do |target|
-      (target.transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport) ||
-        target.transport.is_a?(RbVmomi::VIM::HostFibreChannelOverEthernetTargetTransport)) &&
-        target.lun.find{|lun| lun.key.include?(scsi_lun_uuid)}
+  unless ds.host.empty?
+    #Have to go through many steps in order to get the iscsi name and the iscsi group IP.  All the data doesn't seem to be in one place
+    # so we have to get a piece of data from one place, and match it up to a different place to get all the data we want.
+    if parent
+      host = ds.host.find{|host| host.key.name == parent.name}.key
+    else
+      host = ds.host.first.key
     end
-  end.flatten
-  if topology_targets.empty?
-    return attributes
-  end
-  #List of topology targets will have largely the same information that's necessary, so we'll just check the first one
-  transport = topology_targets.first.transport
-  if transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport)
-    iscsi_name = transport.iScsiName
-    attributes[:iscsi_iqn] = iscsi_name
-    address = ''
-    host_storage_device.hostBusAdapter.each do |hba|
-      if hba.respond_to?('configuredStaticTarget')
-        target = hba.configuredStaticTarget.find{|target| target.iScsiName == iscsi_name}
-        unless target.nil?
-          address = target.address
-          break
+    host_config = get_host_config(host)
+    mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
+    attributes[:volume_name] = mount_info.volume.name
+    if mount_info.volume.is_a?(RbVmomi::VIM::HostNasVolume)
+      attributes[:nfs_host] = mount_info.volume.remoteHost
+    elsif mount_info.volume.is_a?(RbVmomi::VIM::HostVmfsVolume)
+      scsi_lun_disk_name = mount_info.volume.extent.first.diskName
+      host_storage_device = host_config.storageDevice
+      host_scsi_disk = host_storage_device.scsiLun.find{|lun| lun.canonicalName == scsi_lun_disk_name}
+      unless host_scsi_disk.nil?
+        attributes[:vendor] = host_scsi_disk.vendor
+        scsi_lun_uuid = host_scsi_disk.uuid
+        topology_targets = host_config.storageDevice.scsiTopology.adapter.collect do |adapter|
+          adapter.target.find_all do |target|
+            (target.transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport) ||
+                target.transport.is_a?(RbVmomi::VIM::HostFibreChannelOverEthernetTargetTransport)) &&
+                target.lun.find{|lun| lun.key.include?(scsi_lun_uuid)}
+          end
+        end.flatten
+        unless topology_targets.empty?
+          #List of topology targets will have largely the same information that's necessary, so we'll just check the first one
+          transport = topology_targets.first.transport
+          if transport.is_a?(RbVmomi::VIM::HostInternetScsiTargetTransport)
+            iscsi_name = transport.iScsiName
+            attributes[:iscsi_iqn] = iscsi_name
+            address = ''
+            host_storage_device.hostBusAdapter.each do |hba|
+              if hba.respond_to?('configuredStaticTarget')
+                target = hba.configuredStaticTarget.find{|target| target.iScsiName == iscsi_name}
+                unless target.nil?
+                  address = target.address
+                  break
+                end
+              end
+            end
+            attributes[:iscsi_group_ip] = address
+          elsif transport.is_a?(RbVmomi::VIM::HostFibreChannelOverEthernetTargetTransport)
+            wwpn = transport.portWorldWideName.to_s(16)
+            attributes[:fcoe_wwpn] = wwpn
+          end
         end
       end
     end
-    attributes[:iscsi_group_ip] = address
-  elsif transport.is_a?(RbVmomi::VIM::HostFibreChannelOverEthernetTargetTransport)
-    wwpn = transport.portWorldWideName.to_s(16)
-    attributes[:fcoe_wwpn] = wwpn
   end
   attributes
 end
