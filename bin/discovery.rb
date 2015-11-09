@@ -79,6 +79,7 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
+  attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
   attributes
 end
 
@@ -103,7 +104,7 @@ def collect_datastore_attributes(ds, parent=nil)
       host_storage_device = host_config.storageDevice
       host_scsi_disk = host_storage_device.scsiLun.find{|lun| lun.canonicalName == scsi_lun_disk_name}
       unless host_scsi_disk.nil?
-        attributes[:vendor] = host_scsi_disk.vendor
+        attributes[:vendor] = (host_scsi_disk.vendor || '').strip
         scsi_lun_uuid = host_scsi_disk.uuid
         topology_targets = host_config.storageDevice.scsiTopology.adapter.collect do |adapter|
           adapter.target.find_all do |target|
