@@ -318,10 +318,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     datastore = resource[:datastore]
-    if datastore
+    unless datastore
       ds = get_cluster_datastore
       raise(Puppet::Error, "Unable to find the target datastore '#{datastore}'") unless ds
-      spec.datastore = ds
+      spec.datastore = datastore_object(ds)
+    else
+      spec.datastore = datastore_object("[#{datastore}]")
     end
 
     spec
@@ -625,6 +627,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :name => vm_name,
       :spec => spec
     ).wait_for_completion
+  end
+
+  def datastore_object(datastore_name)
+    cluster.datastore.select { |ds| ds_obj = ds if "[#{ds.name}]" == datastore_name}.flatten.first
   end
 
   private
