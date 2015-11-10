@@ -630,7 +630,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def datastore_object(datastore_name)
-    cluster.datastore.select { |ds| ds_obj = ds if "[#{ds.name}]" == datastore_name}.flatten.first
+    cluster.datastore.find { |ds| ds_obj = ds if "[#{ds.name}]" == datastore_name}
   end
 
   private
