@@ -57,7 +57,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def shift_networks(current_networks, networks_to_remove)
     Puppet.debug("Inside shift network: current network: #{current_networks.inspect}, networks to remove: #{networks_to_remove.inspect}")
-    require 'pry'
     network_spec = []
     if(networks_to_remove.size != 0)
       new_networks = current_networks.clone
@@ -77,6 +76,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
             new_networks[i].deviceInfo.summary = "DVSwitch: #{dv_switch_uuid}"
             new_networks[i].backing.port.portgroupKey = dv_portgroup.key
             new_networks[i].backing.port.switchUuid = dv_switch.uuid
+            new_networks[i].backing.port.portKey = nil
           else
             new_networks[i].backing[:deviceName] = networks_to_remove[i]['portgroup']
             new_networks[i].deviceInfo.summary = networks_to_remove[i]['portgroup']
