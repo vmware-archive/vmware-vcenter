@@ -11,8 +11,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def network_interfaces
     @vm.config.hardware.device.collect do |x|
-      {'portgroup'=>x.backing.deviceName, 'nic_type'=>x.class.to_s.sub(/\AVirtual/, '').downcase} if x.class < RbVmomi::VIM::VirtualEthernetCard
+      {'portgroup'=>portgroup_name(x), 'nic_type'=>x.class.to_s.sub(/\AVirtual/, '').downcase} if x.class < RbVmomi::VIM::VirtualEthernetCard
     end.compact
+  end
+
+  def portgroup_name(x)
+     return x.backing.deviceName  if x.backing.respond_to?('deviceName')
+     dvswitch_name = dvswitch_uuid(x.backing.port.switchUuid).name
+     dvport_name = dvportgroup_portkey(dvswitch_name, x.backing.port.portgroupKey).name
+     "#{dvport_name} (#{dvswitch_name})"
   end
 
   def network_interfaces=(config)
@@ -54,15 +61,27 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if(networks_to_remove.size != 0)
       new_networks = current_networks.clone
       devices_left = current_networks.find_all do |network|
-        networks_to_remove.index{|n| n['portgroup'] == network.backing.deviceName}.nil?
+        networks_to_remove.index{|n| n['portgroup'] == portgroup_name(network)}.nil?
       end
       #go through and edit the existing network
       new_networks.each_index do |i|
         if(i > devices_left.size-1)
           break
         else
-          new_networks[i].backing[:deviceName] = networks_to_remove[i]['portgroup']
-          new_networks[i].deviceInfo.summary = networks_to_remove[i]['portgroup']
+          if new_networks[i].backing.class.to_s == "VirtualEthernetCardDistributedVirtualPortBackingInfo"
+            dv_switch_info = networks_to_remove[i]['portgroup'].scan(/(\S+)+\s*\((\S+)\)/).flatten
+            dv_switch = dvswitch(dv_switch_info[1])
+            dv_portgroup = dvportgroup(dv_switch.name,dv_switch_info[0])
+            dv_switch_uuid = dv_switch.uuid
+            new_networks[i].deviceInfo.summary = "DVSwitch: #{dv_switch_uuid}"
+            new_networks[i].backing.port.portgroupKey = dv_portgroup.key
+            new_networks[i].backing.port.switchUuid = dv_switch.uuid
+            new_networks[i].backing.port.portKey = nil
+          else
+            new_networks[i].backing[:deviceName] = networks_to_remove[i]['portgroup']
+            new_networks[i].deviceInfo.summary = networks_to_remove[i]['portgroup']
+          end
+
         end
       end
       Puppet.debug("New network: #{new_networks.inspect}")
@@ -532,7 +551,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def network_specs(interfaces=resource[:network_interfaces], action='add')
     interfaces.each_with_index.collect do |nic, index|
       portgroup = nic['portgroup']
-      backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => portgroup)
+      if portgroup.match(/(\S+)\s*\((\S+)\)/)
+        backing = RbVmomi::VIM.VirtualEthernetCardDistributedVirtualPortBackingInfo
+        port = RbVmomi::VIM.DistributedVirtualSwitchPortConnection
+        port.portgroupKey = dvportgroup($2,$1).key
+        port.switchUuid = dvswitch($2).uuid
+        backing.port = port
+      else
+        backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => portgroup)
+      end
       nic =  RbVmomi::VIM.send(
         "Virtual#{PuppetX::VMware::Util.camelize(nic['nic_type'])}".to_sym,
         {
@@ -663,6 +690,68 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def vm
     @vm ||= findvm(datacenter.vmFolder, resource[:name])
+  end
+
+  def dvswitch(dv_switch_name)
+    dvswitches = datacenter.networkFolder.children.select {|n|
+      n.class == RbVmomi::VIM::VmwareDistributedVirtualSwitch
+    }
+    dvswitches.find{|d| d.name == dv_switch_name}
+  end
+
+  def dvswitch_uuid(dv_switch_uuid)
+    dvswitches = datacenter.networkFolder.children.select {|n|
+      n.class == RbVmomi::VIM::VmwareDistributedVirtualSwitch
+    }
+    dvswitches.find{|d| d.uuid == dv_switch_uuid}
+  end
+
+  def dvportgroup(dv_switch_name, dv_port_group_name)
+    name = dv_port_group_name
+    dvs_name = dv_switch_name
+    pg =
+      if datacenter
+        pg =
+          datacenter.networkFolder.children.select{|n|
+            n.class == RbVmomi::VIM::DistributedVirtualPortgroup
+          }.
+              find_all{|pg| pg.name == name}.
+              tap{|all| @dvportgroup_list = all}.
+              find{|pg| pg.config.distributedVirtualSwitch.name == dvs_name}
+        if pg.nil? && (@dvportgroup_list.size != 0)
+          owner = @dvportgroup_list.first.config.distributedVirtualSwitch.name
+          fail "dvportgroup '#{name}' owned by dvswitch '#{owner}', "\
+             "is not available for '#{dvs_name}'"
+        end
+        pg
+      else
+        nil
+      end
+    pg
+  end
+
+  def dvportgroup_portkey(dv_switch_name, dv_port_group_key)
+    name = dv_port_group_key
+    dvs_name = dv_switch_name
+    pg =
+        if datacenter
+          pg =
+              datacenter.networkFolder.children.select{|n|
+                n.class == RbVmomi::VIM::DistributedVirtualPortgroup
+              }.
+                  find_all{|pg| pg.key == name}.
+                  tap{|all| @dvportgroup_list = all}.
+                  find{|pg| pg.config.distributedVirtualSwitch.name == dvs_name}
+          if pg.nil? && (@dvportgroup_list.size != 0)
+            owner = @dvportgroup_list.first.config.distributedVirtualSwitch.name
+            fail "dvportgroup '#{name}' owned by dvswitch '#{owner}', "\
+             "is not available for '#{dvs_name}'"
+          end
+          pg
+        else
+          nil
+        end
+    pg
   end
 
 end
