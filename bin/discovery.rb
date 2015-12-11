@@ -80,6 +80,7 @@ def collect_host_attributes(host)
   end
   attributes[:service_tags] = service_tag_array
   attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
+  attributes[:version] = get_host_config(host).product.version
   attributes
 end
 
