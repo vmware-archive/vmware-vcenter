@@ -238,7 +238,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
   end
 
   def host_version(host)
-    @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => host, :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{host}'")
+    @host ||= vim.searchIndex.FindByDnsName(:datacenter => datacenter , :dnsName => host, :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{host}'")
     @host.summary.config.product.version
   end
 
