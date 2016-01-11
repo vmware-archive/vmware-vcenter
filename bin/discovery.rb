@@ -79,8 +79,10 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
-  attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
-  attributes[:version] = get_host_config(host).product.version
+  unless get_host_config(host)
+    attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
+    attributes[:version] = get_host_config(host).product.version
+  end
   attributes
 end
 
@@ -96,6 +98,7 @@ def collect_datastore_attributes(ds, parent=nil)
       host = ds.host.first.key
     end
     host_config = get_host_config(host)
+    return attributes if host_config.nil?
     mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
     attributes[:volume_name] = mount_info.volume.name
     if mount_info.volume.is_a?(RbVmomi::VIM::HostNasVolume)
