@@ -79,7 +79,7 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
-  unless get_host_config(host)
+  if get_host_config(host)
     attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
     attributes[:version] = get_host_config(host).product.version
   end
