@@ -105,6 +105,7 @@ def collect_datastore_attributes(ds, parent=nil)
       attributes[:nfs_host] = mount_info.volume.remoteHost
     elsif mount_info.volume.is_a?(RbVmomi::VIM::HostVmfsVolume)
       scsi_lun_disk_name = mount_info.volume.extent.first.diskName
+      attributes[:scsi_device_id] = scsi_lun_disk_name
       host_storage_device = host_config.storageDevice
       host_scsi_disk = host_storage_device.scsiLun.find{|lun| lun.canonicalName == scsi_lun_disk_name}
       unless host_scsi_disk.nil?
