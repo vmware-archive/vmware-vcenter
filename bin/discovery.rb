@@ -103,6 +103,7 @@ def collect_datastore_attributes(ds, parent=nil)
     attributes[:volume_name] = mount_info.volume.name
     if mount_info.volume.is_a?(RbVmomi::VIM::HostNasVolume)
       attributes[:nfs_host] = mount_info.volume.remoteHost
+      attributes[:nfs_path] = mount_info.volume.remotePath
     elsif mount_info.volume.is_a?(RbVmomi::VIM::HostVmfsVolume)
       scsi_lun_disk_name = mount_info.volume.extent.first.diskName
       attributes[:scsi_device_id] = scsi_lun_disk_name
