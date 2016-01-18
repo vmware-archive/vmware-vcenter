@@ -101,6 +101,8 @@ def collect_datastore_attributes(ds, parent=nil)
     return attributes if host_config.nil?
     mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
     attributes[:volume_name] = mount_info.volume.name
+    # Capacity will be returned back in gigabytes
+    attributes[:capacity] = mount_info.volume.capacity / 1024.0 / 1024.0 / 1024.0
     if mount_info.volume.is_a?(RbVmomi::VIM::HostNasVolume)
       attributes[:nfs_host] = mount_info.volume.remoteHost
       attributes[:nfs_path] = mount_info.volume.remotePath
