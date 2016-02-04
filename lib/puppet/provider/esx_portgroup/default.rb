@@ -240,6 +240,40 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
     end
   end
 
+  def vsan
+    Puppet.debug "Retrieving vsan status flag of specified portgroup."
+    begin
+      myportgroup = find_portgroup
+      ports = myportgroup.port
+      if (ports !=nil)
+        if ( myportgroup.port[0] != nil)
+          type=myportgroup.port[0].type
+          if (type == "host")
+            #if it is a VMkernel port group then need to change the vsan flag as per given by user
+            return "currentstatus"
+          else
+            #return the same value as given by user
+            return resource[:vsan]
+          end
+        else
+          return resource[:vsan]
+        end
+
+      end
+    rescue Exception => e
+      fail "Unable to retrieve vsan status flag of the specified portgroup because the following exception occurred: -\n #{e.message}"
+    end
+  end
+
+  def vsan=(value)
+    Puppet.debug "Updating vmotion status flag of specified portgroup."
+    begin
+      setupvsan
+    rescue Exception => e
+      fail "Unable to configure the  vMotion on a port group because the following exception occurred: -\n #{e.message}"
+    end
+  end
+
   #ipsettings property getter method.
   def ipsettings
     Puppet.debug "Retrieving ip configuration of specified portgroup."
@@ -597,6 +631,46 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
         it throws an exception - just a workaround to handle this scenario.
 =end
         Puppet.debug "vmotion is already disabled."
+      end
+
+    end
+  end
+
+  def setupvsan
+    Puppet.debug "Entering setup vsan method."
+    @networksystem=host.configManager.networkSystem
+    vnicdevice = nil
+
+    if (resource[:portgrouptype] == :VMkernel)
+      @virtualNicManager = host.configManager.virtualNicManager
+
+      vnics=@networksystem.networkInfo.vnic
+
+      #enabling vmotion
+      vnics.each do |vnic|
+        if (vnic.portgroup && resource[:portgrp] == vnic.portgroup)
+          vnicdevice=vnic.device
+        end
+      end
+      if (resource[:vsan] == :enabled)
+        if (vnicdevice != nil)
+          @virtualNicManager.SelectVnicForNicType(:nicType => "vsan" , :device => vnicdevice)
+        end
+      end
+
+      begin
+        #disabling vmotion
+        if (resource[:vmotion] == :disabled)
+          if (vnicdevice != nil)
+            @virtualNicManager.DeselectVnicForNicType(:nicType => "vsan" , :device => vnicdevice)
+          end
+        end
+      rescue Exception => e
+=begin
+        Exception is handled here to just log a debug message because there is no way to retrieve vMotion current status and if puupet tries to disable vMotion when it is already disabled,
+        it throws an exception - just a workaround to handle this scenario.
+=end
+        Puppet.debug "vsan is already disabled."
       end
 
     end
