@@ -152,11 +152,6 @@ Puppet::Type.newtype(:esx_portgroup) do
     newvalues(:enabled, :disabled)
   end
 
-  newproperty (:vsan) do
-    desc "Enable or Disable the vsan on the VMkernel portgroup."
-    newvalues(:enabled, :disabled)
-  end
-
   newproperty (:ipsettings) do
     desc "IP settings on the VMkernel port group."
     newvalues(:dhcp, :static)
