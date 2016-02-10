@@ -20,14 +20,15 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
         volume[:password] = resource[:password] if resource[:password]
         host.configManager.datastoreSystem.CreateNasDatastore(:spec => volume)
       when 'VMFS'
-        attempt = 3
+        attempt = 10
         while ! create_vmfs_lun and ! exists? and attempt > 0
           Puppet.debug('Rescanning for volume')
           host.configManager.storageSystem.RescanAllHba() unless find_disk
           host.configManager.storageSystem.RescanVmfs()
+          host.configManager.storageSystem.RefreshStorageSystem()
           # Sleeping because scanning is async:
           # http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.apiref.doc/vim.host.StorageSystem.html#rescanAllHba
-          sleep 5
+          sleep 10
 
           attempt -= 1
         end
