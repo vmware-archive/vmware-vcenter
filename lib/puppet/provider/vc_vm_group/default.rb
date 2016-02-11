@@ -105,7 +105,7 @@ Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provide
   end
 
   def cluster
-    @cluster ||= locate(@resource[:path], RbVmomi::VIM::ClusterComputeResource)
+    @cluster ||= locate(@resource[:path], RbVmomi::VIM::ClusterComputeResource) or raise Puppet::Error, "#{self} cluster not found at path '#{resource[:path]}'."
   end
 end
 

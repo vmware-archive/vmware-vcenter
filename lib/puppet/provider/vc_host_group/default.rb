@@ -25,7 +25,7 @@ Puppet::Type.type(:vc_host_group).provide(:vc_host_group, :parent => Puppet::Pro
   end
 
   def hosts
-    # Configured is Hosts that currently reside under the existing VM group
+    # Configured is Hosts that currently reside under the existing Host group
     configured  = host_group.host.map { |host| host.name }
     # Discovered is Hosts that exist in the cluster matching the requested names
     discovered = host_list(resource[:hosts]).map { |host| host.name }
@@ -83,7 +83,7 @@ Puppet::Type.type(:vc_host_group).provide(:vc_host_group, :parent => Puppet::Pro
   end
 
   def cluster
-    @cluster ||= locate(@resource[:path], RbVmomi::VIM::ClusterComputeResource)
+    @cluster ||= locate(@resource[:path], RbVmomi::VIM::ClusterComputeResource) or raise Puppet::Error, "#{self} cluster not found at path '#{resource[:path]}'."
   end
 end
 
