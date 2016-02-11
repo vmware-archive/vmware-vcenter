@@ -55,6 +55,7 @@ Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provide
 
     group_spec = RbVmomi::VIM::ClusterGroupSpec( spec )
     spec = RbVmomi::VIM::ClusterConfigSpecEx(:groupSpec => [ group_spec ])
+    Puppet.debug "#{self} Reconfiguring cluster '#{cluster.name}' with #{spec.inspect}'"
     cluster.ReconfigureComputeResource_Task(:spec => spec, :modify => true).wait_for_completion
   end
 
@@ -64,7 +65,7 @@ Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provide
     @vm_group ||= 
       begin 
         vm_group = cluster.configurationEx.group.find {|group| group.name == @resource[:name]}
-        raise Puppet::Error, "#{self} :: A ClusterGroup of another type already exists matching '#{resource[:name]}'. You cannot have host groups and vm groups share the same name space." if host_group.class.to_s != 'ClusterVmGroup'
+        raise Puppet::Error, "#{self} :: A ClusterGroup of another type already exists matching '#{resource[:name]}'. You cannot have host groups and vm groups share the same name space." unless vm_group.nil? ||  vm_group.class.to_s == 'ClusterVmGroup'
         Puppet.debug "#{self} returned ClusterVmGroup '#{vm_group.inspect}'"
         vm_group
       end
