@@ -61,10 +61,41 @@ Puppet::Type.type(:vc_vsan_network).provide(:vv_vsan, :parent => Puppet::Provide
     nicmgr = host.configManager.virtualNicManager.info.netConfig
     nicmgr.each do |n|
       n.candidateVnic.each do |nic|
-        return nic.device if nic.portgroup == resource[:vsan_port_group_name]
+        if resource[:vsan_port_group_name]
+          return nic.device if nic.portgroup == resource[:vsan_port_group_name]
+        elsif resource[:vsan_dv_port_group_name] && resource[:vsan_dv_switch_name]
+          dv_pg = dvportgroup(resource[:vsan_dv_switch_name], resource[:vsan_dv_port_group_name])
+          return nic.device if nic.spec.distributedVirtualPort.portgroupKey == dv_pg.key
+        end
+
       end
     end
     raise("Failed to find vmkernel for portgroup : #{resource[:vsan_port_group_name]}")
+  end
+
+  def dvportgroup(dv_switch_name, dv_port_group_name)
+    return @pg unless @pg.nil?
+    name = dv_port_group_name
+    dvs_name = dv_switch_name
+    pg =
+        if datacenter
+          pg =
+              datacenter.networkFolder.children.select{|n|
+                n.class == RbVmomi::VIM::DistributedVirtualPortgroup
+              }.
+                  find_all{|pg| pg.name == name}.
+                  tap{|all| @dvportgroup_list = all}.
+                  find{|pg| pg.config.distributedVirtualSwitch.name == dvs_name}
+          if pg.nil? && (@dvportgroup_list.size != 0)
+            owner = @dvportgroup_list.first.config.distributedVirtualSwitch.name
+            fail "dvportgroup '#{name}' owned by dvswitch '#{owner}', "\
+             "is not available for '#{dvs_name}'"
+          end
+          pg
+        else
+          nil
+        end
+    @pg = pg
   end
 
 
