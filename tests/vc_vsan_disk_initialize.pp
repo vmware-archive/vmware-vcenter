@@ -8,11 +8,10 @@ transport { 'vcenter':
 }
 
 # This resource is not ready for testing:
-vc_vsan { 'vsan_config':
+vc_vsan_disk_initialize { 'vsan_disk_init':
   ensure => present,
   datacenter => $dc1['name'],
   cluster => $cluster1['name'],
-  auto_claim => true,
   transport => Transport['vcenter'],
 }
 

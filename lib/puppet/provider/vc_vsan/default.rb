@@ -2,7 +2,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
-Puppet::Type.type(:vc_vsan).provide(:vv_vsan, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcenter) do
   @doc = "Enable / Disable VSAN property."
 
   def create

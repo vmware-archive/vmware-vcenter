@@ -8,11 +8,11 @@ transport { 'vcenter':
 }
 
 # This resource is not ready for testing:
-vc_vsan { 'vsan_config':
+vc_vsan_network { 'vsan_config':
   ensure => present,
   datacenter => $dc1['name'],
   cluster => $cluster1['name'],
-  auto_claim => true,
+  vsan_port_group_name => 'vsan',
   transport => Transport['vcenter'],
 }
 
