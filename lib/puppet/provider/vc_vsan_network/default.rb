@@ -2,7 +2,7 @@ provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
 
-Puppet::Type.type(:vc_vsan_network).provide(:vv_vsan, :parent => Puppet::Provider::Vcenter) do
+Puppet::Type.type(:vc_vsan_network).provide(:vc_vsan_network, :parent => Puppet::Provider::Vcenter) do
   @doc = "Enable / Disable VSAN property of vmkernel for each host in the cluster"
 
   def create
