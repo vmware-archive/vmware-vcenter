@@ -8,16 +8,30 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
 
   def create
     cluster_hosts.each do |host|
-      next if disk_configured?(host)
-      initialize_disk(host)
+      if disk_configured?(host)
+        Puppet.debug("Skipping disk Initialization for server #{host.name}")
+        next
+      else
+        Puppet.debug("Initiating disk intialization for #server #{host.name}")
+        initialize_disk(host)
+      end
     end
   end
 
   def destroy
+    if resource[:cleanup_hosts]
+      cleanup_hosts_disk_group
+    else
+      cleanup_cluster_disk_group
+    end
+  end
+
+  def host_system(host)
+    cluster_hosts.find {|x| x.name == host}
   end
 
   def exists?
-    false
+    resource[:ensure] == :present ? false : true
   end
 
   def datacenter
@@ -42,23 +56,27 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     ( cluster.host || [] )
   end
 
-  def disk_configured?(host)
+  def disk_mappings(host)
     diskm = RbVmomi::VIM::VimClusterVsanVcDiskManagementSystem(hsconn, 'vsan-disk-management-system')
-    disk_mappings = diskm.QueryDiskMappings(:host => host)
+    diskm.QueryDiskMappings(:host => host)
+  end
+
+  def disk_configured?(host)
+    disk_mappings = disk_mappings(host)
     !disk_mappings.empty?
   end
 
   def hsconn
-    @hsconn = RbVmomi::VIM.new(:host => vim.host,
+    conn = RbVmomi::VIM.new(:host => vim.host,
                                :port => 443,
                                :insecure => true,
                                :ns => 'urn:vim25',
                                :ssl => true,
                                :rev => "6.0",
                                :path => '/vsanHealth' )
-    @hsconn.cookie = vim.cookie
-    @hsconn.debug = vim.debug
-    @hsconn
+    conn.cookie = vim.cookie
+    conn.debug = vim.debug
+    conn
   end
 
   def initialize_disk(host)
@@ -82,11 +100,45 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     diskspec.creationType = "hybrid"
     diskspec.host = host
     diskm = RbVmomi::VIM::VimClusterVsanVcDiskManagementSystem(hsconn, 'vsan-disk-management-system')
-    task_ref = diskm.InitializeDiskMappings(:spec => diskspec)
-    task_ref.wait_for_completion
-    raise("Failed to initialize disk for host #{host.name}") unless task_ref.info.state == "success"
+    task = diskm.InitializeDiskMappings(:spec => diskspec)
   end
 
 
+  def cleanup_cluster_disk_group
+    cluster_hosts.each do |cluster_host|
+      cleanup_disk_group(cluster_host)
+    end
+  end
+
+  def cleanup_hosts_disk_group
+    Puppet.debug("Cleanup hosts : #{resource[:cleanup_hosts]}")
+    if resource[:cleanup_hosts].is_a?(String)
+      host = host_system(resource[:cleanup_hosts])
+      cleanup_disk_group(host)
+    else
+      resource[:cleanup_hosts].each do |input_host|
+        host = host_system(input_host)
+        cleanup_disk_group(host)
+      end
+    end
+  end
+
+  def cleanup_disk_group(host)
+    vsansys = host.configManager.vsanSystem
+    disk_mappings = vsan_query_disk(host)
+    unless disk_mappings.empty?
+      task_ref = vsansys.RemoveDiskMapping_Task(:mapping => disk_mappings )
+      task_ref.wait_for_completion
+      raise("Failed to cleanuo disk-grpup for host #{host.name}") unless task_ref.info.state == "success"
+    end
+  end
+
+  def vsan_query_disk(host)
+    vsan_mapping = []
+    disk_mappings(host).each do |map|
+      vsan_mapping << map.mapping
+    end
+    vsan_mapping
+  end
 
 end
