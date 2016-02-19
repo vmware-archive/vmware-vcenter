@@ -31,7 +31,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
   end
 
   def exists?
-    resource[:ensure] == :present ? false : true
+    resource[:ensure] != :present
   end
 
   def datacenter
