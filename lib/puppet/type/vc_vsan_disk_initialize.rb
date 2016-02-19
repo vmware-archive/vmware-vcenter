@@ -15,4 +15,8 @@ Puppet::Type.newtype(:vc_vsan_disk_initialize) do
     desc 'Name of the cluster.'
   end
 
+  newparam(:cleanup_hosts) do
+    desc 'Array of Hosts to be removed from VSAN '
+  end
+
 end

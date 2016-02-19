@@ -31,7 +31,8 @@ Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcent
   end
 
   def exists?
-    cluster.configurationEx.vsanConfigInfo.enabled
+    ( vsan_config_info.enabled &&
+        vsan_config_info.defaultConfig.autoClaimStorage == resource[:auto_claim])
   end
 
   def datacenter
