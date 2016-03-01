@@ -100,7 +100,10 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     diskspec.creationType = "hybrid"
     diskspec.host = host
     diskm = RbVmomi::VIM::VimClusterVsanVcDiskManagementSystem(hsconn, 'vsan-disk-management-system')
-    task = diskm.InitializeDiskMappings(:spec => diskspec)
+    diskm.InitializeDiskMappings(:spec => diskspec)
+    # disk initialization do not support async operation.
+    # adding delay to avoid multiple init of disk on multiple nodes
+    sleep(15)
   end
 
 
