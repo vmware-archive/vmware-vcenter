@@ -75,7 +75,7 @@ def collect_host_attributes(host)
       #Even though we can get a single service tag from this query, it adds a little amount of time to discovery, which could potentially become huge in big environments.
       service_tag_array = [host.esxcli.hardware.platform.get.SerialNumber]
     rescue
-      logger.error("Could not query host #{host.name} for service tag")
+      STDERR.puts "Could not query host #{host.name} for service tag"
     end
   end
   attributes[:service_tags] = service_tag_array
