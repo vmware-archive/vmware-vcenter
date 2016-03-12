@@ -104,6 +104,7 @@ Puppet::Type.type(:iscsi_intiator_binding).provide(:default, :parent => Puppet::
         if ( binded_vmk_nics_arr.uniq.sort == input_vmk_nics_arr.uniq.sort )
           flag = 0
         else
+          resource[:vmknics] = (input_vmk_nics_arr - binded_vmk_nics_arr).uniq.join(" ")
           flag = 1
         end
       else
