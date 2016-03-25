@@ -85,3 +85,30 @@ $vpx_settings = {
   'event.maxAgeEnabled' => false,
   'event.maxAge'        => l4,
 }
+
+# Sample data for vm_hardware, vm_nic and vm_harddisk
+$vmname = 'vm1'
+$datacenter = 'testdc1'
+
+###  vm_hardware
+$num_cpus   = '4'
+$num_cores  = 1
+$memory     = 2048
+$ich7m      = false
+$smc        = false
+
+###  vm_virtualdisk
+$hdd             = 'Hard disk 2'
+$shareLevel      = 'high'
+$capacity        = 8388608
+$diskMode        = 'persistent'
+$controller      = "SCSI controller 0"
+
+###  vm_vmxnet3
+$vnic            = 'Network adapter 2'
+$nic_type        = 'e1000e'
+$portgroup       = 'VM Network'
+$portgroup_type  = 'standard'
+$startConnected  = true
+$guestControlled = true
+$wakeOnLan       = false
