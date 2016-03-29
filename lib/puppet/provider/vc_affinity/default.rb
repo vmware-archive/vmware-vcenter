@@ -57,7 +57,9 @@ Puppet::Type.type(:vc_affinity).provide(:vc_affinity, :parent => Puppet::Provide
   def resolve_vms(vm_array)
     vm_mob_array = []
     vm_array.each do |vm|
-      vm_mob_array.push(find_vm(cluster.resourcePool.vm,vm))
+      found_vm = find_vm(cluster.resourcePool,vm)
+      fail "Could not find virtual machine: #{vm}" unless found_vm
+      vm_mob_array.push(found_vm)
     end
     vm_mob_array
   end
@@ -65,12 +67,15 @@ Puppet::Type.type(:vc_affinity).provide(:vc_affinity, :parent => Puppet::Provide
   # Find a VM by name in a given array of VM managed objects (cluster.resourcePool.vm)
   def find_vm(rp,vm_name)
     mob_vm = nil
-    rp.each do |vm|
+    rp.vm.each do |vm|
       break if ! mob_vm.nil?
       mob_vm = vm if vm.name == vm_name
     end
     if mob_vm.nil?
-      fail "Could not find virtual machine: #{vm_name}"
+      rp.resourcePool.each do |child_rp|
+        break if ! mob_vm.nil?
+        mob_vm = find_vm(child_rp, vm_name)
+      end
     end
     mob_vm
   end
