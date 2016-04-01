@@ -6,8 +6,19 @@ require 'rbvmomi'
 Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vsphere hosts entering and exiting maintenance mode."
   def enterMaintenanceMode
-    host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
-    :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
+    if resource[:vsan_action].nil?
+      host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
+                                     :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
+    else
+      decommissionmode = RbVmomi::VIM::VsanHostDecommissionMode.new
+      decommissionmode.objectAction = resource[:vsan_action]
+      hostmaintspec = RbVmomi::VIM::HostMaintenanceSpec.new
+      hostmaintspec.vsanMode = decommissionmode
+      host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
+                                     :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms],
+                                     :maintenanceSpec => hostmaintspec).wait_for_completion
+    end
+
   end
 
   def exitMaintenanceMode

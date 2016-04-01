@@ -53,4 +53,9 @@ Puppet::Type.newtype(:esx_maintmode) do
       v.inspect
     end
   end
+
+  newparam(:vsan_action) do
+    desc "describe VSAN action needs to be taken"
+    newvalues('ensureObjectAccessibility', 'evacuateAllData', 'noAction')
+  end
 end
