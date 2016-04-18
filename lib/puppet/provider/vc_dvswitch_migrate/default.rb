@@ -25,7 +25,7 @@ Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
 
   def find_vmknic vmknic
     result = host.configManager.networkSystem.networkConfig.vnic.find{ |v|
-      v.device = vmknic
+      v.device == vmknic
     }
     result or fail "#{host.name}: #{vmknic} not found"
   end
