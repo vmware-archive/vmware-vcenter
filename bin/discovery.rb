@@ -176,6 +176,7 @@ begin
   Timeout.timeout(opts[:timeout]) do
     vim = RbVmomi::VIM.connect(:host=>opts[:server], :password=>opts[:password], :user=> opts[:username], :port=>opts[:port], :insecure=>true)
     facts = collect_vcenter_facts(vim).to_json
+    vim.close if vim # close open connection
   end
 rescue Timeout::Error
   puts "Timed out trying to gather inventory"
