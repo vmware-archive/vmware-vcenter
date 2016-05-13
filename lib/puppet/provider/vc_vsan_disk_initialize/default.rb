@@ -87,7 +87,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     vsandisks.each do |vsandisk|
       next if vsandisk.disk.displayName.match(/usb/i)
       next  if vsandisk.state == "inUse"
-      next  if vsandisk.vendor.strip == "ATA"
+      next  if vsandisk.disk.vendor.strip == "ATA"
       if vsandisk.disk.ssd
         ssd.push(vsandisk.disk)
       else
