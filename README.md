@@ -129,7 +129,7 @@ options => {
 
 ### esx_ntpconfig
 #### Parameters
-* `server` ['array','of','ntp','servers']
+* `server`: ['array','of','ntp','servers']
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
 
 ### esx_powerpolicy
@@ -188,3 +188,28 @@ Manages ESXi vmknic types - management, vmotion, faultToleranceLogging, or vSphe
 #### Parameters
 * `nic_type`: 'faultToleranceLogging', 'management', 'vmotion', 'vSphereReplication'
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_license
+#### Parameters
+* `license_key`: Namevar variable for puppet.
+Adds licenses to Vcenter pool.  Does not assign them to managed entities (esxi, vcenter).  Use esx_license_assignment to assign licenses to entities.
+#### Usage
+```
+esx_license { 'XXXXX-XXXXX-XXXXX-XXXXX-XXXXX'
+  ensure    => present,
+  transport => Transport['vcenter']
+}
+```
+or
+```
+esx_license { 'mylicense':
+  license_key => 'XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
+  ensure      => present,
+  transport   => Transport['vcenter']
+}
+```
+### esx_license_assignment
+Manage vsphere license assignment. entity_id should be the name of an esx host or vcenter. Licenses can only be assigned to one entity at a time.
+#### Parameters
+* `entity_id`: Name of ESX or Virtual Center node associated with the license key
+* `license_key`: vSphere License Key
