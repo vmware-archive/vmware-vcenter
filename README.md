@@ -103,14 +103,6 @@ options => {
 "Config.GlobalSettings.guest.commands.sharedPolicyRefCount" => 0   # IntOption     default 0
 ```
 
-### esx_datastore
-#### Parameters
-* `ensure`: present
-* `type`: 'NFS,CIFS,VMFS'
-* `remote_host`: IP or DNS name of remote host.
-* `remote_path`: Path to directory/folder or remote host.
-* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
-
 ### esx_debug
 #### Parameters
 * `debug`: true, false
@@ -168,6 +160,8 @@ This resource allows the configuration of system resources of a host that are vi
 * `memory_limit`:
 * `memory_reservation`:
 * `memory_expandable_reservation`:
+* `cpu_unlimited`: Enable unlimited CPU resources. Can't be used in conjunction with `cpu_limit`
+* `memory_unlimited`: Enable unlimited Memory resources. Can't be used in conjunction with `memory_limit`
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
 
 ### esx_timezone
@@ -177,14 +171,20 @@ This resource allows the configuration of system resources of a host that are vi
 
 ### esx_datastore
 Manage vCenter esx hosts' datastore.
+The datastore name should be in the form of: `ESXi_hostname:<datastore name>`.      
 #### Parameters
 * `ensure`: present
 * `type`: vmfs, cifs, nfs
 * `lun`: LUN number of storage volume.  Specify only for block storage.
+* `remote_host`: IP or DNS name of remote host.
+* `remote_path`: Path to directory/folder or remote host.
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+
 
 ### esx_vmknic_type
 Manages ESXi vmknic types - management, vmotion, faultToleranceLogging, or vSphereReplication
+The vmknic type should be in the form of: `ESXi_hostname:<name of vmknic>`.
 #### Parameters
 * `nic_type`: 'faultToleranceLogging', 'management', 'vmotion', 'vSphereReplication'
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
