@@ -14,7 +14,7 @@ end
 facts = {}
 
 def collect_esx_installed_packages(host)
-  host.esxcli.software.vib.list.map { |o| o.props.reject { |k| k == :dynamicProperty} }
+  host.esxcli.software.vib.get.map { |o| o.props.reject { |k| k == :dynamicProperty} }
 end
 
 def collect_esx_facts(vim)
