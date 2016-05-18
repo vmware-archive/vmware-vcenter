@@ -39,6 +39,7 @@ Puppet::Type.type(:esx_advanced_options).provide(:esx_advanced_options, :parent 
 
   def cast_option(key, value)
     optdef = host.configManager.advancedOption.supportedOption.find{|so| so[:key] == key}
+    return value.to_i if optdef.nil?
     case optdef.optionType.class.to_s
     when "IntOption"
       RbVmomi::BasicTypes::Int.new value.to_i
