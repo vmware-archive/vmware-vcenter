@@ -96,15 +96,27 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     end
     return true if ssd.empty?
     diskspec = RbVmomi::VIM::VimVsanHostDiskMappingCreationSpec.new()
-    diskspec.cacheDisks = ssd
-    diskspec.capacityDisks = nonssd
-    diskspec.creationType = "hybrid"
+
+    case creation_type(nonssd)
+      when "hybrid"
+        diskspec.cacheDisks = ssd
+        diskspec.capacityDisks = nonssd
+        diskspec.creationType = "hybrid"
+      when "allFlash"
+        diskspec.cacheDisks = ssd[0]
+        diskspec.capacityDisks = ssd[1..ssd.size-1]
+        diskspec.creationType = "allFlash"
+    end
     diskspec.host = host
     diskm = RbVmomi::VIM::VimClusterVsanVcDiskManagementSystem(hsconn, 'vsan-disk-management-system')
     diskm.InitializeDiskMappings(:spec => diskspec)
     # disk initialization do not support async operation.
     # adding delay to avoid multiple init of disk on multiple nodes
     sleep(15)
+  end
+
+  def creation_type(non_ssd)
+    non_ssd.size >= 1 ? "hybrid" : "allFlash"
   end
 
 
