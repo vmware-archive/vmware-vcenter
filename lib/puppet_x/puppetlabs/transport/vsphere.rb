@@ -30,5 +30,11 @@ module PuppetX::Puppetlabs::Transport
       Puppet.debug("#{self.class} closing connection to: #{@options[:host]}")
       @vim.close if @vim
     end
+
+    def reconnect
+      close
+      @vim = nil
+      connect
+    end
   end
 end
