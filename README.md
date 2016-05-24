@@ -63,7 +63,7 @@ connectivity used to manage the resource:
       ensure    => present,
       transport => Transport['lab'],
     }
-    
+
     vc_folder { '/dc1/folder1':
       ensure    => absent,
       transport => Transport['lab'],
@@ -87,3 +87,129 @@ An ESX host can be attached and managed indirectly via vSphere API:
     }
 
 See tests folder for additional examples.
+
+## ESXi resource types
+### esx_advanced_options
+#### Parameters
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+* `options`: A hash containing a list of options:
+```
+options => {
+"Vpx.Vpxa.config.log.level"  => "verbose",   # ChoiceOption  default "verbose"
+"Config.HostAgent.log.level" => "verbose",   # ChoiceOption  default "verbose"
+"Annotations.WelcomeMessage" => "",          # StringOption  default ""
+"BufferCache.SoftMaxDirty"   => 15,          # LongOption    default 15
+"CBRC.Enable"                => false,       # BoolOption    default false
+"Config.GlobalSettings.guest.commands.sharedPolicyRefCount" => 0   # IntOption     default 0
+```
+
+### esx_debug
+#### Parameters
+* `debug`: true, false
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_dnsconfig
+#### Parameters
+* `address`: ['array','of','dns','values']
+* `host_name`: Hostname of ESXi server.
+* `domain_name`: Domain name of ESXi server.
+* `search_domain`: Search domain of ESXi server.
+* `dhcp`: true, false
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+#### Further Documentation
+[VMware Docs](http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.host.DnsConfig.html)
+
+### esx_ntpconfig
+#### Parameters
+* `server`: ['array','of','ntp','servers']
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_powerpolicy
+#### Parameters
+* `current_policy`: 'static','dynamic','low'
+static = High performance
+dynamic = Balanced
+low = Low Power
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+
+### esx_service
+The service name should be in the form of: `ESXi_hostname:<service name`. Eg `esx.example.com:ntpd`
+#### Parameters
+* `running`: true, false
+* `policy`: 'on','off','automatic'
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_syslog
+#### Parameters
+* `default_rotate`: The maximum number of log files to keep locally on the ESXi host in the configured logDir. Does not affect remote syslog server retention. Defaults to 8
+* `default_size`: The maximum size, in kilobytes, of each local log file before it is rotated. Does not affect remote syslog server retention. Defaults to 1024 KB.
+* `log_dir`: A location on a local or remote datastore and path where logs are saved to. Has the format `[DatastoreName] DirectoryName/Filename`, which maps to `/vmfs/volumes/DatastoreName/DirectoryName/Filename`. The `[DatastoreName]` is case sensitive and if the specified DirectoryName does not exist, it will be created. If the datastore path field is blank, the logs are only placed in their default location. If `/scratch` is defined, the default is `[]/scratch/log`.
+* `log_host`:A remote server where logs are sent using the syslog protocol. If the logHost field is blank, no logs are forwarded. Include the protocol and port, similar to `tcp://hostname:514`
+* `log_dir_unique`: A boolean option which controls whether a host-specific directory is created within the configured logDir. The directory name is the hostname of the ESXi host. A unique directory is useful if the same shared directory is used by multiple ESXi hosts. Defaults to false.
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_system_resource
+#### Parameters
+This resource allows the configuration of system resources of a host that are viewed und er the 'System Resource Allocation' section of the vSphere client
+* `host`:
+* `system_resource`:
+* `cpu_limit`:
+* `cpu_reservation`:
+* `cpu_expandable_reservation`:
+* `memory_limit`:
+* `memory_reservation`:
+* `memory_expandable_reservation`:
+* `cpu_unlimited`: Enable unlimited CPU resources. Can't be used in conjunction with `cpu_limit`
+* `memory_unlimited`: Enable unlimited Memory resources. Can't be used in conjunction with `memory_limit`
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_timezone
+#### Parameters
+* `key`: 3 letter time zone. Eg: 'GMT'
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_datastore
+Manage vCenter esx hosts' datastore.
+The datastore name should be in the form of: `ESXi_hostname:<datastore name>`.      
+#### Parameters
+* `ensure`: present
+* `type`: vmfs, cifs, nfs
+* `lun`: LUN number of storage volume.  Specify only for block storage.
+* `remote_host`: IP or DNS name of remote host.
+* `remote_path`: Path to directory/folder or remote host.
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+
+
+### esx_vmknic_type
+Manages ESXi vmknic types - management, vmotion, faultToleranceLogging, or vSphereReplication
+The vmknic type should be in the form of: `ESXi_hostname:<name of vmknic>`.
+#### Parameters
+* `nic_type`: 'faultToleranceLogging', 'management', 'vmotion', 'vSphereReplication'
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+### esx_license
+#### Parameters
+* `license_key`: Namevar variable for puppet.
+Adds licenses to Vcenter pool.  Does not assign them to managed entities (esxi, vcenter).  Use esx_license_assignment to assign licenses to entities.
+#### Usage
+```
+esx_license { 'XXXXX-XXXXX-XXXXX-XXXXX-XXXXX'
+  ensure    => present,
+  transport => Transport['vcenter']
+}
+```
+or
+```
+esx_license { 'mylicense':
+  license_key => 'XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
+  ensure      => present,
+  transport   => Transport['vcenter']
+}
+```
+### esx_license_assignment
+Manage vsphere license assignment. entity_id should be the name of an esx host or vcenter. Licenses can only be assigned to one entity at a time.
+#### Parameters
+* `entity_id`: Name of ESX or Virtual Center node associated with the license key
+* `license_key`: vSphere License Key
