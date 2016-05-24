@@ -134,4 +134,11 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     @host
   end
 
+  def reset_connection
+    if @transport && @transport.respond_to?(:reconnect)
+      @transport.reconnect
+      @host = @rootfolder = nil  # reset instance variables
+    end
+  end
+
 end
