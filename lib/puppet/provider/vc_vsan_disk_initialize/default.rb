@@ -7,14 +7,24 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
   @doc = "Initialize VSAN Disk for cluster node"
 
   def create
+    hosts_task_info = {}
     cluster_hosts.each do |host|
       if disk_configured?(host)
         Puppet.debug("Skipping disk Initialization for server #{host.name}")
         next
       else
+        hosts_task_info[host.name] = []
         Puppet.debug("Initiating disk intialization for #server #{host.name}")
-        initialize_disk(host)
+        hosts_task_info[host.name] = initialize_disk(host)
       end
+    end
+
+    while !hosts_task_info.keys.empty? do
+      hosts_task_info.each do |host_name, task|
+        Puppet.debug("Task status for host #{host_name} is #{task.info.state}")
+        hosts_task_info.delete(host_name) if task.info.state != "running"
+      end
+      sleep(60) unless hosts_task_info.empty?
     end
   end
 
@@ -86,7 +96,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     nonssd = []
     vsandisks.each do |vsandisk|
       next if vsandisk.disk.displayName.match(/usb/i)
-      next  if vsandisk.state == "inUse"
+      next  if ["inUse", "ineligible"].include?(vsandisk.state)
       next  if vsandisk.disk.vendor.strip == "ATA"
       if vsandisk.disk.ssd
         ssd.push(vsandisk.disk)
@@ -103,16 +113,14 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
         diskspec.capacityDisks = nonssd
         diskspec.creationType = "hybrid"
       when "allFlash"
-        diskspec.cacheDisks = ssd[0]
+        diskspec.cacheDisks = [ssd[0]]
         diskspec.capacityDisks = ssd[1..ssd.size-1]
         diskspec.creationType = "allFlash"
     end
     diskspec.host = host
     diskm = RbVmomi::VIM::VimClusterVsanVcDiskManagementSystem(hsconn, 'vsan-disk-management-system')
-    diskm.InitializeDiskMappings(:spec => diskspec)
-    # disk initialization do not support async operation.
-    # adding delay to avoid multiple init of disk on multiple nodes
-    sleep(15)
+    vsan_task = diskm.InitializeDiskMappings(:spec => diskspec)
+    RbVmomi::VIM::Task(vim, vsan_task._ref )
   end
 
   def creation_type(non_ssd)
