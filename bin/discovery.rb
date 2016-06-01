@@ -161,10 +161,12 @@ def collect_vm_attributes(vm)
 end
 
 def collect_vds_portgroup_attributes(portgroup)
-  attributes = {}
+  return {} unless portgroup.config.defaultPortConfig.vlan.respond_to?(:vlanId)
+
   vlan_id = portgroup.config.defaultPortConfig.vlan.vlanId
-  attributes[:vlan_id] = vlan_id if vlan_id.is_a?(Integer)
-  attributes
+  return {} unless vlan_id.is_a?(Integer)
+
+  {:vlan_id => vlan_id}
 end
 
 begin
