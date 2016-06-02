@@ -23,6 +23,7 @@ def collect_esx_facts(vim)
   dc = vim.serviceInstance.find_datacenter
   host = dc.hostFolder.children.first.host.first
   hash = {:name => host.name, :id => host._ref, :type => host.class}
+  hash[:esx_version] = vim.serviceInstance.content.about.version
   hash[:installed_packages] = collect_esx_installed_packages(host).to_json
   hash
 end
