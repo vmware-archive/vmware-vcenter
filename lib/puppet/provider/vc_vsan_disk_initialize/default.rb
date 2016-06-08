@@ -94,10 +94,11 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     vsandisks =  vsansys.QueryDisksForVsan()
     ssd = []
     nonssd = []
+    # Sort disk based on the size
+    vsandisks.sort! {|x| x.disk.capacity.block }
     vsandisks.each do |vsandisk|
       next if vsandisk.disk.displayName.match(/usb/i)
       next  if ["inUse", "ineligible"].include?(vsandisk.state)
-      next  if vsandisk.disk.vendor.strip == "ATA"
       if vsandisk.disk.ssd
         ssd.push(vsandisk.disk)
       else
@@ -113,6 +114,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
         diskspec.capacityDisks = nonssd
         diskspec.creationType = "hybrid"
       when "allFlash"
+        ssd.sort! {|x| x.capacity.block }
         diskspec.cacheDisks = [ssd[0]]
         diskspec.capacityDisks = ssd[1..ssd.size-1]
         diskspec.creationType = "allFlash"
