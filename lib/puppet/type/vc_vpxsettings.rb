@@ -1,7 +1,8 @@
 # Copyright (C) 2013 VMware, Inc.
 require 'pathname'
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet/property/vmware'
+
+module_lib = Pathname.new(__FILE__).parent.parent.parent
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet/property/vmware'
 
 Puppet::Type.newtype(:vc_vpxsettings) do
   @doc = "Manage vCenter vpxsettings ( event.maxAge, mail.smtp.server, etc )"

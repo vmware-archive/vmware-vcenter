@@ -1,9 +1,9 @@
 # Copyright (C) 2013 VMware, Inc.
 require 'pathname'
 module_lib    = Pathname.new(__FILE__).parent.parent.parent
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet/property/vmware'
+
 require File.join module_lib, 'puppet_x/vmware/mapper'
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet/property/vmware'
 
 Puppet::Type.newtype(:vm_hardware) do
   @doc = "Manage a vCenter VM's virtual hardware settings. See http://pubs.vmware.com/vsphere-55/index.jsp#com.vmware.wssdk.apiref.doc/vim.vm.VirtualHardware.html for class details"
