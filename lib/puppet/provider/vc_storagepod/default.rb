@@ -19,6 +19,7 @@ Puppet::Type.type(:vc_storagepod).provide(:vc_storagepod, :parent => Puppet::Pro
     end
     pod_ = dc.datastoreFolder.CreateStoragePod(:name => @resource[:name])
     pod_.MoveIntoFolder_Task(:list => to_add).wait_for_completion unless to_add.empty?
+    configure_pod
   end
 
   def destroy
@@ -57,7 +58,16 @@ Puppet::Type.type(:vc_storagepod).provide(:vc_storagepod, :parent => Puppet::Pro
   end
       
   private
-  
+
+  def configure_pod
+    configure_drs if @resource[:drs]
+  end
+
+  def configure_drs
+    srm.ConfigureStorageDrsForPod_Task!({ pod: pod, spec: drs_spec, modify: true }).wait_for_completion
+  end
+
+
   def dc
     @dc ||= locate(@resource[:datacenter], RbVmomi::VIM::Datacenter)
   end
@@ -68,6 +78,14 @@ Puppet::Type.type(:vc_storagepod).provide(:vc_storagepod, :parent => Puppet::Pro
 
   def ds
     @ds ||= dc.datastoreFolder.children.select{|d| RbVmomi::VIM::Datastore === d}
+  end
+
+  def srm
+    @srm ||= vim.serviceInstance.content.storageResourceManager
+  end
+
+  def drs_spec
+    RbVmomi::VIM::StorageDrsConfigSpec.new(podConfigSpec: RbVmomi::VIM::StorageDrsPodConfigSpec.new(enabled: true, ioLoadBalanceEnabled: true))
   end
 
 end

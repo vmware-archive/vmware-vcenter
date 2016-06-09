@@ -1,4 +1,6 @@
 # Copyright (C) 2013 VMware, Inc.
+require 'puppet/parameter/boolean'
+
 Puppet::Type.newtype(:vc_storagepod) do
 
   @doc = "Manage Storage Pods (clusters)"
@@ -9,6 +11,10 @@ Puppet::Type.newtype(:vc_storagepod) do
 
   newparam(:datacenter) do
     desc "Datacenter in which the cluster will be used"
+  end
+
+  newparam(:drs, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+    desc "Configure DRS on storage pod"
   end
 
   ensurable do

@@ -9,6 +9,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm
   end
 
+  def srm
+    @srm ||= vim.serviceInstance.content.storageResourceManager
+  end
+
   def network_interfaces
     vm.config.hardware.device.collect do |x|
       {'portgroup'=>portgroup_name(x), 'nic_type'=>x.class.to_s.sub(/\AVirtual/, '').downcase} if x.class < RbVmomi::VIM::VirtualEthernetCard
@@ -417,15 +421,13 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           'info' => d['info'], 'summary' => d['summary'], 'is_local' => is_local
       }
       info if d['summary.accessible'] && (resource[:skip_local_datastore] == :false || !is_local)
-    end.compact.sort do |a, b|
-      if a['is_local'] && !b['is_local']
-        1 # local storage at end
-      elsif !a['is_local'] && b['is_local']
-        -1 # remote storage at beginning
-      else
-        b['free'] <=> a['free'] # Descending order
-      end
     end
+    datastore_info += get_cluster_storage_pods
+    datastore_info.compact!
+
+    #Sort order: Pod -> Remote Datastore -> Local Datastore (each sorted by free size)
+    datastore_info.sort_by! {|h| [h["pod"] ? 0 : 1, h["is_local"] ? 1 : 0, -h["free"]]}
+
     Puppet.debug("Datastore info: #{datastore_info}")
     Puppet.debug("Requested size: #{requested_size}")
     if !requested_datastore.empty?
@@ -438,8 +440,27 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise("No datastore found with sufficient free space") unless datastore_selected
       Puppet.debug("Selected datastore: #{datastore_selected['name']}")
       # Why are we putting [] around the name in this case??
-      "[#{datastore_selected['name']}]"
+      datastore_selected
     end
+  end
+
+  def get_cluster_storage_pods
+    paths = %w(name summary.capacity summary.freeSpace)
+    property_set = [{:type => "StoragePod", :pathSet => paths}]
+    filter_spec = {:objectSet => datacenter.datastoreFolder.childEntity.map {|ds| {:obj => ds} }, :propSet => property_set}
+    data = vim.propertyCollector.RetrieveProperties(:specSet => [filter_spec])
+    datastore_info = data.map do |d|
+      size = d["summary.capacity"]
+      free = d["summary.freeSpace"]
+      used = size - free
+      name = d["name"]
+      info = {
+        "name" => name, "size" => size, "free" => free, "used" => used, "pod" => true, "obj" => d.obj
+      }
+      info
+    end.compact
+    Puppet.debug("Found Storage Pods: #{datastore_info}")
+    datastore_info
   end
   
   def create_vm
@@ -449,7 +470,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     
     if cluster_name
       resource_pool = cluster.resourcePool
-      ds_path = get_cluster_datastore
+      datastore = get_cluster_datastore
+      ds_path = datastore["name"]
+      if datastore["pod"]
+        create_pod_vm(storage_placement_spec(datastore, resource_pool))
+        return
+      end
     elsif host_name
       resource_pool = host.parent.resourcePool
       ds = host.datastore.first
@@ -459,23 +485,64 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     ds_path = "[#{ds.name}]" if ds_path.nil?
     raise(Puppet::Error, 'No datastores exist for the host') if ds_path.nil?
+
+    datacenter.vmFolder.CreateVM_Task(:config => vm_config_spec("[#{ds_path}]"), :pool => resource_pool).wait_for_completion
+
+    # power_state= did not work.
+    self.send(:power_state=, resource[:power_state].to_sym)
+  end
+
+  def create_pod_vm (spec)
+    rec = srm.RecommendDatastores(:storageSpec => spec)
+    rec_key = rec.recommendations[0].key
+    srm.ApplyStorageDrsRecommendation_Task(:key => [rec_key]).wait_for_completion
+    self.send(:power_state=, resource[:power_state].to_sym)
+  end
+
+  def vm_config_spec(path="")
     vm_devices = []
-    vm_devices.push(scsi_controller_spec, disk_spec(ds_path))
+    vm_devices.push(scsi_controller_spec, disk_spec(path))
     vm_devices.push(*network_specs)
-    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec({
+    RbVmomi::VIM.VirtualMachineConfigSpec({
       :name => resource[:name],
       :memoryMB => resource[:memory_mb],
       :numCPUs => resource[:num_cpus] ,
       :guestId => resource[:guestid],
-      :files => { :vmPathName => ds_path },
+      :files => { :vmPathName => path },
       :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
       :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
       :deviceChange => vm_devices
-    })
-    datacenter.vmFolder.CreateVM_Task(:config => config_spec, :pool => resource_pool).wait_for_completion
+                                                        })
+  end
 
-    # power_state= did not work.
-    self.send(:power_state=, resource[:power_state].to_sym)
+  def storage_placement_spec(datastore, resource_pool)
+    RbVmomi::VIM.StoragePlacementSpec({
+      :type => "create",
+      :podSelectionSpec => storage_drs_pod_selection_spec(datastore),
+      :configSpec => vm_config_spec,
+      :resourcePool => resource_pool,
+      :folder => datacenter.vmFolder
+                                       })
+  end
+
+  def storage_drs_pod_selection_spec(datastore)
+  RbVmomi::VIM.StorageDrsPodSelectionSpec({
+    :initialVmConfig => [initial_pod_vm_config(datastore)],
+    :storagePod => datastore["obj"],
+                                          })
+  end
+
+  def initial_pod_vm_config(datastore)
+    RbVmomi::VIM.VmPodConfigForPlacement({
+      :storagePod => datastore["obj"]
+                                         })
+  end
+
+  def pod_disk_locator
+    RbVmomi::VIM.PodDiskLocator({
+      :diskId          => -48,
+      :diskBackingInfo => disk_backing,
+                                })
   end
 
   def controller_map
@@ -504,18 +571,20 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     )
   end
 
-  #  create virtual device config spec for disk
-  def disk_spec(file_name)
+  def disk_backing(file_name="")
     thin = (resource[:disk_format].to_s == 'thin')
 
-    backing = RbVmomi::VIM.VirtualDiskFlatVer2BackingInfo(
+    RbVmomi::VIM.VirtualDiskFlatVer2BackingInfo(
       :diskMode => 'persistent',
       :fileName => file_name,
       :thinProvisioned => thin
     )
+  end
 
+  #  create virtual device config spec for disk
+  def disk_spec(file_name)
     disk = RbVmomi::VIM.VirtualDisk(
-      :backing => backing,
+      :backing => disk_backing(file_name),
       :controllerKey => 0,
       :key => 0,
       :unitNumber => 0,
