@@ -1,8 +1,8 @@
 require 'spec_helper'
-
 describe Puppet::Type.type(:esx_service) do
   parameters = [ :name, :service, :host ]
   properties = [ :running, :policy ]
+
 
   parameters.each do |parameter|
     it "should have a #{parameter} parameter" do
@@ -15,4 +15,6 @@ describe Puppet::Type.type(:esx_service) do
       expect(described_class.attrclass(property).ancestors).to be_include(Puppet::Property)
     end
   end
+
+
 end
