@@ -1,6 +1,7 @@
 #!/opt/puppet/bin/ruby
 require 'json'
 require 'rbvmomi'
+require_relative '../lib/puppet_x/puppetlabs/transport/rbvmomi_patch' # Use patched library to workaround rbvmomi issues
 require 'trollop'
 
 opts = Trollop::options do
@@ -44,6 +45,6 @@ begin
     end
   end
 rescue Exception => e
-  puts "Error gathering ESX software inventory: #{e.class}:#{e.message}"
+  puts "Error gathering ESX software inventory: #{e.class}:#{e.message}\n#{e.backtrace.join("\n")}"
   exit 1
 end

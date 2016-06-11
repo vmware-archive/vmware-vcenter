@@ -1,6 +1,6 @@
 provider_path = Pathname.new(__FILE__).parent.parent
-require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
+require File.join(provider_path, 'vcenter')
 require 'asm/util'
 
 Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent => Puppet::Provider::Vcenter) do
@@ -126,8 +126,9 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
             else
               Puppet.warning("Unexpected VIB source information: #{vib_source_data} is not an Array.")
             end
-          rescue RbVmomi::Fault => e
-            Puppet.error("Failed to get VIB info for #{qualified_vib_path} due to error: #{e.message} #{e.fault.errMsg}")
+          rescue Exception => e
+            Puppet.error("Failed to get VIB info for #{qualified_vib_path} due to error: #{e.message}")
+            Puppet.error("Fault error message: #{e.fault.errMsg}") if e.is_a?(RbVmomi::Fault)
             raise e
           end
         end
