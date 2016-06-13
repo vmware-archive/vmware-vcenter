@@ -1,23 +1,35 @@
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
+require File.join(provider_path, 'vsanmgmt.api')
+require File.join(provider_path, 'vsanapiutils')
 
 Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcenter) do
   @doc = "Enable / Disable VSAN property."
 
   def create
-    vsan_config = RbVmomi::VIM::VsanClusterConfigInfoHostDefaultInfo.new(
-        'autoClaimStorage' => resource[:auto_claim]
-    )
-    vsan_config_spec = RbVmomi::VIM::VsanClusterConfigInfo.new(
-        'enabled' => true,
-        'defaultConfig' => vsan_config
-    )
-    cluster_config_spec = RbVmomi::VIM::ClusterConfigSpecEx.new('vsanConfig' => vsan_config_spec)
-    task_ref = cluster.ReconfigureComputeResource_Task({ 'spec' => cluster_config_spec, 'modify' => true}  )
-    task_ref.wait_for_completion
-    raise("Failed to enable VSAN for cluster #{resource[:cluster]}") unless task_ref.info.state == "success"
+    Puppet.debug("Configuring VSAN ")
+    if resource[:dedup]
+      data_efficiency_spec = RbVmomi::VIM::VsanDataEfficiencyConfig.new
+      data_efficiency_spec.compressionEnabled = resource[:dedup]
+      data_efficiency_spec.dedupEnabled = resource[:dedup]
+    end
 
+    vsan_cluster_config = RbVmomi::VIM::VsanClusterConfigInfo.new
+    default_config_spec = RbVmomi::VIM::VsanClusterConfigInfoHostDefaultInfo.new
+    default_config_spec.autoClaimStorage = resource[:auto_claim]
+
+    vsan_cluster_config.defaultConfig = default_config_spec
+    vsan_cluster_config.enabled = true
+
+    reconfig_spec = RbVmomi::VIM::VimVsanReconfigSpec.new
+    reconfig_spec.dataEfficiencyConfig = data_efficiency_spec if resource[:dedup]
+    reconfig_spec.vsanClusterConfig = vsan_cluster_config
+    reconfig_spec.modify = true
+
+    vsan_task = vsan.vsanClusterConfigSystem.VsanClusterReconfig(:cluster => cluster, :vsanReconfigSpec => reconfig_spec ).onConnection(vim)
+    vsan_task.wait_for_completion
+    raise("Failed to enable / configure VSAN for cluster #{resource[:cluster]} with message: #{vsan_task.info.error.inspect}") unless vsan_task.info.state == "success"
   end
 
   def destroy
@@ -31,8 +43,14 @@ Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcent
   end
 
   def exists?
-    ( vsan_config_info.enabled &&
-        vsan_config_info.defaultConfig.autoClaimStorage == resource[:auto_claim])
+    if resource[:dedup].nil?
+      vsan_cluster_config.enabled &&
+          vsan_cluster_config.defaultConfig.autoClaimStorage == resource[:auto_claim]
+    else
+      vsan_cluster_config.enabled &&
+          vsan_cluster_config.defaultConfig.autoClaimStorage == resource[:auto_claim] &&
+          vsan_cluster_config.dataEfficiencyConfig.dedupEnabled == resource[:dedup]
+    end
   end
 
   def datacenter
@@ -43,10 +61,12 @@ Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcent
     datacenter.find_compute_resource(resource[:cluster])
   end
 
-  private
+  def vsan
+    @vsan ||= vim.vsan
+  end
 
-  def vsan_config_info
-    cluster.configurationEx.vsanConfigInfo
+  def vsan_cluster_config
+    vsan.vsanClusterConfigSystem.VsanClusterGetConfig(:cluster => cluster)
   end
 
 end
