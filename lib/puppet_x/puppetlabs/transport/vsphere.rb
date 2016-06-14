@@ -1,5 +1,8 @@
 # Copyright (C) 2013 VMware, Inc.
-require 'rbvmomi' if Puppet.features.vsphere? and ! Puppet.run_mode.master?
+if Puppet.features.vsphere? and ! Puppet.run_mode.master?
+  require 'rbvmomi'
+  require_relative 'rbvmomi_patch' # Use patched library to workaround rbvmomi issues
+end
 
 module PuppetX::Puppetlabs::Transport
   class Vsphere
