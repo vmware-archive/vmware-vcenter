@@ -22,6 +22,7 @@ define vcenter::dvportgroup (
     # vsphere property 'name' is 'dvportgroup_name'
     dvportgroup_name     => $dvportgroup_name,
     ensure               => $ensure,
+    transport            => $transport,
    
     # provider will set spec.configVersion automatically
     #onfig_version       => nested_value($spec, ['configVersion']),

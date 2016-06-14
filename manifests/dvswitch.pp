@@ -15,7 +15,8 @@ define vcenter::dvswitch (
 # http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.apiref.doc/right-pane.html
 
   vc_dvswitch_nioc { $name:
-    network_resource_management_enabled => $networkResourceManagementEnabled
+    network_resource_management_enabled => $networkResourceManagementEnabled,
+    transport => $transport,
   }
 
   vc_dvswitch { $name:
