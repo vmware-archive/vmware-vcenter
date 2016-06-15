@@ -57,7 +57,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # We loop through and make a list of network adapters to be removed by
     # comparing the requested networks to the networks on the existing adapters
     adapters.each do |adapter|
-      network_label = adapter.backing.deviceName
+      if adapter.backing.is_a?(RbVmomi::VIM::VirtualEthernetCardDistributedVirtualPortBackingInfo)
+        network_label = portgroup_name(adapter)
+      else
+        network_label = adapter.backing.deviceName
+      end
       if new_network_names[index] == network_label
         index += 1
       else
