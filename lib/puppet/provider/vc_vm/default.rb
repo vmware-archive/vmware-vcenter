@@ -28,8 +28,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def network_interfaces=(config)
-    network_spec = shifted_virtual_device_specs
-
+    network_spec = network_adapter_spec
     Puppet.debug("Expected final network_spec #{network_spec.inspect}")
     if network_spec.size != 0
       vm_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
@@ -49,50 +48,42 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
   end
 
-  # Returns back a list of virtual device specs that have been adjusted to add/remove/edit network adapters on a vm
-  def shifted_virtual_device_specs
-    new_networks = resource[:network_interfaces]
-    adapters = vm.config.hardware.device.find_all{|x| x if x.class < RbVmomi::VIM::VirtualEthernetCard}
-
+  def network_adapter_spec
     network_spec = []
-    reusable_adapters = adapters[0, new_networks.size]
+    new_networks = resource[:network_interfaces]
+    new_network_names = new_networks.collect { |n| n["portgroup"] }
+    adapters = vm.config.hardware.device.find_all do |x|
+      x if x.class < RbVmomi::VIM::VirtualEthernetCard
+    end
+    index = 0
+    adapters_to_remove = []
 
-    # Shift networks on existing adapters
-    # Reusing adapters helps to avoid any network connectivity issues from removing/adding adapters unnecessarily
-    reusable_adapters.each_with_index do |adapter, i|
-      new_network_name = new_networks[i]["portgroup"]
-      if adapter.backing.class.to_s == "VirtualEthernetCardDistributedVirtualPortBackingInfo"
-        dv_switch_info = new_network_name.scan(/(\S+)+\s*\((\S+)\)/).flatten
-        dv_switch = dvswitch(dv_switch_info[1])
-        dv_portgroup = dvportgroup(dv_switch.name,dv_switch_info[0])
-        dv_switch_uuid = dv_switch.uuid
-
-        adapter.deviceInfo.summary = "DVSwitch: #{dv_switch_uuid}"
-        adapter.backing.port.portgroupKey = dv_portgroup.key
-        adapter.backing.port.switchUuid = dv_switch.uuid
-        adapter.backing.port.portKey = nil
+    # We loop through and make a list of network adapters to be removed by
+    # comparing the requested networks to the networks on the existing adapters
+    adapters.each do |adapter|
+      if adapter.backing.is_a?(RbVmomi::VIM::VirtualEthernetCardDistributedVirtualPortBackingInfo)
+        network_label = portgroup_name(adapter)
       else
-        adapter.backing[:deviceName] = new_network_name
-        adapter.deviceInfo.summary = new_network_name
+        network_label = adapter.backing.deviceName
       end
-      network_spec << RbVmomi::VIM.VirtualDeviceConfigSpec(
-              :device => adapter,
-              :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation("edit")
-          )
+      if new_network_names[index] == network_label
+        index += 1
+      else
+        adapters_to_remove << adapter
+      end
     end
 
-    # Add network adapters if we don't have enough to cover the network interfaces requested
-    new_adapter_networks = new_networks[adapters.size..-1]
-    network_spec.concat(network_specs(new_adapter_networks)) if new_adapter_networks
-
-    # Remove network adapters if we'll have any left over after shifting the networks
-    adapters_to_remove = adapters[new_networks.size..-1] || []
+    # Generate specs to remove network adapters
     adapters_to_remove.each do |extra_adapter|
       network_spec << RbVmomi::VIM.VirtualDeviceConfigSpec(
-              :device => extra_adapter,
-              :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation("remove")
-          )
+          :device => extra_adapter,
+          :operation =>  RbVmomi::VIM.VirtualDeviceConfigSpecOperation("remove")
+      )
     end
+
+    # Add specs to add network adapters
+    networks_to_add = new_networks[index..-1]
+    network_spec.concat(network_specs(networks_to_add)) if networks_to_add
     network_spec
   end
 
