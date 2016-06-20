@@ -14,7 +14,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
         next
       else
         hosts_task_info[host.name] = []
-        Puppet.debug("Initiating disk intialization for #server #{host.name}")
+        Puppet.debug("Initiating disk intialization for server #{host.name}")
         hosts_task_info[host.name] = initialize_disk(host)
       end
     end
@@ -108,7 +108,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     return true if ssd.empty?
     diskspec = RbVmomi::VIM::VimVsanHostDiskMappingCreationSpec.new()
 
-    case creation_type(nonssd)
+    case resource[:vsan_disk_group_creation_type]
       when "hybrid"
         diskspec.cacheDisks = ssd
         diskspec.capacityDisks = nonssd
