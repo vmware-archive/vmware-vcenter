@@ -72,14 +72,14 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
               found = true
               rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:replica_preference]]]
             else
-              rules << "VSAN.%s=%s" % [property_instance.id, property_instance.value]
+              rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:replica_preference]]]
             end
           end
         end
       end
     end
 
-    rules << "VSAN.%s=%s" % ["replicaPreference", resource[:replica_preference]] unless found
+    rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:replica_preference]]] unless found
     profile_modify(rules)
     return true
   end

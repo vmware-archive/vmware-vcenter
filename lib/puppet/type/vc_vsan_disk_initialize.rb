@@ -15,6 +15,12 @@ Puppet::Type.newtype(:vc_vsan_disk_initialize) do
     desc 'Name of the cluster.'
   end
 
+  newparam(:vsan_disk_group_creation_type) do
+    desc 'VSAN disk group creation type'
+    newvalues('hybrid', 'allFlash')
+    defaultto('hybrid')
+  end
+
   newparam(:cleanup_hosts) do
     desc 'Array of Hosts to be removed from VSAN '
   end
