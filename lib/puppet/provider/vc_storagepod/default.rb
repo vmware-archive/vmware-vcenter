@@ -85,7 +85,7 @@ Puppet::Type.type(:vc_storagepod).provide(:vc_storagepod, :parent => Puppet::Pro
   end
 
   def drs_spec
-    RbVmomi::VIM::StorageDrsConfigSpec.new(podConfigSpec: RbVmomi::VIM::StorageDrsPodConfigSpec.new(enabled: true, ioLoadBalanceEnabled: true))
+    RbVmomi::VIM::StorageDrsConfigSpec.new(podConfigSpec: RbVmomi::VIM::StorageDrsPodConfigSpec.new(enabled: true, ioLoadBalanceEnabled: true, defaultVmBehavior: "automated"))
   end
 
 end
