@@ -1,3 +1,7 @@
+#
+# Wrapper to load the transport library from vmware_lib
+#
+#
 begin
   require 'puppet_x/vmware/util'
 rescue LoadError => e
