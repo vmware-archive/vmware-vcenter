@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat template.rb | sed "s/NAME/$1/" > $1_spec.rb && vim $1_spec.rb
