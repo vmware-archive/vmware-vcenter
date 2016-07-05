@@ -1,7 +1,11 @@
 # Copyright (C) 2013 VMware, Inc.
+#
+
 require 'pathname'
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet/property/vmware'
+
+module_lib    = Pathname.new(__FILE__).parent.parent.parent
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet/property/vmware'
+
 
 Puppet::Type.newtype(:vc_vm) do
   @doc = "Manage vCenter VMs. Warning, this type / provider is currently experimental"

@@ -1,11 +1,11 @@
 # Copyright (C) 2013 VMware, Inc.
 
 require 'pathname' # WORK_AROUND #14073 and #7788
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 module_lib = Pathname.new(__FILE__).parent.parent.parent.parent
+
 require File.join module_lib, 'puppet/provider/vcenter'
 require File.join module_lib, 'puppet_x/vmware/mapper'
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/vmware/util'
 
 Puppet::Type.type(:esx_vmknic_type).provide(:esx_vmknic_type, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages ESXi vmknic types - "\

@@ -2,10 +2,9 @@
 require 'pathname'
 module_lib = Pathname.new(__FILE__).parent.parent.parent
 
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
-require File.join vmware_module.path, 'lib/puppet/property/vmware'
 require File.join module_lib, 'puppet_x/vmware/mapper'
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/vmware/util'
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet/property/vmware'
 
 Puppet::Type.newtype(:vc_vm_host_rule) do
   @doc = "Manages vCenter cluster's settings for VM-Host rules. http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.cluster.VmHostRuleInfo.html"

@@ -2,10 +2,9 @@
 require 'set'
 require 'pathname'
 
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 module_lib = Pathname.new(__FILE__).parent.parent.parent.parent
 require File.join module_lib, 'puppet/provider/vcenter'
+require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/vmware/util'
 
 Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vCenter cluster's settings for VM Groups used for VM-Host rules. http://pubs.vmware.com/vsphere-55/index.jsp#com.vmware.wssdk.apiref.doc/vim.cluster.VmGroup.html"
