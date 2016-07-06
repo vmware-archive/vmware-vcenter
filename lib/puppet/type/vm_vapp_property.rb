@@ -17,7 +17,11 @@ Puppet::Type.newtype(:vm_vapp_property) do
     desc 'The datacenter, vm name and visible label of the property split by a colon (:). Format dc1:vm1:label'
 
     munge do |value|
-      @resource[:datacenter], @resource[:vm_name], @resource[:label] = value.split(':',3)
+      if value =~ /^[a-zA-Z0-9\-\. ]+:[a-zA-Z0-9\-\. ]+:[a-zA-Z0-9\-\. ]+$/ then
+        @resource[:datacenter], @resource[:vm_name], @resource[:label] = value.split(':',3)
+      else
+        @resource[:label] = value
+      end
     end
   end
 
