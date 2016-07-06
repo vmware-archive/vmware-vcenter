@@ -4,7 +4,7 @@
 module_lib = Pathname.new(__FILE__).parent.parent.parent
 
 require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/puppetlabs/transport'
-require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/puppetlabs/transport/vsphere'
+require File.join module_lib, 'puppet_x/puppetlabs/transport/vsphere'
 require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/vmware/util'
 
 
