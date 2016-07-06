@@ -19,3 +19,9 @@ else
   # rubocop requires ruby >= 1.9
   gem 'rubocop'
 end
+
+# JSON must be 1.x on Ruby 1.9
+if RUBY_VERSION < '2.0'
+  gem 'json', '~> 1.8'
+end
+
