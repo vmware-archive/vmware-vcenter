@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/vmware/vmware-vcenter.svg?branch=master)](https://travis-ci.org/vmware/vmware-vcenter)
+
 # VMware vCenter module
 
 This module manages resources in VMware vCenter such as folders, datacenter,
