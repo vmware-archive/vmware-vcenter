@@ -11,7 +11,6 @@ require File.join module_lib, 'puppet_x/vmware/vmware_lib/puppet_x/vmware/util'
 class Puppet::Provider::Vcenter <  Puppet::Provider
   confine :feature => :vsphere
 
-  private
 
   def vim
     @transport ||= PuppetX::Puppetlabs::Transport.retrieve(:resource_ref => resource[:transport], :catalog => resource.catalog, :provider => 'vsphere')
