@@ -1,5 +1,5 @@
 #
-# Wrapper to load the transport library from vmware_lib
+# Wrapper to load the property library from vmware_lib
 #
 begin
   require 'puppet/property/vmware'
