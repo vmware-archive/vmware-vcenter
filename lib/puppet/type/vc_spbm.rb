@@ -15,7 +15,7 @@ Puppet::Type.newtype(:vc_spbm) do
     desc "set of rules that needs to be configured in the policy"
   end
 
-  newproperty(:replica_preference) do
+  newproperty(:failure_tolerance_method) do
     desc "Replication state"
   end
 
