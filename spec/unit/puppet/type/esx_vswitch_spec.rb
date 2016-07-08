@@ -22,7 +22,7 @@ describe Puppet::Type.type(:esx_vswitch) do
       }}
     it do
       expect {
-        should compile
+        compile
       }
     end
 
@@ -31,19 +31,21 @@ describe Puppet::Type.type(:esx_vswitch) do
   context "when validating attributes" do
 
     it "should have name as its keyattribute" do
-      described_class.key_attributes.should == [:name]
+      expect(described_class.key_attributes).to eq( [:name ])
     end
 
     describe "when validating attributes" do
       [:name, :path, :vswitch, :host].each do |param|
         it "should be a #{param} parameter" do
-          described_class.attrtype(param).should == :param
+          #described_class.attrtype(param).should == :param
+          expect(described_class.attrtype(param)).to eq(:param)
         end
       end
 
       [:ensure, :num_ports, :nics, :nicorderpolicy, :mtu, :checkbeacon].each do |property|
         it "should be a #{property} property" do
-          described_class.attrtype(property).should == :property
+          #described_class.attrtype(property).should == :property
+          expect(described_class.attrtype(property)).to eq(:property)
         end
       end
     end
@@ -53,8 +55,8 @@ describe Puppet::Type.type(:esx_vswitch) do
       describe "validating name param" do
 
         it "should allow a valid name" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:name].should == 'esx1:vswitch1'
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:name]).to eq('esx1:vswitch1')
         end
 
         it "should not allow blank value in the name" do
@@ -66,13 +68,13 @@ describe Puppet::Type.type(:esx_vswitch) do
       describe "validating ensure property" do
 
         it "should support present value" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:ensure].should == :present
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:ensure]).to eq(:present)
         end
 
         it "should support absent value" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :absent)[:ensure].should == :absent
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :absent)[:ensure]).to eq(:absent)
         end
 
         it "should not allow values other than present or absent" do
@@ -85,8 +87,8 @@ describe Puppet::Type.type(:esx_vswitch) do
       describe "validating path param" do
 
         it "should be a valid path" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:path].should == '/datacenter1'
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:path]).to eq('/datacenter1')
         end
 
         it "should not allow invalid path values" do
@@ -98,8 +100,8 @@ describe Puppet::Type.type(:esx_vswitch) do
 
       describe "validating num_ports property" do
         it "should be a valid num_ports value" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:num_ports].should == 108
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:num_ports]).to eq(108)
         end
 
         it "should not allow invalid num_ports values" do
@@ -110,8 +112,8 @@ describe Puppet::Type.type(:esx_vswitch) do
 
       describe "validating nics property" do
         it "should be a valid nics value" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:nics].should.is_a?(Array) and [:nics].should == ["vmnic1", "vmnic2", "vmnic3", "vmnic4"]
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:nics]).to be_a(Array)# and [:nics].should == ["vmnic1", "vmnic2", "vmnic3", "vmnic4"]
         end
 
         it "should not allow invalid nics value" do
@@ -122,8 +124,8 @@ describe Puppet::Type.type(:esx_vswitch) do
 
       describe "validating mtu property" do
         it "should be a valid mtu value" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:mtu].should == 2000
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:mtu]).to eq(2000)
         end
 
         it "should not allow invalid mtu values" do
@@ -134,8 +136,8 @@ describe Puppet::Type.type(:esx_vswitch) do
 
       describe "validating checkbeacon property" do
         it "should be a valid mtu value" do
-          described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
-          :checkbeacon => true, :ensure => :present)[:checkbeacon].should.to_s == true
+          expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
+          :checkbeacon => true, :ensure => :present)[:checkbeacon].to_s).to eq("true")
         end
 
         it "should not allow invalid checkbeacon values" do
