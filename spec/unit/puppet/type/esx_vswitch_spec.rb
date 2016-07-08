@@ -37,14 +37,12 @@ describe Puppet::Type.type(:esx_vswitch) do
     describe "when validating attributes" do
       [:name, :path, :vswitch, :host].each do |param|
         it "should be a #{param} parameter" do
-          #described_class.attrtype(param).should == :param
           expect(described_class.attrtype(param)).to eq(:param)
         end
       end
 
       [:ensure, :num_ports, :nics, :nicorderpolicy, :mtu, :checkbeacon].each do |property|
         it "should be a #{property} property" do
-          #described_class.attrtype(property).should == :property
           expect(described_class.attrtype(property)).to eq(:property)
         end
       end
