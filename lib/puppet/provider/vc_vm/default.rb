@@ -494,7 +494,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_devices = []
     vm_devices.push(scsi_controller_spec, disk_spec(path))
     vm_devices.push(*network_specs)
-    vm_config = {
+    config = {
         :name => resource[:name],
         :memoryMB => resource[:memory_mb],
         :numCPUs => resource[:num_cpus] ,
@@ -509,7 +509,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           :profileId => resource[:vm_storage_policy].profileId.uniqueId
       )]
     end
-    RbVmomi::VIM.VirtualMachineConfigSpec(:config => config)
+    RbVmomi::VIM.VirtualMachineConfigSpec(config)
   end
 
   def vsan_data_store?(datastore)
