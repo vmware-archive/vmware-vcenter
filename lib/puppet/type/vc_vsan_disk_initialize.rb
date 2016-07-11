@@ -25,4 +25,8 @@ Puppet::Type.newtype(:vc_vsan_disk_initialize) do
     desc 'Array of Hosts to be removed from VSAN '
   end
 
+  newparam(:vsan_trace_volume) do
+    desc "Volume name to use for VSAN traces"
+  end
+
 end

@@ -17,6 +17,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
         Puppet.debug("Initiating disk intialization for server #{host.name}")
         hosts_task_info[host.name] = initialize_disk(host)
       end
+      set_vsan_trace(host)
     end
 
     while !hosts_task_info.keys.empty? do
@@ -165,7 +166,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     unless disk_mappings.empty?
       task_ref = vsansys.RemoveDiskMapping_Task(:mapping => disk_mappings )
       task_ref.wait_for_completion
-      raise("Failed to cleanuo disk-grpup for host #{host.name}") unless task_ref.info.state == "success"
+      raise("Failed to cleanup disk-group for host #{host.name}") unless task_ref.info.state == "success"
     end
   end
 
@@ -175,6 +176,25 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
       vsan_mapping << map.mapping
     end
     vsan_mapping
+  end
+
+  def set_vsan_trace(host)
+    if resource[:vsan_trace_volume] && !resource[:vsan_trace_volume].empty?
+      trace_set = false
+      host.datastore.each do |ds|
+        if ds.info.respond_to?(:name) && ds.info.respond_to?(:url) && ds.info.name == resource[:vsan_trace_volume]
+          Puppet.info("Setting VSAN trace for #{host.name} to #{ds.info.name} (#{ds.info.url})")
+          begin
+            trace_set = host.esxcli.vsan.trace.set({:path => ds.info.url})
+          rescue Exception => ex
+            # Don't fail the puppet run if we cannot set VSAN trace, but simply log it
+            Puppet.debug("Error #{ex.class}:#{ex.message} on setting VSAN trace to #{ds.info.url}")
+          end
+          break
+        end
+      end
+      Puppet.warning("Did not set VSAN traces for #{host.name}") unless trace_set
+    end
   end
 
 end
