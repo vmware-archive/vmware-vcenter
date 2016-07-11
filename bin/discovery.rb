@@ -27,7 +27,7 @@ def collect_vcenter_facts(vim)
       :vm_count => @vm_count.to_s,
       :host_count => @host_count.to_s,
       :customization_specs => customization_specs.to_s,
-      :storage_profiles => storage_profiles.to_s,
+      :storage_profiles => storage_profiles.to_json,
       :inventory => inventory.to_json
   }
 end
