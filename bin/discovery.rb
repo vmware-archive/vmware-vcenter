@@ -19,6 +19,7 @@ def collect_vcenter_facts(vim)
   inventory = collect_inventory(vim.serviceContent.rootFolder)
   name = vim.serviceContent.setting.setting.find{|x| x.key == 'VirtualCenter.InstanceName'}.value
   customization_specs = vim.serviceContent.customizationSpecManager.info.collect{|spec| spec.name}
+  storage_profiles = (exiting_profiles(vim).collect {|x| x.name} || [])
   {
       :vcenter_name => name,
       :datacenter_count => @datacenter_count.to_s,
@@ -26,8 +27,28 @@ def collect_vcenter_facts(vim)
       :vm_count => @vm_count.to_s,
       :host_count => @host_count.to_s,
       :customization_specs => customization_specs.to_s,
+      :storage_profiles => storage_profiles.to_json,
       :inventory => inventory.to_json
   }
+end
+
+def exiting_profiles(vim)
+  profiles = []
+  require 'rbvmomi/pbm'
+  pbm_obj = RbVmomi::PBM
+  pbm = pbm_obj.connect(vim, :insecure=> true)
+
+  pbm_manager = pbm.serviceContent.profileManager
+  profileIds = pbm_manager.PbmQueryProfile(
+      :resourceType => {:resourceType => "STORAGE"},
+      :profileCategory => "REQUIREMENT"
+  )
+
+  if profileIds.length > 0
+    profiles = pbm_manager.PbmRetrieveContent(:profileIds => profileIds)
+  end
+
+  profiles
 end
 
 def collect_inventory(obj, parent=nil)

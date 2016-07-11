@@ -9,10 +9,43 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
 
   def create
     Puppet.debug("Inside create block")
+    pm = pbm_manager
+
+    rules = create_rules
+    resType = {:resourceType => "STORAGE"}
+    constraints = _convertStrRulesToApiStructs(rules)
+
+    pm.PbmCreate(
+      :createSpec => {
+        :name => resource[:name],
+        :description => resource[:description],
+        :resourceType => resType,
+        :constraints => PBM::PbmCapabilitySubProfileConstraints(
+          :subProfiles => [
+            PBM::PbmCapabilitySubProfile(
+              :name => "Object",
+              :capability => constraints
+            )
+          ]
+        )
+      }
+    )
+    true
+  end
+
+  def create_rules
+    rules = []
+    rules << "VSAN.%s=%s" % ["stripeWidth", resource[:stripe_width]] if resource[:stripe_width]
+    rules << "VSAN.%s=%s" % ["forceProvisioning", resource[:force_provisioning]] if resource[:force_provisioning]
+    rules << "VSAN.%s=%s" % ["proportionalCapacity", resource[:proportional_capacity]] if resource[:proportional_capacity]
+    rules << "VSAN.%s=%s" % ["cacheReservation", resource[:cache_reservation]] if resource[:cache_reservation]
+    rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:failure_tolerance_method]]] if resource[:failure_tolerance_method]
+    rules << "VSAN.%s=%s" % ["hostFailuresToTolerate", resource[:host_failures_to_tolerate]] if resource[:host_failures_to_tolerate]
+    rules
   end
 
   def destroy
-    Puppet.debug("Inside destroy block")
+    true
   end
 
   def exists?
@@ -40,7 +73,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
     }
   end
 
-  def replica_preference
+  def failure_tolerance_method
     profile = exiting_profiles.find { |x| x.name == resource[:name]}
     constraints = profile.constraints
     return [] unless constraints.respond_to?('subProfiles')
@@ -56,7 +89,8 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
     end
   end
 
-  def replica_preference=(value)
+  def failure_tolerance_method=(value)
+    return true if value.empty?
     Puppet.debug("Updating value #{value} of replica_preference to #{resource[:replica_preference]}")
     found = false
 
@@ -68,18 +102,18 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
         cap.constraint.each do |constraint|
           constraint.propertyInstance.each do |property_instance|
             if property_instance.id == "replicaPreference"
-              property_instance.value = failure_tolerance_value[resource[:replica_preference]]
+              property_instance.value = failure_tolerance_value[resource[:failure_tolerance_method]]
               found = true
-              rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:replica_preference]]]
+              rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:failure_tolerance_method]]]
             else
-              rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:replica_preference]]]
+              rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:failure_tolerance_method]]]
             end
           end
         end
       end
     end
 
-    rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:replica_preference]]] unless found
+    rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:failure_tolerance_method]]] unless found
     profile_modify(rules)
     return true
   end
@@ -102,6 +136,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
   end
 
   def host_failures_to_tolerate=(value)
+    return true if value.empty?
     Puppet.debug("Updating value #{value} of hostFailuresToTolerate to #{resource[:host_failures_to_tolerate]}")
     found = false
 
@@ -146,6 +181,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
   end
 
   def stripe_width=(value)
+    return true if value.empty?
     Puppet.debug("Updating value #{value} of stripeWidth to #{resource[:stripe_width]}")
     found = false
 
@@ -190,6 +226,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
   end
 
   def force_provisioning=(value)
+    return true if value.empty?
     Puppet.debug("Updating value #{value} of forceProvisioning to #{resource[:force_provisioning]}")
     found = false
 
@@ -234,6 +271,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
   end
 
   def proportional_capacity=(value)
+    return true if value.empty?
     Puppet.debug("Updating value #{value} of proportionalCapacity to #{resource[:proportional_capacity]}")
     found = false
 
@@ -278,6 +316,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
   end
 
   def cache_reservation=(value)
+    return true if value.empty?
     Puppet.debug("Updating value #{value} of cacheReservation to #{resource[:cache_reservation]}")
     found = false
 

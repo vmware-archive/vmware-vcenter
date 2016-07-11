@@ -256,4 +256,9 @@ Puppet::Type.newtype(:vc_vm) do
     newvalues(:true, :false)
     defaultto(true)
   end
+
+  newparam(:vm_storage_policy) do
+    desc 'VM Storage policy name'
+  end
+
 end

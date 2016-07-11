@@ -494,16 +494,26 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_devices = []
     vm_devices.push(scsi_controller_spec, disk_spec(path))
     vm_devices.push(*network_specs)
-    RbVmomi::VIM.VirtualMachineConfigSpec({
-      :name => resource[:name],
-      :memoryMB => resource[:memory_mb],
-      :numCPUs => resource[:num_cpus] ,
-      :guestId => resource[:guestid],
-      :files => { :vmPathName => path },
-      :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
-      :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
-      :deviceChange => vm_devices
-                                                        })
+    config = {
+        :name => resource[:name],
+        :memoryMB => resource[:memory_mb],
+        :numCPUs => resource[:num_cpus] ,
+        :guestId => resource[:guestid],
+        :files => { :vmPathName => path },
+        :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
+        :cpuHotAddEnabled => resource[:cpu_hot_add_enabled],
+        :deviceChange => vm_devices
+    }
+    if vsan_data_store?(path) && resource[:vm_storage_policy]
+      config[:vmProfile] = [VIM::VirtualMachineDefinedProfileSpec(
+          :profileId => resource[:vm_storage_policy].profileId.uniqueId
+      )]
+    end
+    RbVmomi::VIM.VirtualMachineConfigSpec(config)
+  end
+
+  def vsan_data_store?(datastore)
+    datastore == "vsanDatastore"
   end
 
   def storage_placement_spec(datastore, resource_pool)

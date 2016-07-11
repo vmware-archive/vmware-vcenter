@@ -108,15 +108,25 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     return true if ssd.empty?
     diskspec = RbVmomi::VIM::VimVsanHostDiskMappingCreationSpec.new()
 
-    case resource[:vsan_disk_group_creation_type]
+    case resource[:vsan_disk_group_creation_type].to_s
       when "hybrid"
         diskspec.cacheDisks = ssd
         diskspec.capacityDisks = nonssd
         diskspec.creationType = "hybrid"
       when "allFlash"
         ssd.sort! {|x| x.capacity.block }
-        diskspec.cacheDisks = [ssd[0]]
-        diskspec.capacityDisks = ssd[1..ssd.size-1]
+        disk_sizes = ssd.collect {|x| x.capacity.block }.sort.uniq
+        if disk_sizes.size == 1
+          ssd.each_slice(8).to_a.each do |ssd_group|
+            diskspec.cacheDisks = [ssd_group[0]]
+            diskspec.capacityDisks = ssd_group[1..ssd_group.size-1]
+          end
+        else
+          cache_disks = ssd.find_all {|x| x.capacity.block == disk_sizes[0]}
+          capacity_disks = ssd.reject {|x| x.capacity.block == disk_sizes[0]}
+          diskspec.cacheDisks = cache_disks
+          diskspec.capacityDisks = capacity_disks
+        end
         diskspec.creationType = "allFlash"
     end
     diskspec.host = host
