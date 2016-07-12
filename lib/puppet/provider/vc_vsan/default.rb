@@ -44,12 +44,10 @@ Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcent
 
   def exists?
     if resource[:dedup].nil?
-      vsan_cluster_config.enabled &&
-          vsan_cluster_config.defaultConfig.autoClaimStorage == resource[:auto_claim]
+      vsan_cluster_config.enabled
     else
       vsan_cluster_config.enabled &&
-          vsan_cluster_config.defaultConfig.autoClaimStorage == resource[:auto_claim] &&
-          vsan_cluster_config.dataEfficiencyConfig.dedupEnabled == resource[:dedup]
+        vsan_cluster_config.dataEfficiencyConfig.dedupEnabled.to_s == resource[:dedup].to_s
     end
   end
 
