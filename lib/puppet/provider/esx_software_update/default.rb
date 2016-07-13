@@ -18,7 +18,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
           Puppet.debug("Attempting to install the VIB: #{vib_url}")
           install_results = install_vib vib_url
           installed_vibs += install_results[:VIBsInstalled]
-          skipped_vibs += install_results[:VIBsSkipped]
+          skipped_vibs += install_results[:VIBsSkipped] if install_results[:VIBsSkipped]
           reboot_required ||= install_results[:RebootRequired]
         end
         if installed_vibs.length == @actionable_vibs.length
@@ -26,12 +26,17 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
         elsif installed_vibs.length > 0
           Puppet.info("Successfully installed following VIBs : #{installed_vibs}")
           Puppet.info("Skipped installing following VIBs : #{skipped_vibs}")
+          if installed_vibs.length + skipped_vibs.length < @actionable_vibs.length
+            raise "Some VIBs failed to install"
+          end
         else
           raise "no VIBs installed"
         end
         # Unmount all NFS stores we mounted
         unmount_mounted_nfs_shares
         reboot_and_wait_for_host if reboot_required
+      else
+        raise "No VIBs to update"
       end
     rescue Exception => e
       unmount_mounted_nfs_shares
