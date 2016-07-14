@@ -88,6 +88,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
     begin
       if resource[:nfs_hostname]
         # Get list of all mounted NFS datastores, and add it to mounted NFS shares
+        Puppet.debug("Getting list of mounted NFS datastores...")
         host.esxcli.storage.nfs.list.each do |nfs_store|
           if nfs_store[:Host] && nfs_store[:Share] && nfs_store[:Mounted]
             key = nfs_store[:Host] + ":" + nfs_store[:Share]
@@ -97,6 +98,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
         end
       end
       # Get all pre-installed VIBs and save it to our map
+      Puppet.debug("Getting list of pre-installed VIBs...")
       host.esxcli.software.vib.get.each do |installed_vib_data|
         if installed_vib_data[:ID]
           existing_vibs[installed_vib_data[:ID]] = true
@@ -104,11 +106,11 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
         end
       end
       vibs = resource[:vibs].is_a?(Array) ? resource[:vibs] : [resource[:vibs]]
+      Puppet.debug("VIBs to query : #{vibs}...")
       # The type validation already validates proper format of fields for either install or uninstall
       # To determine the install mode, we simply need to do check if first element hash or not
       is_install = vibs.first.is_a?(Hash)
       vibs.each do |vib_data|
-        is_install = vib_data.is_a?(Hash) if is_install.nil?
         if !is_install
           # For each VIB data, add the VIB name to the actionable_vibs list
           add_actionable_vib(vib_data)
@@ -139,8 +141,8 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
         end
       end
     rescue Exception => e
-      Puppet.warning("Cannot determine if specified VIBs exists due to exception #{e.message}. Assuming absent")
-      return false
+      Puppet.error("Cannot determine if specified VIBs exists due to exception #{e.class}:#{e.message} Backtrace: #{e.backtrace.join("\n")}")
+      raise e
     end
     # For install mode: if there are any actionable VIBs, we need to return false (i.e. resource does not exist) so that "create" is invoked by puppet
     # For uninstall mode: if there are any actionable VIBs, we need to return true (i.e. resource exist) so that "destroy" is invoked by puppet
