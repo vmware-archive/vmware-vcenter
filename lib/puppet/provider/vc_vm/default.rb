@@ -396,7 +396,14 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     
     # Disk size is in KB and the information coming back from 
     # API is in Bytes
-    requested_size = resource[:disk_size].to_i * 1024
+    if resource[:virtual_disks]
+      requested_size = 0
+      # virtual_disks size is originally in gb
+      resource[:virtual_disks].each{ |disk| requested_size += disk["size"].to_i * 1024 * 1024}
+      requested_size  *= 1024
+    else
+      requested_size = resource[:disk_size].to_i * 1024
+    end
 
     paths = %w(name info.url info summary summary.accessible summary.capacity summary.freeSpace)
     propSet = [{ :type => 'Datastore', :pathSet => paths }]
@@ -492,7 +499,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def vm_config_spec(path="")
     vm_devices = []
-    vm_devices.push(scsi_controller_spec, disk_spec(path))
+    vm_devices.push(scsi_controller_spec)
+    vm_devices.push(*disk_specs(path))
     vm_devices.push(*network_specs)
     config = {
         :name => resource[:name],
@@ -582,14 +590,31 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     )
   end
 
+  #Returns an array of all the disk specs
+  def disk_specs(path)
+    specs = []
+    unit = 0
+    if resource[:virtual_disks]
+      resource[:virtual_disks].each do |vd|
+        size = vd["size"].to_i * 1024 * 1024
+        specs << disk_spec(path, size, unit)
+        unit += 1
+      end
+    else
+      specs << disk_spec(path, resource[:disk_size], unit)
+    end
+
+    specs
+  end
+
   #  create virtual device config spec for disk
-  def disk_spec(file_name)
+  def disk_spec(file_name, size, unit)
     disk = RbVmomi::VIM.VirtualDisk(
       :backing => disk_backing(file_name),
       :controllerKey => 0,
       :key => 0,
-      :unitNumber => 0,
-      :capacityInKB => resource[:disk_size]
+      :unitNumber => unit,
+      :capacityInKB => size
     )
 
     RbVmomi::VIM.VirtualDeviceConfigSpec(

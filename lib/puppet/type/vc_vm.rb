@@ -261,4 +261,15 @@ Puppet::Type.newtype(:vc_vm) do
     desc 'VM Storage policy name'
   end
 
+  newparam(:virtual_disks) do
+    desc "Multiple storage disks to deploy"
+    munge do |value|
+      if value.is_a?(Hash)
+        [value]
+      else
+        value
+      end
+    end
+  end
+
 end
