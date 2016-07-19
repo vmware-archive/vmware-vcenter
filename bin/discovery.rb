@@ -34,6 +34,10 @@ end
 
 def exiting_profiles(vim)
   profiles = []
+
+  # vCenter 5.1 do not support Profile Based Management
+  return profiles if vim.rev.to_i <= 5.1
+
   require 'rbvmomi/pbm'
   pbm_obj = RbVmomi::PBM
   pbm = pbm_obj.connect(vim, :insecure=> true)
