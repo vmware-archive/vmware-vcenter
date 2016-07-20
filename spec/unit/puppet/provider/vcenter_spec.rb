@@ -8,10 +8,18 @@ describe Puppet::Provider::Vcenter do
  before do
    @transport = Vcenter::Spec_fixtures::Transport.new.transport
    provider.stubs(:rootfolder).returns('/test')
+   catalog.add_resource(stubbed_resource)
+   catalog.add_resource(transport_resource)
  end
 
  let(:provider) { Puppet::Provider::Vcenter.new }
- let(:stubbed_resource) { Puppet::Resource.new('Vcenter[test]') }
+ let(:catalog) { Puppet::Resource::Catalog.new }
+ let(:transport_resource) { Puppet::Resource.new('Transport[test]') }
+ let(:stubbed_resource) { 
+   res = Puppet::Resource.new('Vcenter[test]') 
+   res[:transport] = transport_resource
+   res
+ }
  let(:fake_class) { Class.new }
  
 
@@ -37,8 +45,8 @@ describe Puppet::Provider::Vcenter do
    it "should return the transports vim method" do
 
      expect(PuppetX::Puppetlabs::Transport).to receive(:retrieve).with(
-       :resource_ref=>nil,
-       :catalog=>nil,
+       :resource_ref=>transport_resource,
+       :catalog=>catalog,
        :provider=>"vsphere").and_return(@transport)
 
      @transport.stubs(:vim).returns(Vcenter::Spec_fixtures::VimObject)
