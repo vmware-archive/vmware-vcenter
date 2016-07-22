@@ -550,7 +550,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def vsan_data_store?(datastore)
-    datastore.match(/vsanDatastore/)
+    datastore =~ /vsanDatastore/
   end
 
   def storage_placement_spec(datastore, resource_pool)
