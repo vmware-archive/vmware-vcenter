@@ -1,7 +1,6 @@
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
-require 'pry'
 require File.join(provider_path, 'spbmapiutils')
 
 Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcenter) do

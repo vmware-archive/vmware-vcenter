@@ -1,6 +1,8 @@
 # Copyright (C) 2013 VMware, Inc.
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
+require 'rbvmomi'
+require File.join(provider_path, 'spbmapiutils')
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
   @doc = 'Manages vCenter Virtual Machines.'
@@ -514,14 +516,41 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     }
     if vsan_data_store?(path) && resource[:vm_storage_policy]
       config[:vmProfile] = [VIM::VirtualMachineDefinedProfileSpec(
-          :profileId => resource[:vm_storage_policy].profileId.uniqueId
+          :profileId => profile(resource[:vm_storage_policy]).profileId.uniqueId
       )]
     end
+    Puppet.debug("VM Create config: #{config.inspect}")
     RbVmomi::VIM.VirtualMachineConfigSpec(config)
   end
 
+  def profile(profile_name)
+    @profile ||= exiting_profiles.find {|x| x.name == profile_name}
+  end
+
+  def pbm
+    @pbm ||= vim.pbm
+  end
+
+  def pbm_manager
+    @pbm_manager ||= pbm.serviceContent.profileManager
+  end
+
+  def exiting_profiles
+    profiles = []
+    profileIds = pbm_manager.PbmQueryProfile(
+        :resourceType => {:resourceType => "STORAGE"},
+        :profileCategory => "REQUIREMENT"
+    )
+
+    if profileIds.length > 0
+      profiles = pbm_manager.PbmRetrieveContent(:profileIds => profileIds)
+    end
+
+    profiles
+  end
+
   def vsan_data_store?(datastore)
-    datastore == "vsanDatastore"
+    datastore.match(/vsanDatastore/)
   end
 
   def storage_placement_spec(datastore, resource_pool)
