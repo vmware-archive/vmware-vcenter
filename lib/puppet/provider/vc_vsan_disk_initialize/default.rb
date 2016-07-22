@@ -9,6 +9,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
   def create
     hosts_task_info = {}
     cluster_hosts.each do |host|
+      set_vsan_trace(host)
       if disk_configured?(host)
         Puppet.debug("Skipping disk Initialization for server #{host.name}")
         next
@@ -17,7 +18,6 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
         Puppet.debug("Initiating disk intialization for server #{host.name}")
         hosts_task_info[host.name] = initialize_disk(host)
       end
-      set_vsan_trace(host)
     end
 
     while !hosts_task_info.keys.empty? do
@@ -180,6 +180,7 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
 
   def set_vsan_trace(host)
     if resource[:vsan_trace_volume] && !resource[:vsan_trace_volume].empty?
+      Puppet.debug("Browsing datastores for setting VSAN trace to #{resource[:vsan_trace_volume]}")
       trace_set = false
       host.datastore.each do |ds|
         if ds.info.respond_to?(:name) && ds.info.respond_to?(:url) && ds.info.name == resource[:vsan_trace_volume]
