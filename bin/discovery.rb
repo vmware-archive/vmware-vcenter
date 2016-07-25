@@ -36,7 +36,7 @@ def exiting_profiles(vim)
   profiles = []
 
   # vCenter 5.1 do not support Profile Based Management
-  return profiles if vim.rev.to_f <= 5.1
+  return profiles if Float(vim.rev) <= 5.1
 
   require 'rbvmomi/pbm'
   pbm_obj = RbVmomi::PBM
