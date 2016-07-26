@@ -14,6 +14,19 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
   private
 
   def vim
+    unless resource[:transport]
+      raise Puppet::Error, "No transport metaparameter provided for #{resource.ref}"
+    end
+    unless resource[:transport].is_a?(Puppet::Resource)
+      raise Puppet::Error, "Invalid transport #{resource[:transport]} provided for #{resource.ref}"
+    end
+    unless resource[:transport].type == "Transport"
+      raise Puppet::Error, "Transport metaparameter must be of type Transport for #{resource.ref}"
+    end
+    unless resource.catalog.resource_refs.include?(resource[:transport].to_s)
+      raise Puppet::Error, "Transport #{resource[:transport].to_s} not defined for #{resource.ref}"
+    end
+
     @transport ||= PuppetX::Puppetlabs::Transport.retrieve(:resource_ref => resource[:transport], :catalog => resource.catalog, :provider => 'vsphere')
     @transport.vim
   end
