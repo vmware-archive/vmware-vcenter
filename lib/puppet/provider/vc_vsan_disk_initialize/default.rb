@@ -9,7 +9,6 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
   def create
     hosts_task_info = {}
     cluster_hosts.each do |host|
-      set_vsan_trace(host)
       if disk_configured?(host)
         Puppet.debug("Skipping disk Initialization for server #{host.name}")
         next
@@ -26,6 +25,10 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
         hosts_task_info.delete(host_name) if task.info.state != "running"
       end
       sleep(60) unless hosts_task_info.empty?
+    end
+
+    cluster_hosts.each do |host|
+      set_vsan_trace(host)
     end
   end
 
