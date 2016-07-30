@@ -186,13 +186,15 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
       Puppet.debug("Browsing datastores for setting VSAN trace to #{resource[:vsan_trace_volume]}")
       trace_set = false
       host.datastore.each do |ds|
-        if ds.info.respond_to?(:name) && ds.info.respond_to?(:url) && ds.info.name == resource[:vsan_trace_volume]
-          Puppet.info("Setting VSAN trace for #{host.name} to #{ds.info.name} (#{ds.info.url})")
+        next unless ds.info.respond_to?(:name) && ds.info.respond_to?(:url)
+        if ds.info.name == resource[:vsan_trace_volume] && ds.info.url && !ds.info.url.empty?
+          url = ds.info.url.sub("ds:/","")
+          Puppet.info("Setting VSAN trace for #{host.name} to #{ds.info.name} (#{url})")
           begin
-            trace_set = host.esxcli.vsan.trace.set({:path => ds.info.url})
+            trace_set = host.esxcli.vsan.trace.set({:path => url})
           rescue Exception => ex
             # Don't fail the puppet run if we cannot set VSAN trace, but simply log it
-            Puppet.debug("Error #{ex.class}:#{ex.message} on setting VSAN trace to #{ds.info.url}")
+            Puppet.debug("Error #{ex.class}:#{ex.message} on setting VSAN trace to #{url}")
           end
           break
         end
