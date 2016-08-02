@@ -90,7 +90,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
 
   def failure_tolerance_method=(value)
     return true if value.empty?
-    Puppet.debug("Updating value #{value} of replica_preference to #{resource[:replica_preference]}")
+    Puppet.debug("Updating value #{value} of replica_preference to #{resource[:failure_tolerance_method]}")
     found = false
 
     profile = exiting_profiles.find { |x| x.name == resource[:name]}
