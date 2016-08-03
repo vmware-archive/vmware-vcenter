@@ -15,9 +15,6 @@ gem 'rspec-puppet'
 if RUBY_VERSION >= '1.8.7' && RUBY_VERSION < '1.9'
   gem 'rspec', '~> 2.0'
   gem 'rake', '~> 10.0'
-else
-  # rubocop requires ruby >= 1.9
-  gem 'rubocop'
 end
 
 # JSON must be 1.x on Ruby 1.9
