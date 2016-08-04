@@ -646,11 +646,19 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :capacityInKB => size
     )
 
-    RbVmomi::VIM.VirtualDeviceConfigSpec(
-      :device => disk,
-      :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
-      :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
-    )
+    config = {
+        :device => disk,
+        :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
+        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+    }
+
+    if vsan_data_store?(file_name) && resource[:vm_storage_policy]
+      config[:profile] = [VIM::VirtualMachineDefinedProfileSpec(
+          :profileId => profile(resource[:vm_storage_policy]).profileId.uniqueId
+      )]
+    end
+
+    RbVmomi::VIM.VirtualDeviceConfigSpec(config)
   end
 
   # get network configuration
