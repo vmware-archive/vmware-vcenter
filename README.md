@@ -156,14 +156,12 @@ The service name should be in the form of: `ESXi_hostname:<service name`. Eg `es
 This resource allows the configuration of system resources of a host that are viewed und er the 'System Resource Allocation' section of the vSphere client
 * `host`:
 * `system_resource`:
-* `cpu_limit`:
+* `cpu_limit`: Can be set to a numerical value representing MHz, or "unlimited"
 * `cpu_reservation`:
 * `cpu_expandable_reservation`:
-* `memory_limit`:
+* `memory_limit`: Can be set to a numerical value representing MB, or "unlimited"
 * `memory_reservation`:
 * `memory_expandable_reservation`:
-* `cpu_unlimited`: Enable unlimited CPU resources. Can't be used in conjunction with `cpu_limit`
-* `memory_unlimited`: Enable unlimited Memory resources. Can't be used in conjunction with `memory_limit`
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
 
 ### esx_timezone
