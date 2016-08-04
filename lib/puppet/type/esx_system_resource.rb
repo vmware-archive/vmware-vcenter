@@ -25,22 +25,17 @@ Puppet::Type.newtype(:esx_system_resource) do
   end
 
   newproperty(:cpu_limit) do
-    desc "CPU limit in MHz"
-    newvalues(/\d{1,}/)
-  end
-
-  newparam(:cpu_unlimited) do
-    desc "Enable unlimited CPU resources"
-    newvalues(:true,:false)
+    desc <<-EOT
+    Sets the CPU limit.  Acceptable values are a numeric value (in Mhz) or
+    the string "unlimited"
+    EOT
+    newvalues(/\d{1,}/, "unlimited")
     munge do |value|
-      if value == 'true'
-        @resource[:cpu_limit] = -1
-      elsif value == 'false' && !(@resource[:cpu_limit])
-        @resource[:cpu_limit] = 0
-      end
+      value = -1 if value == "unlimited"
+      value
     end
   end
- 
+
   newproperty(:memory_reservation) do
     desc "System resource memory reservation in MB"
     newvalues(/\d{1,}/)
@@ -52,19 +47,15 @@ Puppet::Type.newtype(:esx_system_resource) do
   end
  
   newproperty(:memory_limit) do
-    desc "Memory limit in MB"
-    newvalues(/\d{1,}/)
+    desc <<-EOT
+    Sets the memory limit.  Acceptable values are a numeric value (in MB) or
+    the string "unlimited"
+    EOT
+    newvalues(/\d{1,}/, "unlimited")
+    munge do |value|
+      value = -1 if value == "unlimited"
+      value
+    end
   end
 
-   newparam(:memory_unlimited) do
-     desc "Enable unlimited Memory resources"
-     newvalues(:true,:false)
-     munge do |value|
-       if value == 'true'
-         @resource[:memory_limit] = -1
-       elsif value == 'false' && !(@resource[:memory_limit])
-         @resource[:memory_limit] = 0
-       end
-     end
-   end
 end
