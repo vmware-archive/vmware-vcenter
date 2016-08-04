@@ -31,7 +31,7 @@ describe Puppet::Type.type(:esx_vswitch) do
   context "when validating attributes" do
 
     it "should have name as its keyattribute" do
-      expect(described_class.key_attributes).to eq( [:name ])
+      expect(described_class.key_attributes).to eq( [:name, :vswitch, :host ])
     end
 
     describe "when validating attributes" do
@@ -50,7 +50,7 @@ describe Puppet::Type.type(:esx_vswitch) do
 
     describe "when validating values" do
 
-      describe "validating name param" do
+      describe "validating the namevars" do
 
         it "should allow a valid name" do
           expect(described_class.new(:name => 'esx1:vswitch1', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
@@ -61,6 +61,30 @@ describe Puppet::Type.type(:esx_vswitch) do
           expect { described_class.new(:name => '', :path => '/datacenter1', :vswitch => 'vSwitch', :host => 'esx', :num_ports => '100', :nics => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"], :nicorderpolicy => { :activenic => ["vmnic1", "vmnic4"], :standbynic => ["vmnic3", "vmnic2"]}, :mtu => 2000,
             :checkbeacon => true, :ensure => :present) }.to raise_error Puppet::Error
         end
+
+        it "should assign host and vswitch from the title if it matches host:vswitch" do
+          resource_type = described_class.new(:name => 'esx1:vswitch1')
+          expect(resource_type[:host]).to eq("esx1")
+          expect(resource_type[:vswitch]).to eq("vswitch1")
+        end
+
+        it "should assign the title to vswitch if it is not colon delimited" do
+          resource_type = described_class.new(:name => 'vswitch1', :host => 'esx1')
+          expect(resource_type[:host]).to eq("esx1")
+          expect(resource_type[:vswitch]).to eq("vswitch1")
+        end
+
+        it "should ignore the resource title if both vswitch and host are defined" do
+          resource_type = described_class.new(:name => 'random name', :vswitch => "vswitch1", :host => 'esx1')
+          expect(resource_type[:host]).to eq("esx1")
+          expect(resource_type[:vswitch]).to eq("vswitch1")
+        end
+
+
+        it "should raise an error if the host is not set" do
+          expect { described_class.new(:name => 'vswitch') }.to raise_error Puppet::Error
+        end
+
       end
 
       describe "validating ensure property" do

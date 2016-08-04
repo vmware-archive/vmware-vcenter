@@ -2,6 +2,51 @@
 Puppet::Type.newtype(:esx_vswitch) do
   @doc = "Manage vCenter vSwitch."
 
+  # Out title_patterns allow for three ways to declare the resource.
+  # All three of the following declarations will result in the
+  # host parameter being set to esx1 and the vswitch parameter
+  # to vswitch1
+  #
+  # esx_vswitch { 'random name':
+  #   host => 'esx1',
+  #   vswitch => 'vswitch1',
+  #   ...
+  # }
+  #
+  # esx_vswitch { 'vswitch1':
+  #   host => 'esx1',
+  #   ...
+  # }
+  #
+  # esx_vswitch { 'esx1:vswitch1':
+  #   ...
+  # }
+  #
+  def self.title_patterns
+    identity = lambda { |x| x }
+    [ 
+      [ 
+        /^([^:]+):([^:]+)$/,
+        [ [:host, identity], [:vswitch, identity] ]
+      ],
+      [
+        /^([^:]+)$/,
+        [[ :vswitch, identity ]]
+      ]
+    ]
+  end
+
+  # Make sure that we always have a host and vswitch parameter defined, this is
+  # evaluated after title_patterns so it will validate any form of declaration.
+  # Top level validate is required, because isrequired within a newparam method does
+  # not work, https://tickets.puppetlabs.com/browse/PUP-1591
+  #
+  validate do
+    [ :host, :vswitch ].each do |p|
+      raise ArgumentError, "No value provided for #{p.to_s} parameter" unless self[p]
+    end
+  end
+
   ensurable do
     newvalue(:present) do
       provider.create
@@ -12,18 +57,13 @@ Puppet::Type.newtype(:esx_vswitch) do
     defaultto(:present)
   end
 
-  newparam(:name, :namevar => true) do
-    desc "ESX host:vSwitch name."
-    validate do |value|
-      if value.strip.length == 0
-        raise ArgumentError, "Invalid ESX host:vSwitch name."
-      end
-    end
-    munge do |value|
-      @resource[:host], @resource[:vswitch] = value.split(':',2)
-      value
-    end
-  end
+
+  # The name parameter is a bit redundant but Puppet still needs types to support
+  # the parameter, even if it doesn't get used.  The namevars for this resource
+  # are host and vswitch
+  #
+  newparam(:name)
+
 
   newparam(:path) do
     desc "Datacenter path where host resides"
@@ -33,6 +73,7 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newparam(:vswitch) do
+    isnamevar
     desc "The name of vSwitch"
     validate do |value|
       if value.strip.length == 0
@@ -42,6 +83,7 @@ Puppet::Type.newtype(:esx_vswitch) do
   end
 
   newparam(:host) do
+    isnamevar
     desc "ESX hostname or IP"
     validate do |value|
       if value.strip.length == 0
