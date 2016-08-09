@@ -1,3 +1,4 @@
+Gemfile.lock
 lib/puppet/type/esx_debug.rb
 lib/puppet/provider/esx_debug/default.rb
 *.gem
