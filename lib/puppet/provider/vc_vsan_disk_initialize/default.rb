@@ -102,7 +102,9 @@ Puppet::Type.type(:vc_vsan_disk_initialize).provide(:vc_vsan_disk_initialize, :p
     vsandisks.sort! {|x| x.disk.capacity.block }
     vsandisks.each do |vsandisk|
       next if vsandisk.disk.displayName.match(/usb/i)
-      next  if ["inUse", "ineligible"].include?(vsandisk.state)
+      next if ["inUse", "ineligible"].include?(vsandisk.state)
+      next if vsandisk.disk.displayName =~ /ATA/i && resource[:vsan_disk_group_creation_type].to_s == "hybrid"
+
       if vsandisk.disk.ssd
         ssd.push(vsandisk.disk)
       else
