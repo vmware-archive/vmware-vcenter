@@ -110,6 +110,19 @@ options => {
 * `debug`: true, false
 * `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
 
+### esx_firewall_ruleset
+#### Parameters
+* `ensure`: enabled, disabled
+* `name`: Name of the firewall ruleset (namevar)
+* `host`: ESX host to configure (namevar)
+* `path`:  Path to the datacenter where the host resides
+* `allowed_hosts`: Accepts a string value of "all" or an array of IP addresses and IP networks with prefixes
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+
+#### Title pattern
+
+Both `name` and `host` are namevars, by default the title will be used for `name`, but both may be specified in the title as `host:name`
+
 ### esx_dnsconfig
 #### Parameters
 * `address`: ['array','of','dns','values']
