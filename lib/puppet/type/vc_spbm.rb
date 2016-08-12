@@ -17,7 +17,7 @@ Puppet::Type.newtype(:vc_spbm) do
 
   newproperty(:failure_tolerance_method) do
     desc "Replication state"
-    defaultto('none')
+    defaultto("none")
   end
 
   newproperty(:host_failures_to_tolerate) do

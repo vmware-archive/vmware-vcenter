@@ -100,7 +100,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
       sub_profile.capability.each do |cap|
         cap.constraint.each do |constraint|
           constraint.propertyInstance.each do |property_instance|
-            if property_instance.id == "replicaPreference" && value != 'none'
+            if property_instance.id == "replicaPreference" && value != "none"
               property_instance.value = failure_tolerance_value[resource[:failure_tolerance_method]]
               found = true
               rules << "VSAN.%s=%s" % [property_instance.id, failure_tolerance_value[resource[:failure_tolerance_method]]]
@@ -112,7 +112,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
       end
     end
 
-    if !found && value != 'none'
+    if !found && value != "none"
       rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:failure_tolerance_method]]]
     end
     profile_modify(rules)
