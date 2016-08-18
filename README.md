@@ -215,3 +215,26 @@ Manage vsphere license assignment. entity_id should be the name of an esx host o
 #### Parameters
 * `entity_id`: Name of ESX or Virtual Center node associated with the license key
 * `license_key`: vSphere License Key
+
+## vCenter resource types
+### vc_role
+#### Parameters
+* `transport`: A resource reference to a transport type declared elsewhere. Eg: `Transport['vcenter']`
+* `name`: The desired name for the role.
+* `privileges`: An array of privilege IDs to be assigned to the role. A list of privileges of privileges can be gathered via the Managed Object Browser (MOB). Simply navigate to https://<vcenter fqdn>/mob/?moid=AuthorizationManager&doPath=privilegeList. Use the privId value to add the privilege to the role.
+* `force_delete`: By default, a role will not be deleted if user or group permissions are associated with it. If force_delete is set to true, then the role will be deleted even if there are associated permissions
+```
+vc_role { 'Role Admin':
+  ensure     => present,
+  privileges => [ 'Authorization.ModifyRoles', 'Authorization.ReassignRolePermissions', 'Authorization.ModifyPermissions' ],
+  transport  => Transport['vcenter']
+}
+```
+or
+```
+vc_role { 'Role Admin':
+  ensure       => absent,
+  force_delete => true,
+  transport    => Transport['vcenter']
+}
+```
