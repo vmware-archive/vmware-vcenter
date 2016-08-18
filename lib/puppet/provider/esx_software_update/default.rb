@@ -15,18 +15,24 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
         installed_vibs = []
         skipped_vibs = []
         @actionable_vibs.each do |vib_url|
-          Puppet.debug("Attempting to install the VIB: #{vib_url}")
-          install_results = install_vib vib_url
+          Puppet.debug("Attempting to install the VIB: %s" % vib_url)
+          begin
+            install_results = install_vib vib_url
+          rescue Exception => ex
+            Puppet.err("Failed to install the VIB: %s due to %s:%s " % [vib_url, ex.class, ex.message] )
+            next  # proceed to next VIB
+          end
           installed_vibs += install_results[:VIBsInstalled]
           skipped_vibs += install_results[:VIBsSkipped] if install_results[:VIBsSkipped]
           reboot_required ||= install_results[:RebootRequired]
         end
         if installed_vibs.length == @actionable_vibs.length
           Puppet.info("Successfully installed the VIBs")
-        elsif installed_vibs.length > 0
+        elsif installed_vibs.length > 0 || skipped_vibs.length > 0
           Puppet.info("Successfully installed following VIBs : #{installed_vibs}")
           Puppet.info("Skipped installing following VIBs : #{skipped_vibs}")
           if installed_vibs.length + skipped_vibs.length < @actionable_vibs.length
+            reboot_and_wait_for_host if reboot_required
             raise "Some VIBs failed to install"
           end
         else
@@ -39,6 +45,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
         raise "No VIBs to update"
       end
     rescue Exception => e
+      # Unmount all NFS stores we mounted
       unmount_mounted_nfs_shares
       fail "esx_software_update installation failed due to following exception: \n #{e.message}"
     end
@@ -134,14 +141,14 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
               Puppet.warning("Unexpected VIB source information: #{vib_source_data} is not an Array.")
             end
           rescue Exception => e
-            Puppet.error("Failed to get VIB info for #{qualified_vib_path} due to error: #{e.message}")
-            Puppet.error("Fault error message: #{e.fault.errMsg}") if e.is_a?(RbVmomi::Fault)
+            Puppet.err("Failed to get VIB info for #{qualified_vib_path} due to error: #{e.message}")
+            Puppet.err("Fault error message: #{e.fault.errMsg}") if e.is_a?(RbVmomi::Fault)
             raise e
           end
         end
       end
     rescue Exception => e
-      Puppet.error("Cannot determine if specified VIBs exists due to exception #{e.class}:#{e.message} Backtrace: #{e.backtrace.join("\n")}")
+      Puppet.err("Cannot determine if specified VIBs exists due to exception #{e.class}:#{e.message} Backtrace: #{e.backtrace.join("\n")}")
       raise e
     end
     # For install mode: if there are any actionable VIBs, we need to return false (i.e. resource does not exist) so that "create" is invoked by puppet
@@ -264,7 +271,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
       Puppet.info("Mounted #{share} with volume name #{volume_name}")
       return true
     rescue RbVmomi::Fault => e
-      Puppet.error("Failed to mount #{share} due to error: #{e.message} #{e.fault.errMsg}")
+      Puppet.err("Failed to mount #{share} due to error: #{e.message} #{e.fault.errMsg}")
     end
     false
   end
@@ -288,7 +295,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
       Puppet.info("Unmounted volume name #{volume_name}")
       return true
     rescue RbVmomi::Fault => e
-      Puppet.error("Failed to unmount #{volume_name} due to error: #{e.message} #{e.fault.errMsg}")
+      Puppet.err("Failed to unmount #{volume_name} due to error: #{e.message} #{e.fault.errMsg}")
     end
     false
   end
