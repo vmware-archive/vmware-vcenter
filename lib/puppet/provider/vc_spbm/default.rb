@@ -38,7 +38,7 @@ Puppet::Type.type(:vc_spbm).provide(:vc_spbm, :parent => Puppet::Provider::Vcent
     rules << "VSAN.%s=%s" % ["forceProvisioning", resource[:force_provisioning]] if resource[:force_provisioning]
     rules << "VSAN.%s=%s" % ["proportionalCapacity", resource[:proportional_capacity]] if resource[:proportional_capacity]
     rules << "VSAN.%s=%s" % ["cacheReservation", resource[:cache_reservation]] if resource[:cache_reservation]
-    rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:failure_tolerance_method]]] if resource[:failure_tolerance_method]
+    rules << "VSAN.%s=%s" % ["replicaPreference", failure_tolerance_value[resource[:failure_tolerance_method]]] if resource[:failure_tolerance_method] != "none"
     rules << "VSAN.%s=%s" % ["hostFailuresToTolerate", resource[:host_failures_to_tolerate]] if resource[:host_failures_to_tolerate]
     rules
   end
