@@ -4,14 +4,22 @@ Puppet::Type.newtype(:esx_software_update) do
   ensurable
 
   newparam(:vibs) do
-    desc "Array of VIBs. For installation, each array element is a hash of vib_path, nfs_share, volume_name (Note: For HTTP(s) or FTP, provide only fully qualified vib_path). For un-installation, each array element is a string."
+    desc "Array of VIBs. For installation, each array element is a hash of instance_id, vib_path, nfs_share, volume_name (Note: For HTTP(s) or FTP, provide only fully qualified vib_path). For un-installation, each array element is a string."
     validate do |value|
       if value.is_a?(Array)
         install_mode = value.all? {|v| v.is_a?(Hash) && !v[:vib_path].nil? && !v[:vib_path].empty? }
         uninstall_mode = value.all? {|v| v.is_a?(String) && !v.nil? && !v.empty? }
-        raise ArgumentError, "Array elements are not in invalid install or uninstall format" if !install_mode && !uninstall_mode
+        unless uninstall_mode
+          value.each do |v|
+            if !v.is_a?(Hash) || !v[:vib_path] || v[:vib_path].empty? || !v["instance_id"] || v["instance_id"].empty?
+              raise ArgumentError, "Invalid install format for one of the array elements"
+            end
+          end
+        end
       elsif value.is_a?(Hash)
-        raise ArgumentError, "Invalid install format" if value[:vib_path].nil? || value[:vib_path].empty?
+        if !value.is_a?(Hash) || !value[:vib_path] || value[:vib_path].empty? || !value["instance_id"] || value["instance_id"].empty?
+          raise ArgumentError, "Invalid install format"
+        end
       elsif value.is_a?(String)
         raise ArgumentError, "Invalid uninstall format" if value.nil? && !value.empty?
       else
