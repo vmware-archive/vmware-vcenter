@@ -18,8 +18,9 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
           Puppet.debug("Attempting to install the VIB: %s" % vib_url)
           begin
             install_results = install_vib vib_url
-          rescue Exception => ex
+          rescue => ex
             Puppet.err("Failed to install the VIB: %s due to %s:%s " % [vib_url, ex.class, ex.message] )
+            Puppet.err("Fault error message: %s" % ex.fault.errMsg.to_s) if ex.is_a?(RbVmomi::Fault)
             next  # proceed to next VIB
           end
           installed_vibs += install_results[:VIBsInstalled]
@@ -167,7 +168,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
     host.RebootHost_Task({:force => false}).wait_for_completion
     Puppet.debug("%s Waiting upto %s seconds for host to connect" % [Time.now, resource[:reboot_timeout]])
     rounds = ((1.0 * (resource[:reboot_timeout] - 180)) / 30).ceil
-    sleep 180  # Sleep for 3 minutes to allow reboot initiation request to reflect
+    sleep 300 # Sleep to allow reboot initiation request to reflect, otherwise we may get false state of connected host
     reboot_done = false
     for i in 1..rounds
       begin
@@ -264,14 +265,15 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
   # Helper method to mount a given NFS share on ESX as a specified volume_name
   def mount_nfs_share share, volume_name
     begin
-      Puppet.debug("Mounting #{share} with volume name #{volume_name}")
+      Puppet.debug("Mounting %s with volume name %s" % [share, volume_name])
       host.esxcli.storage.nfs.add({:host => resource[:nfs_hostname],
                                    :share => share,
                                    :volumename => volume_name})
-      Puppet.info("Mounted #{share} with volume name #{volume_name}")
+      Puppet.debug("Mounted %s with volume name %s" % [share, volume_name])
       return true
-    rescue RbVmomi::Fault => e
-      Puppet.err("Failed to mount #{share} due to error: #{e.message} #{e.fault.errMsg}")
+    rescue => e
+      Puppet.err("Failed to mount %s due to error: %s:%s" %[share, e.class, e.message])
+      Puppet.err("Fault error message: %s" % e.fault.errMsg.to_s) if e.is_a?(RbVmomi::Fault)
     end
     false
   end
@@ -290,12 +292,13 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
   # Helper method to unmount a given NFS volume on ESX
   def unmount_nfs_share volume_name
     begin
-      Puppet.debug("Unmounting volume name #{volume_name}")
+      Puppet.debug("Unmounting volume name %s" % volume_name)
       host.esxcli.storage.nfs.remove({:volumename => volume_name})
-      Puppet.info("Unmounted volume name #{volume_name}")
+      Puppet.debug("Unmounted volume name %s" % volume_name)
       return true
-    rescue RbVmomi::Fault => e
-      Puppet.err("Failed to unmount #{volume_name} due to error: #{e.message} #{e.fault.errMsg}")
+    rescue => e
+      Puppet.err("Failed to unmount %s due to error: %s:%s" %[volume_name, e.class, e.message])
+      Puppet.err("Fault error message: %s" % e.fault.errMsg.to_s) if e.is_a?(RbVmomi::Fault)
     end
     false
   end
