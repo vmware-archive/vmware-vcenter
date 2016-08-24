@@ -6,49 +6,37 @@ require 'asm/util'
 Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent => Puppet::Provider::Vcenter) do
   @doc = "Perform software updates on a desired ESX"
 
+  # Helper method to log an error message
+  def log_error(msg, res, ex)
+    Puppet.err("%s for %s: Error %s:%s " % [msg, res, ex.class, ex.message] )
+    Puppet.err("Fault error message: %s" % ex.fault.errMsg.to_s) if ex.is_a?(RbVmomi::Fault)
+  end
+
   # Method called by puppet to create a resource i.e. when exists returns false
   def create
-    begin
-      if @actionable_vibs.length > 0
-        # Install all specified VIBs
-        reboot_required = false
-        installed_vibs = []
-        skipped_vibs = []
-        @actionable_vibs.each do |vib_url|
-          Puppet.debug("Attempting to install the VIB: %s" % vib_url)
-          begin
-            install_results = install_vib vib_url
-          rescue => ex
-            Puppet.err("Failed to install the VIB: %s due to %s:%s " % [vib_url, ex.class, ex.message] )
-            Puppet.err("Fault error message: %s" % ex.fault.errMsg.to_s) if ex.is_a?(RbVmomi::Fault)
-            next  # proceed to next VIB
-          end
-          installed_vibs += install_results[:VIBsInstalled]
-          skipped_vibs += install_results[:VIBsSkipped] if install_results[:VIBsSkipped]
-          reboot_required ||= install_results[:RebootRequired]
-        end
-        if installed_vibs.length == @actionable_vibs.length
-          Puppet.info("Successfully installed the VIBs")
-        elsif installed_vibs.length > 0 || skipped_vibs.length > 0
-          Puppet.info("Successfully installed following VIBs : #{installed_vibs}")
-          Puppet.info("Skipped installing following VIBs : #{skipped_vibs}")
-          if installed_vibs.length + skipped_vibs.length < @actionable_vibs.length
-            reboot_and_wait_for_host if reboot_required
-            raise "Some VIBs failed to install"
-          end
-        else
-          raise "no VIBs installed"
-        end
-        # Unmount all NFS stores we mounted
-        unmount_mounted_nfs_shares
-        reboot_and_wait_for_host if reboot_required
-      else
-        raise "No VIBs to update"
+    # Install all specified VIBs
+    reboot_required = false
+    installed_vibs = []
+    skipped_vibs = []
+    @actionable_vibs.each do |vib_url|
+      begin
+        install_results = install_vib vib_url
+      rescue => ex
+        log_error("Failed to install the VIB", vib_url, ex)
+        next  # proceed to next VIB
       end
-    rescue Exception => e
-      # Unmount all NFS stores we mounted
-      unmount_mounted_nfs_shares
-      fail "esx_software_update installation failed due to following exception: \n #{e.message}"
+      installed_vibs += install_results[:VIBsInstalled]
+      skipped_vibs += install_results[:VIBsSkipped] if install_results[:VIBsSkipped]
+      reboot_required ||= install_results[:RebootRequired]
+    end
+    Puppet.info("Successfully installed %d VIBs" % installed_vibs.length)
+    Puppet.info("Skipped installing following VIBs : %s" % skipped_vibs.join(",")) if skipped_vibs.length > 0
+    # Unmount all NFS stores we mounted
+    unmount_mounted_nfs_shares
+    # Reboot if needed
+    reboot_and_wait_for_host if reboot_required
+    if installed_vibs.length + skipped_vibs.length < @actionable_vibs.length
+      fail "Failed to install some or all VIBs"
     end
   end
 
