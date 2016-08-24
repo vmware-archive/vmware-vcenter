@@ -1,11 +1,10 @@
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
-require 'rbvmomi'
 require File.join(provider_path, 'vsanmgmt.api')
 require File.join(provider_path, 'vsanapiutils')
 
 Puppet::Type.type(:vc_vsan_health_performance).provide(:vc_vsan_health_performance, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Enable / Disable VSAN property."
+  @doc = "Enable / Disable VSAN Health Performance Service."
 
   def create
     Puppet.debug("Configuring VSAN performance service")
@@ -14,18 +13,24 @@ Puppet::Type.type(:vc_vsan_health_performance).provide(:vc_vsan_health_performan
 
   def destroy
     Puppet.debug("De-Configuring VSAN performance service")
-    vsan.vsanPerformanceManager.VsanPerfDeleteStatsObject(:cluster => cluster)
+    begin
+      vsan.vsanPerformanceManager.VsanPerfDeleteStatsObject(:cluster => cluster)
+    rescue => ex
+      Puppet.debug("Exception encountered while disabling VSAN Health Services with message: %s" % [ex.message])
+    end
   end
 
   def exists?
     status = JSON.parse(vsan.vsanClusterHealthSystem.VsanHealthGetClusterStatus(:cluster => cluster))
     Puppet.debug("VSAN Health Servce Status: #{status}")
 
+    # We need to enable VSAN Health Performance services only when group health status is not "green"
+    # If it is already in "green" state, then we dont need to re-enable services
     group_health = vsan.vsanPerformanceManager.VsanPerfQueryClusterHealth(:cluster => cluster)[0].groupHealth
     if resource[:ensure] == :present
       group_health != "green" ? false : true
     elsif resource[:ensure] == :absent
-      group_health != "green" ? false : true
+      group_health != "unknown"
     end
   end
 
