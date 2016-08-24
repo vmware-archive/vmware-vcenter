@@ -4,7 +4,7 @@ require File.join(provider_path, 'vsanmgmt.api')
 require File.join(provider_path, 'vsanapiutils')
 
 Puppet::Type.type(:vc_vsan_health_performance).provide(:vc_vsan_health_performance, :parent => Puppet::Provider::Vcenter) do
-  @doc = "Enable / Disable VSAN Health Performannce Service."
+  @doc = "Enable / Disable VSAN Health Performance Service."
 
   def create
     Puppet.debug("Configuring VSAN performance service")
