@@ -28,7 +28,7 @@ Puppet::Type.type(:vc_vsan_health_performance).provide(:vc_vsan_health_performan
     if resource[:ensure] == :present
       group_health != "green" ? false : true
     elsif resource[:ensure] == :absent
-      group_health != "unknown" ? true: false
+      group_health != "unknown"
     end
   end
 
