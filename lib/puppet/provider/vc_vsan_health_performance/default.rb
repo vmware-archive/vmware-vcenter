@@ -24,6 +24,8 @@ Puppet::Type.type(:vc_vsan_health_performance).provide(:vc_vsan_health_performan
     status = JSON.parse(vsan.vsanClusterHealthSystem.VsanHealthGetClusterStatus(:cluster => cluster))
     Puppet.debug("VSAN Health Servce Status: #{status}")
 
+    # We need to enable VSAN Health Performance services only when group health status is not "green"
+    # If it is already in "green" state, then we dont need to re-enable services
     group_health = vsan.vsanPerformanceManager.VsanPerfQueryClusterHealth(:cluster => cluster)[0].groupHealth
     if resource[:ensure] == :present
       group_health != "green" ? false : true
