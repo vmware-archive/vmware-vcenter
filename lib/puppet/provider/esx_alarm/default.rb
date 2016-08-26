@@ -21,7 +21,7 @@ Puppet::Type.type(:esx_alarm).provide(:esx_alarm, :parent => Puppet::Provider::V
   end
 
   def host
-    @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}'")
+    @host ||= vim.searchIndex.FindByDnsName(:datacenter => datacenter , :dnsName => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}")
   end
 
   def datacenter
