@@ -9,7 +9,7 @@ opts = Trollop::options do
   opt :port, "ESX port", :default => 443
   opt :username, "ESX username", :type => :string, :required => true
   opt :password, "ESX password", :type => :string, :default => ENV["PASSWORD"]
-  opt :timeout, "command timeout", :default => 240
+  opt :timeout, "command timeout", :default => 20
   opt :output, "output facts to a file", :type => :string, :required => true
   opt :credential_id, 'dummy value for ASM, not used'
 end
