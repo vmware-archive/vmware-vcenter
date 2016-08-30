@@ -36,8 +36,12 @@ module PuppetX::Puppetlabs::Transport
 
     def reconnect
       close
-      @vim = nil
-      connect
+      reconnect_opts = {
+          :host => @options[:host], :port => @options[:port], :user => @options[:user], :password => @options[:password],
+          :insecure => @options[:insecure] || true
+      }
+      Puppet.debug("Reconnecting to %s" % reconnect_opts[:host])
+      @vim = RbVmomi::VIM.connect(reconnect_opts)
     end
   end
 end
