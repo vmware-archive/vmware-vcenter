@@ -141,4 +141,34 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     end
   end
 
+  def wait_for_host(init_sleep, max_wait, sleep_interval = 30)
+    is_connected = false
+    rounds = ((1.0 * (max_wait - init_sleep)) / sleep_interval ).ceil
+
+    Puppet.debug("%s: Wait for host connection: %s to %s seconds" % [Time.now, init_sleep, max_wait])
+    sleep init_sleep
+
+    for i in 1..rounds
+      begin
+        connect_state = host.runtime.connectionState
+        if connect_state == "connected"
+          Puppet.info("%s: Host is now connected" % Time.now)
+          is_connected = true
+          break
+        else
+          Puppet.debug("%s: Host connection state: %s " % [Time.now, connect_state] )
+        end
+      rescue => ex
+        Puppet.debug("%s: Ignoring error: %s %s" % [Time.now, ex.class, ex.message])
+        if ex.is_a?(RbVmomi::Fault) && ex.fault.class.to_s == "NotAuthenticated"
+          Puppet.info("Reset host connection")
+          reset_connection
+        end
+      end
+      sleep sleep_interval
+    end
+    Puppet.warning("Host was not connected after waiting upto %d seconds" % max_wait) unless is_connected
+    is_connected
+  end
+
 end

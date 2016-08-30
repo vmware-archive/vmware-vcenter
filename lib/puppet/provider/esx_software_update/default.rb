@@ -119,29 +119,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
   # Helper method to reboot a ESX host and wait for it to come back upto desired timeout
   def reboot_and_wait_for_host
     host.RebootHost_Task({:force => false}).wait_for_completion
-    Puppet.debug("%s Waiting upto %s seconds for host to connect" % [Time.now, resource[:reboot_timeout]])
-    rounds = ((1.0 * (resource[:reboot_timeout] - 180)) / 30).ceil
-    sleep 300 # Sleep to allow reboot initiation request to reflect, otherwise we may get false state of connected host
-    reboot_done = false
-    for i in 1..rounds
-      begin
-        if host.runtime.connectionState == "connected"
-          Puppet.info("Host has rebooted and is connected")
-          reboot_done = true
-          break
-        else
-          Puppet.debug("%s Host connection state: %s " % [Time.now, host.runtime.connectionState] )
-        end
-      rescue Exception => ex
-        Puppet.debug("%s Host is in process of rebooting, ignoring error: %s %s" % [Time.now, ex.class, ex.message])
-        if ex.is_a?(RbVmomi::Fault) && ex.fault.class.to_s == "NotAuthenticated"
-          Puppet.info("Reset host connection")
-          reset_connection
-        end
-      end
-      sleep 30
-    end
-    Puppet.warning("Host not connected after rebooting in %d seconds" % resource[:reboot_timeout]) unless reboot_done
+    wait_for_host(300, resource[:reboot_timeout])
   end
 
   # Get fully qualified path for a given VIB, performing any setup necessary
