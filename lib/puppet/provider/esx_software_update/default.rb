@@ -12,8 +12,22 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
     Puppet.err("Fault error message: %s" % ex.fault.errMsg.to_s) if ex.is_a?(RbVmomi::Fault)
   end
 
+  def ensure_maintenance_mode
+    begin
+      is_mm = host.runtime.inMaintenanceMode
+      Puppet.debug("Host Maintenance mode = %s " % is_mm )
+      unless is_mm
+        Puppet.warning("Host is not in maintenance mode. Enforcing Maintenance mode...")
+        host.EnterMaintenanceMode_Task(:timeout => 450, :evacuatePoweredOffVms => false).wait_for_completion
+      end
+    rescue => ex
+      fail "Cannot ensure maintenance mode due to error %s:%s" % [ex.class, ex.message]
+    end
+  end
+
   # Method called by puppet to create a resource i.e. when exists returns false
   def create
+    ensure_maintenance_mode
     # Install all specified VIBs
     reboot_required = false
     installed_vibs = []
