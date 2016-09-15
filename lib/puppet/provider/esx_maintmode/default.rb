@@ -10,6 +10,7 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
       host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
                                      :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
     else
+      Puppet.debug("VSAN action specified = %s" % resource[:vsan_action])
       decommissionmode = RbVmomi::VIM::VsanHostDecommissionMode.new
       decommissionmode.objectAction = resource[:vsan_action]
       hostmaintspec = RbVmomi::VIM::HostMaintenanceSpec.new
