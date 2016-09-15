@@ -18,7 +18,13 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
       Puppet.debug("Host Maintenance mode = %s " % is_mm )
       unless is_mm
         Puppet.warning("Host is not in maintenance mode. Enforcing Maintenance mode...")
-        host.EnterMaintenanceMode_Task(:timeout => 450, :evacuatePoweredOffVms => false).wait_for_completion
+        decommissionmode = RbVmomi::VIM::VsanHostDecommissionMode.new
+        decommissionmode.objectAction = "noAction"
+        hostmaintspec = RbVmomi::VIM::HostMaintenanceSpec.new
+        hostmaintspec.vsanMode = decommissionmode
+        host.EnterMaintenanceMode_Task(:timeout => 450,
+                                       :maintenanceSpec => hostmaintspec,
+                                       :evacuatePoweredOffVms => true).wait_for_completion
       end
     rescue => ex
       fail "Cannot ensure maintenance mode due to error %s:%s" % [ex.class, ex.message]
