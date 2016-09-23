@@ -19,7 +19,7 @@ Puppet::Type.type(:esx_reconfigureha).provide(:esx_reconfigureha, :parent => Pup
         # is functioning correctly. It is not clear that reconfiguring HA can
         # fix all of the other states, but there does not appear to be any harm
         # in running the HA reconfigure task.
-        if !%w(connectedToMaster election master).include?(connection_state) || resource[:force]
+        if !%w(connectedToMaster election master).include?(connection_state) || resource[:force] || !host.configStatus.eql?("green")
           Puppet.info("Running HA Reconfigure task for #{resource[:host]}")
           task_status = host.ReconfigureHostForDAS_Task!
           while task_status.info.state.match(/running|queued/i)
