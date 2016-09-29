@@ -78,24 +78,14 @@ Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provide
       end
   end
 
-  def match_vm(matches, vm)
-    matched_vms = []
-    matches.each do |match|
-      matched_vms << vm if vm.name == match
-    end
-    matched_vms
-  end
-
   def find_vms(container, vm_names)
     vm_obj = []
     vmview = vim.serviceContent.viewManager.CreateContainerView(
       recursive: true, container: container,
       type: ['VirtualMachine'])
-    vmview.view.each do |vm|
-      vm_obj << match_vm(vm_names, vm)
-    end
+    vm_obj = vmview.view.select { |vm| vm_names.include? vm.name }
     vmview.DestroyView
-    vm_obj.flatten
+    vm_obj
   end
 
   def cluster
