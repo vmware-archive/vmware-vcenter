@@ -79,7 +79,6 @@ Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provide
   end
 
   def find_vms(container, vm_names)
-    vm_obj = []
     vmview = vim.serviceContent.viewManager.CreateContainerView(
       recursive: true, container: container,
       type: ['VirtualMachine'])
