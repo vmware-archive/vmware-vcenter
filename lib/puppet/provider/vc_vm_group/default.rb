@@ -73,34 +73,18 @@ Puppet::Type.type(:vc_vm_group).provide(:vc_vm_group, :parent => Puppet::Provide
   def vm_list(vm_names)
     @vms ||= 
       begin  
-        vms = find_rp_vms(cluster.resourcePool, vm_names)
+        vms = find_vms(cluster, vm_names)
         vms.uniq { |vm| vm._ref}
       end
   end
 
-  def match_vm(matches, vm)
-    matched_vms = []
-    matches.each do |match|
-      matched_vms << vm if vm.name =~ /#{match}/
-    end
-    matched_vms
-  end
-
- def find_rp_vms(resourcepool,vm_names)
-    @vm_obj ||= []
-    resourcepool.childConfiguration.each do |child|
-      case child.entity
-      when RbVmomi::VIM::VirtualMachine
-        @vm_obj << match_vm(vm_names, child.entity) 
-      when RbVmomi::VIM::VirtualApp
-        find_rp_vms(child.entity, vm_names)
-      when RbVmomi::VIM::ResourcePool
-        find_rp_vms(child.entity, vm_names)
-      else
-        Puppet.warning "#{self} find_rp_vm: unknown child type found: #{child.entity.class}"
-      end
-    end
-    @vm_obj.flatten
+  def find_vms(container, vm_names)
+    vmview = vim.serviceContent.viewManager.CreateContainerView(
+      recursive: true, container: container,
+      type: ['VirtualMachine'])
+    vm_obj = vmview.view.select { |vm| vm_names.include? vm.name }
+    vmview.DestroyView
+    vm_obj
   end
 
   def cluster
