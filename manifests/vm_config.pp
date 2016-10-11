@@ -11,6 +11,7 @@ class vcenter::vm_config (
   $num_cpus                = undef,
   $num_cores               = undef,
   $memory                  = undef,
+  $memory_size             = 'mb',
   $ich7m                   = undef,
   $smc                     = undef,
   $power_state             = 'poweredOn',
@@ -46,12 +47,23 @@ class vcenter::vm_config (
   if !empty($vm_harddisks) {
     create_resources(vm_harddisk, $vm_harddisks, $resource_defaults)
   }
-  
+
+  if ($memory != undef) {
+    case $memory_size {
+      'gb', 'GB': { $memory_mb = $memory * 1024 }
+      'mb', 'MB': { $memory_mb = $memory }
+      default:    { fail("Unsupported memory_size") }
+    }
+  }
+  else {
+    $memory_mb = undef
+  }
+
   vm_hardware { $vm_name :
     datacenter             => $datacenter,
     num_cpus               => $num_cpus,
     num_cores_per_socket   => $num_cores,
-    memory_mb              => $memory,
+    memory_mb              => $memory_mb,
     virtual_ich7m_present  => $ich7m,
     virtual_smc_present    => $smc,
     transport              => Transport['vcenter'],
