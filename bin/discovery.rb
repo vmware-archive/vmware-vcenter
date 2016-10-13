@@ -38,18 +38,22 @@ def exiting_profiles(vim)
   # vCenter 5.1 do not support Profile Based Management
   return profiles if Float(vim.rev) <= 5.1
 
-  require 'rbvmomi/pbm'
-  pbm_obj = RbVmomi::PBM
-  pbm = pbm_obj.connect(vim, :insecure=> true)
+  begin
+    require 'rbvmomi/pbm'
+    pbm_obj = RbVmomi::PBM
+    pbm = pbm_obj.connect(vim, :insecure=> true)
 
-  pbm_manager = pbm.serviceContent.profileManager
-  profileIds = pbm_manager.PbmQueryProfile(
-      :resourceType => {:resourceType => "STORAGE"},
-      :profileCategory => "REQUIREMENT"
-  )
+    pbm_manager = pbm.serviceContent.profileManager
+    profileIds = pbm_manager.PbmQueryProfile(
+        :resourceType => {:resourceType => "STORAGE"},
+        :profileCategory => "REQUIREMENT"
+    )
 
-  if profileIds.length > 0
-    profiles = pbm_manager.PbmRetrieveContent(:profileIds => profileIds)
+    if profileIds.length > 0
+      profiles = pbm_manager.PbmRetrieveContent(:profileIds => profileIds)
+    end
+  rescue
+    STDERR.puts("Failed to look up profiles: %s" % $!.to_s)
   end
 
   profiles
