@@ -26,6 +26,7 @@ Puppet::Type.type(:vc_vsan).provide(:vc_vsan, :parent => Puppet::Provider::Vcent
     reconfig_spec.dataEfficiencyConfig = data_efficiency_spec if resource[:dedup]
     reconfig_spec.vsanClusterConfig = vsan_cluster_config
     reconfig_spec.modify = true
+    reconfig_spec.allowReducedRedundancy = true
 
     vsan_task = vsan.vsanClusterConfigSystem.VsanClusterReconfig(:cluster => cluster, :vsanReconfigSpec => reconfig_spec ).onConnection(vim)
     vsan_task.wait_for_completion
