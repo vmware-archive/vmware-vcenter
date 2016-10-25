@@ -13,7 +13,11 @@ Puppet::Type.type(:esx_advanced_options).provide(:esx_advanced_options, :parent 
 
   def options
     value = {}
+    property = nil
+
     resource[:options].keys.each do |optkey|
+
+      property = optkey
       v = host.configManager.advancedOption.QueryOptions(:name => optkey)[0].value
       v = v.to_s if Integer === v
       value[optkey] = v
@@ -21,9 +25,8 @@ Puppet::Type.type(:esx_advanced_options).provide(:esx_advanced_options, :parent 
     end
     value
   rescue RbVmomi::Fault
-    Puppet.debug "ESX advanced options #{resource[:options]} -- get failed for " +
-        "key '#{optkey}'"
-    fail "property '#{optkey}' not found in map"
+    Puppet.debug "ESX advanced options %s -- get failed for key %s " % [resource[:options], property]
+    fail "property %s not found in map" % property
   end
 
   def options=(value)
@@ -51,4 +54,3 @@ Puppet::Type.type(:esx_advanced_options).provide(:esx_advanced_options, :parent 
   end
 
 end
-
