@@ -17,7 +17,8 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     @create_message ||= []
     # build the spec for CreateDVS_Task
     create_spec = RbVmomi::VIM::DVSCreateSpec.new
-    create_spec.configSpec = RbVmomi::VIM::DVSConfigSpec.new
+    protocol = RbVmomi::VIM::LinkDiscoveryProtocolConfig.new(:operation => "listen", :protocol => "lldp")
+    create_spec.configSpec = RbVmomi::VIM::VMwareDVSConfigSpec.new(:linkDiscoveryProtocolConfig => protocol)
     create_spec.configSpec.name = basename
     if @dvswitch.nil? && resource[:vds_version]
       create_spec.productInfo = RbVmomi::VIM::DistributedVirtualSwitchProductSpec.new
