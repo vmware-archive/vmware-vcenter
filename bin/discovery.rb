@@ -111,6 +111,7 @@ def collect_host_attributes(host)
   if get_host_config(host)
     attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
     attributes[:version] = get_host_config(host).product.version
+    attributes[:maintenance_mode] = host.runtime.inMaintenanceMode
   end
   attributes
 end
