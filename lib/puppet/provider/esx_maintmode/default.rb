@@ -47,8 +47,16 @@ Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Pro
   def exists?
     begin
       host.runtime.inMaintenanceMode
-    rescue Exception => e
-      fail "Host is not available: -\n #{e.message}"
+    rescue => e
+      msg = "Could not determine maintenance mode state: %s" % e.message
+      if resource[:fail_when_undetermined]
+        fail msg
+      else
+        # If the flag is set to not fail when we cannot determine maintenance mode,
+        # we simply return value to prevent create/destroy to get invoked
+        Puppet.warning(msg)
+        resource[:ensure] == :present
+      end
     end
   end
 

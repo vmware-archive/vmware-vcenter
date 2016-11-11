@@ -58,4 +58,15 @@ Puppet::Type.newtype(:esx_maintmode) do
     desc "describe VSAN action needs to be taken"
     newvalues('ensureObjectAccessibility', 'evacuateAllData', 'noAction')
   end
+
+  newparam(:fail_when_undetermined) do
+    desc "Flag to determine if we should raise error if state cannot be determined"
+
+    newvalues(:true, :false)
+    defaultto(:true)
+
+    munge do |v|
+      v == :true
+    end
+  end
 end
