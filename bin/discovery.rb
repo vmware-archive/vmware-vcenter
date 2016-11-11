@@ -1,7 +1,8 @@
 #!/opt/puppet/bin/ruby
-require 'json'
-require 'rbvmomi'
-require 'trollop'
+require "json"
+require "rbvmomi"
+require_relative "../lib/puppet_x/puppetlabs/transport/rbvmomi_patch" # Use patched library to workaround rbvmomi issues
+require "trollop"
 
 opts = Trollop::options do
   opt :server, 'vcenter address', :type => :string, :required => true
