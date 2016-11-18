@@ -6,21 +6,36 @@ Puppet::Type.type(:vc_vsan_network).provide(:vc_vsan_network, :parent => Puppet:
   @doc = "Enable / Disable VSAN property of vmkernel for each host in the cluster"
 
   def create
-    host_spec = []
     vsan_hosts.each do |vsan_host|
+      vmk_already_added = []
       cluster_host = vsan_host.hostSystem
-      vmk = vsan_vmkernel(cluster_host)
-      next if vsan_host_existing_vmk(vsan_host).include?(vmk)
+      Puppet.debug("Processing cluster host %s" % [cluster_host.name])
+      vmks = vsan_vmkernel(cluster_host).sort.uniq
+      vsan_host_existing_vmk(vsan_host).each do |vmk_device|
+        next if vmk_device.nil?
+        vmk_already_added << vmk_device.device
+      end
 
-      network_info = RbVmomi::VIM::VsanHostConfigInfoNetworkInfo.new(
-          :port => [RbVmomi::VIM::VsanHostConfigInfoNetworkInfoPortConfig.new(:device => vmk)])
+      Puppet.debug("VSAN VM kernels %s and VMKernels already added %s" % [vmks, vmk_already_added])
+      if vmk_already_added.sort == vmks.sort
+        Puppet.debug("All VSAN VMKernels are already configured for host %s" % [cluster_host.name])
+        next
+      end
 
+      ports = []
+      host_spec = []
+      vmks.sort.each do |vmk|
+        Puppet.debug("Creating new vsan network config: #{vmk}")
+        ports << RbVmomi::VIM::VsanHostConfigInfoNetworkInfoPortConfig.new(:device => vmk)
+      end
+
+      network_info = RbVmomi::VIM::VsanHostConfigInfoNetworkInfo.new(:port => ports)
       host_spec << RbVmomi::VIM::VsanHostConfigInfo.new(:hostSystem => cluster_host, :networkInfo => network_info)
+      spec = RbVmomi::VIM::ClusterConfigSpecEx.new(:vsanHostConfigSpec => host_spec)
+      task_ref = cluster.ReconfigureComputeResource_Task(:modify => 'true', :spec => spec);
+      task_ref.wait_for_completion
+      raise("Failed to configure VSAN for host #{host.name}") unless task_ref.info.state == "success"
     end
-    spec = RbVmomi::VIM::ClusterConfigSpecEx.new(:vsanHostConfigSpec => host_spec)
-    task_ref = cluster.ReconfigureComputeResource_Task(:modify => 'true', :spec => spec);
-    task_ref.wait_for_completion
-    raise("Failed to configure VSAN for host #{host.name}") unless task_ref.info.state == "success"
   end
 
   def destroy
@@ -55,26 +70,40 @@ Puppet::Type.type(:vc_vsan_network).provide(:vc_vsan_network, :parent => Puppet:
   def vsan_host_existing_vmk(vsan_host)
     vsan_ports = ( vsan_host.networkInfo.port || [] )
     vsan_ports.collect { |x| x.device}
+    Puppet.debug("VSAN Ports: #{vsan_ports}")
+    vsan_ports
   end
 
   def vsan_vmkernel(host)
+    vmks = []
     nicmgr = host.configManager.virtualNicManager.info.netConfig
-    nicmgr.each do |n|
-      n.candidateVnic.each do |nic|
-        if resource[:vsan_port_group_name]
-          return nic.device if nic.portgroup == resource[:vsan_port_group_name]
-        elsif resource[:vsan_dv_port_group_name] && resource[:vsan_dv_switch_name]
-          dv_pg = dvportgroup(resource[:vsan_dv_switch_name], resource[:vsan_dv_port_group_name])
-          return nic.device if nic.spec.distributedVirtualPort.portgroupKey == dv_pg.key
-        end
 
+    if resource[:vsan_dv_port_group_name] && resource[:vsan_dv_switch_name]
+      dv_pg_names = Array(resource[:vsan_dv_port_group_name])
+      dv_pg_names.each do |dv_pg_name|
+        dv_pg = dvportgroup(resource[:vsan_dv_switch_name], dv_pg_name)
+        Puppet.debug("Port name: #{dv_pg.name}")
+        nicmgr.each do |n|
+          n.candidateVnic.each do |nic|
+            vmks << nic.device if nic.spec.distributedVirtualPort.portgroupKey == dv_pg.key
+          end
+        end
       end
     end
-    raise("Failed to find vmkernel for portgroup : #{resource[:vsan_port_group_name]}")
+
+    if resource[:vsan_port_group_name]
+      resource[:vsan_port_group_name].each do |pg|
+        nicmgr.each do |n|
+          n.candidateVnic.each do |nic|
+            vmks << nic.device if nic.portgroup == resource[:vsan_port_group_name]
+          end
+        end
+      end
+    end
+    vmks
   end
 
   def dvportgroup(dv_switch_name, dv_port_group_name)
-    return @pg unless @pg.nil?
     name = dv_port_group_name
     dvs_name = dv_switch_name
     pg =
