@@ -92,10 +92,10 @@ Puppet::Type.type(:vc_vsan_network).provide(:vc_vsan_network, :parent => Puppet:
     end
 
     if resource[:vsan_port_group_name]
-      resource[:vsan_port_group_name].each do |pg|
+      Array(resource[:vsan_port_group_name]).each do |pg|
         nicmgr.each do |n|
           n.candidateVnic.each do |nic|
-            vmks << nic.device if nic.portgroup == resource[:vsan_port_group_name]
+            vmks << nic.device if nic.portgroup == pg
           end
         end
       end
