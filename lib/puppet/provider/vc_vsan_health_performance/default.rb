@@ -9,6 +9,12 @@ Puppet::Type.type(:vc_vsan_health_performance).provide(:vc_vsan_health_performan
   def create
     Puppet.debug("Configuring VSAN performance service")
     vsan.vsanPerformanceManager.VsanPerfCreateStatsObjectTask(:cluster => cluster).onConnection(vim).wait_for_completion
+  rescue => ex
+    if ex.message =~ /FileAlreadyExists/
+      Puppet.debug("FileAlreadyExists error message received. Health services is aleady enabled. Need to ignore this error")
+    else
+      raise
+    end
   end
 
   def destroy
