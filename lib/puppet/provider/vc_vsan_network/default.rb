@@ -82,6 +82,7 @@ Puppet::Type.type(:vc_vsan_network).provide(:vc_vsan_network, :parent => Puppet:
       dv_pg_names = Array(resource[:vsan_dv_port_group_name])
       dv_pg_names.each do |dv_pg_name|
         dv_pg = dvportgroup(resource[:vsan_dv_switch_name], dv_pg_name)
+        next unless dv_pg
         Puppet.debug("Port name: #{dv_pg.name}")
         nicmgr.each do |n|
           n.candidateVnic.each do |nic|
