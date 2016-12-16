@@ -179,16 +179,16 @@ Puppet::Type.type(:vm_nic).provide(:vm_nic, :parent => Puppet::Provider::Vcenter
       nicType = config_is_now.class.to_s
     end
 
-    deviceSpec = 
+    deviceSpec =
      begin
         case nicType
-        when :e1000, 'VirtualE1000'
+        when :e1000, 'VirtualE1000', :VirtualE1000
           RbVmomi::VIM::VirtualE1000( deviceSpec.props )
-        when :e1000e, 'VirtualE1000e'
+        when :e1000e, 'VirtualE1000e', :VirtualE1000e
           RbVmomi::VIM::VirtualE1000e( deviceSpec.props )
-        when :vmxnet2, 'VirtualVmxnet2'
+        when :vmxnet2, 'VirtualVmxnet2', :VirtualVmxnet2
           RbVmomi::VIM::VirtualVmxnet2( deviceSpec.props )
-        when :vmxnet3, 'VirtualVmxnet3'
+        when :vmxnet3, 'VirtualVmxnet3', :VirtualVmxnet3
           RbVmomi::VIM::VirtualVmxnet3( deviceSpec.props )
         end
      end
@@ -196,9 +196,8 @@ Puppet::Type.type(:vm_nic).provide(:vm_nic, :parent => Puppet::Provider::Vcenter
       :operation => operation,
       :device    => deviceSpec
     }
-
     virtualDeviceConfigSpec = RbVmomi::VIM::VirtualDeviceConfigSpec( spec )
-    
+
     @virtualMachineConfigSpec = RbVmomi::VIM::VirtualMachineConfigSpec(
       :deviceChange => [ virtualDeviceConfigSpec ]
     )
