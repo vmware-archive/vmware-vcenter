@@ -12,7 +12,7 @@ module PuppetX::VMware::Mapper
         ],
         :type               => LeafData[
           :desc             => 'Virtual Ethernet Card Type',
-          :valid_enum       => [:e1000, :e1000e, :vmxnet2, :vmxnet3]
+          :valid_enum       => [:e1000, :e1000e, :vmxnet2, :vmxnet3, 'VirtualE1000', 'VirtualE1000e', 'VirtualVmxnet2', 'VirtualVmxnet3']
         ],
         :portgroup          => LeafData[
           :desc             => "The name of the portgroup this adapter is connected on"
