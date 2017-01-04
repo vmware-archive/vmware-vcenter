@@ -26,8 +26,8 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
                                        :maintenanceSpec => hostmaintspec,
                                        :evacuatePoweredOffVms => true).wait_for_completion
       end
-    rescue => ex
-      fail "Cannot ensure maintenance mode due to error %s:%s" % [ex.class, ex.message]
+    rescue
+      fail "Cannot ensure maintenance mode due to error %s:%s" % [$!.class, $!.message]
     end
   end
 
