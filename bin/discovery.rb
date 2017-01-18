@@ -77,7 +77,7 @@ def collect_inventory(obj, parent=nil)
     when RbVmomi::VIM::HostSystem
       @host_count += 1
       hash[:attributes] = collect_host_attributes(obj)
-      (obj.vm + obj.datastore).each{ |vm| hash[:children] << collect_inventory(vm, obj)}
+      (obj.vm + obj.datastore + obj.network).each{ |vm| hash[:children] << collect_inventory(vm, obj)}
     when RbVmomi::VIM::VirtualMachine
       @vm_count += 1
       hash[:attributes] = collect_vm_attributes(obj)
