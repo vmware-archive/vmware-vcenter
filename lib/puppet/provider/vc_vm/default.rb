@@ -504,6 +504,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_devices.push(scsi_controller_spec)
     vm_devices.push(*disk_specs(path))
     vm_devices.push(*network_specs)
+    vm_devices.push(*cdrom_spec)
     config = {
         :name => resource[:name],
         :memoryMB => resource[:memory_mb],
@@ -619,6 +620,32 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     )
   end
 
+  # spec for creating virtualCdRom
+  # it creates empty CDROM each time creating new_vm
+  def cdrom_spec
+    disk = RbVmomi::VIM.VirtualCdrom(
+        :backing => RbVmomi::VIM.VirtualCdromRemotePassthroughBackingInfo(:deviceName => "CDROM", :exclusive => false, :useAutoDetect => false),
+        :connectable => virtualcd_connect_info,
+        :controllerKey => 200, #IDE Controllers start at 200
+        :key => 999,
+        :unitNumber => 0
+    )
+
+    config = {
+        :device => disk,
+        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation("add")
+    }
+    RbVmomi::VIM.VirtualDeviceConfigSpec(config)
+  end
+
+  def virtualcd_connect_info
+    RbVmomi::VIM.VirtualDeviceConnectInfo(
+        :allowGuestControl => true,
+        :connected => false,
+        :startConnected => false
+    )
+  end
+
   #Returns an array of all the disk specs
   def disk_specs(path)
     specs = []
@@ -706,6 +733,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     dc = vim.serviceInstance.find_datacenter(resource[:template_datacenter])
     template = findvm(dc.vmFolder, resource[:template]) or raise(Puppet::Error, "Unable to find template #{resource[:template]}.")
+    template_cd_drive = template.config.hardware.device.select{ |d|d.deviceInfo.label.include?("CD/DVD")}
 
     vm_devices=[]
     if resource[:network_interfaces]
@@ -718,6 +746,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       end
       vm_devices.push(*delete_network_specs)
       vm_devices.push(*network_specs)
+      vm_devices.push(*cdrom_spec) if template_cd_drive.empty?
     end
 
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
