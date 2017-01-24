@@ -67,6 +67,28 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
     end
   end
 
+  # Override default_port_config_network_resource_pool_key_value to convert display name into networkResourcePool key value
+  alias get_default_port_config_network_resource_pool_key_value default_port_config_network_resource_pool_key_value
+  def default_port_config_network_resource_pool_key_value
+    if config_is_now[:defaultPortConfig][:networkResourcePoolKey][:value] == '-1'
+      config_is_now[:defaultPortConfig][:networkResourcePoolKey][:value]
+    else
+      nrp = dvswitch.networkResourcePool.find { |n| n.key == config_is_now[:defaultPortConfig][:networkResourcePoolKey][:value] }
+      nrp.name if nrp
+    end
+  end
+
+  alias set_default_port_config_network_resource_pool_key_value default_port_config_network_resource_pool_key_value=
+  def default_port_config_network_resource_pool_key_value=(value)
+    @flush_required = true
+    new_value = value
+    if new_value != '-1'
+      nrp = dvswitch.networkResourcePool.find { |n| n.name == value }
+      new_value = nrp.key
+    end
+    set_default_port_config_network_resource_pool_key_value(new_value)
+  end
+
   def flush_prep
     # dvswitch requires matching configVersion
     unless @creating

@@ -16,4 +16,6 @@ if RUBY_VERSION < '2.0'
   gem 'json', '~> 1.8'
   gem 'json_pure', '~> 1.0'
 end
-
+if RUBY_VERSION < '2.1'
+  gem 'nokogiri', '~> 1.6.0'
+end
