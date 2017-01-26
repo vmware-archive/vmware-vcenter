@@ -23,6 +23,9 @@ def collect_esx_facts(vim, host_ip)
   puts "Fetching ESX facts for %s" % host_ip
 
   host = vim.root.findByIp(host_ip, RbVmomi::VIM::HostSystem)
+
+  host = vim.root.findByDnsName(host_ip, RbVmomi::VIM::HostSystem) unless host
+
   raise "Host '%s' not found" % host_ip if host.nil?
 
   hash = {:name => host.name, :id => host._ref, :type => host.class}
