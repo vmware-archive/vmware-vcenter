@@ -626,7 +626,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     disk = RbVmomi::VIM.VirtualCdrom(
         :backing => RbVmomi::VIM.VirtualCdromRemotePassthroughBackingInfo(:deviceName => "CDROM", :exclusive => false, :useAutoDetect => false),
         :connectable => virtualcd_connect_info,
-        :controllerKey => 200, #IDE Controllers start at 200
+        :controllerKey => 201, #IDE Controllers start at 200
         :key => 999,
         :unitNumber => 0
     )
