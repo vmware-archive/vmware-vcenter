@@ -61,6 +61,10 @@ Puppet::Type.newtype(:vc_vm) do
     end
   end
 
+  newparam(:iso_file) do
+    desc 'iso file name to attach to cd_drive'
+  end
+
   newparam(:datastore) do
   end
 
@@ -109,6 +113,10 @@ Puppet::Type.newtype(:vc_vm) do
     desc 'Network Interfaces consist of a portgroup and nic_type'
     defaultto([])
   end
+
+  newparam(:nfs) do
+    desc 'nfs datastore hash to add nfs that contain iso file'
+    end
 
   newparam(:scsi_controller_type) do
     desc 'Virtual SCSI controller type for new Virtual Machine''s boot disk.'
