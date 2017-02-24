@@ -61,8 +61,8 @@ Puppet::Type.newtype(:vc_vm) do
     end
   end
 
-  newparam(:iso_file) do
-    desc 'iso file name to attach to cd_drive'
+  newproperty(:iso_file, :array_matching => :all) do
+    desc 'iso file to attach to cd_drive'
   end
 
   newparam(:datastore) do
