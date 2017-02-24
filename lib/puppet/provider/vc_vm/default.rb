@@ -8,10 +8,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   @doc = 'Manages vCenter Virtual Machines.'
 
   def exists?
+    @property_flush = {}
 
-    return !!vm if resource[:ensure] == :absent
-
-    vm && cdrom_iso == resource[:iso_file]
+    vm
   end
 
    # return the mounted iso file name
@@ -22,6 +21,24 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     return nil unless cdrom.backing.class == RbVmomi::VIM::VirtualCdromIsoBackingInfo
 
     return cdrom.backing.fileName.split(" ").last
+  end
+
+  def flush
+    if resource[:ensure] == :present
+      self.power_state = :poweredOff unless @property_flush.empty?
+
+      if @property_flush[:network_vm_spec]
+        vm.ReconfigVM_Task(
+            :spec => @property_flush[:network_vm_spec]
+        ).wait_for_completion
+        # sleep, gives time for changed network configuration to get into effect
+        sleep 10
+      end
+
+      configure_iso if @property_flush[:cd_iso_spec]
+
+      self.power_state = :poweredOn unless (resource[:power_state] == :poweredOff || power_state == "poweredOn")
+    end
   end
 
   def nfs_vm_datastore
@@ -53,24 +70,28 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     "%s (%s)" % [dvport_name, dvswitch_name]
   end
 
+
+  # only return requested file name in resource parameter
+  # actual state will not be set to property flush and not be accessible in_crete as this is called before setter
+  def iso_file
+    resource[:iso_file].first["name"]
+  end
+
+  def iso_file=(value)
+    @property_flush[:cd_iso_spec] = true unless cdrom_iso == iso_file
+  end
+
+
   def network_interfaces=(config)
     network_spec = network_adapter_spec
     Puppet.debug("Expected final network_spec #{network_spec.inspect}")
     if network_spec.size != 0
       vm_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
-        :name => resource[:name],
-        :deviceChange => network_spec
+          :name => resource[:name],
+          :deviceChange => network_spec
       )
-       vm.ReconfigVM_Task(
-         :spec => vm_spec
-         ).wait_for_completion
-      # No need to reset the VM in case existing and new network count is the same
-      # We are just changing the port-group mapping
-      if power_state == "poweredOn"
-         #need to give vcenter a chance to reconfigure before rebooting
-         sleep 15
-         vm.ResetVM_Task.wait_for_completion
-      end
+      # adds to property_flush to configure at the end
+      @property_flush[:network_vm_spec] = vm_spec
     end
   end
 
@@ -187,7 +208,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise(Puppet::Error, "Unable to create VM: '#{resource[:name]}'") unless vm
     end
 
-    configure_iso unless cdrom_iso == resource[:iso_file]
+    configure_iso unless cdrom_iso == iso_file
   end
 
   # mount iso to cd drive or detach iso based on iso_file resource
@@ -195,7 +216,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def configure_iso
     cdrom = vm.config.hardware.device.find { |hw| hw.class == RbVmomi::VIM::VirtualCdrom }
 
-    if resource[:iso_file]
+    if iso_file
       nfs_ds = add_nfs_datastore
       # attach iso from cd/DVD drive
       vm.ReconfigVM_Task(:spec => vm_reconfig_spec(nfs_ds, cdrom)).wait_for_completion
@@ -616,7 +637,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     raise(Puppet::Error, 'No datastores exist for the host') if ds_path.nil?
 
     datacenter.vmFolder.CreateVM_Task(:config => vm_config_spec("[#{ds_path}]"), :pool => resource_pool).wait_for_completion
-
     # power_state= did not work.
     self.send(:power_state=, resource[:power_state].to_sym)
   end
@@ -751,8 +771,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # return iso_bakinginfo object only if iso_file name is present in resource.
   def cd_drive_backing_info(datastore=nil)
-    if datastore && resource[:iso_file]
-      return RbVmomi::VIM.VirtualCdromIsoBackingInfo(:datastore => datastore, :fileName => "[#{datastore.info.name}]/#{resource[:iso_file]}")
+    if datastore && iso_file
+      return RbVmomi::VIM.VirtualCdromIsoBackingInfo(:datastore => datastore, :fileName => "[#{datastore.info.name}]/#{iso_file}")
     else
       return RbVmomi::VIM.VirtualCdromRemotePassthroughBackingInfo(:deviceName => "CDROM", :exclusive => false, :useAutoDetect => false)
     end
@@ -794,8 +814,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def virtualcd_connect_info(datastore)
     RbVmomi::VIM.VirtualDeviceConnectInfo(
         :allowGuestControl => true,
-        :connected => datastore && resource[:iso_file] ? true : false,
-        :startConnected => datastore && resource[:iso_file] ? true : false
+        :connected => datastore && iso_file ? true : false,
+        :startConnected => datastore && iso_file ? true : false
     )
   end
 
