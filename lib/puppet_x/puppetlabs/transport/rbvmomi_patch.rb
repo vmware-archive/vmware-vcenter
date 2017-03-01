@@ -48,3 +48,21 @@ RbVmomi::VIM::DynamicTypeMgrManagedTypeInfo.send(:define_method, :toRbvmomiTypeH
     }
   }
 end
+
+# Monkey-patch RbVmomi::VIM::close method
+#
+# Seems current implementation of vim.close does not logout session gracefully, rather results in a
+# ManagedObjectNotFound exception and gets ignored silently. See https://github.com/vmware/rbvmomi/issues/101 for
+# details. To fix this problem, we override the base implementation to do the appropriate logout operation, and
+# then delegate to original implementation
+RbVmomi::VIM.send(:alias_method, :__close, :close)
+RbVmomi::VIM.send(:define_method, :close) do
+  # @todo Remove this patch once above issue is fixed in public rbvmomi gem
+  begin
+    self.serviceContent.sessionManager.Logout
+
+    self.__close
+  rescue
+    puts "Failed to close VIM session %s:%s" % [$!.class, $!.message]
+  end
+end
