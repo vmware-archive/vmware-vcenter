@@ -71,6 +71,7 @@ def collect_inventory(obj, parent=nil)
     when RbVmomi::VIM::ClusterComputeResource
       @cluster_count += 1
       obj.host.each { |host| hash[:children] << collect_inventory(host) }
+      hash[:attributes] = collect_cluster_attributes(obj)
     when RbVmomi::VIM::ComputeResource
       #If ComputeResource but not ClusterComputeResource, it is a standalone host
       hash = collect_inventory(obj.host.first)
@@ -90,6 +91,30 @@ def collect_inventory(obj, parent=nil)
     else
   end
   hash
+end
+
+def collect_cluster_attributes(obj)
+  attributes = {}
+
+  das_config = obj.configurationEx.dasConfig
+  drs_config = obj.configurationEx.drsConfig
+  vsan_config = obj.configurationEx.vsanConfigInfo
+
+  attributes = { :das_config => {}, :drs_config => {}, :vsan_config => {}}
+
+  attributes[:das_config][:enabled] = das_config.enabled
+  attributes[:das_config][:failoverLevel] = das_config.failoverLevel
+  attributes[:das_config][:hBDatastoreCandidatePolicy] = das_config.hBDatastoreCandidatePolicy
+  attributes[:das_config][:admissionControlEnabled] = das_config.admissionControlEnabled
+
+  attributes[:drs_config][:defaultVmBehavior] = drs_config.defaultVmBehavior
+  attributes[:drs_config][:enableVmBehaviorOverrides] = drs_config.enableVmBehaviorOverrides
+  attributes[:drs_config][:enabled] = drs_config.enabled
+
+  attributes[:vsan_config][:enabled] = vsan_config.enabled
+  attributes[:vsan_config][:auto_claim] = vsan_config.defaultConfig.autoClaimStorage
+
+  attributes
 end
 
 def collect_host_attributes(host)
@@ -113,6 +138,7 @@ def collect_host_attributes(host)
     attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
     attributes[:version] = get_host_config(host).product.version
     attributes[:maintenance_mode] = host.runtime.inMaintenanceMode
+    attributes[:syslog] = host.configManager.advancedOption.setting.select { |x| x.key == "Syslog.global.logDir" }.first.value
   end
   attributes
 end
