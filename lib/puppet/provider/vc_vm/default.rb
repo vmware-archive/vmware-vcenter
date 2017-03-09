@@ -74,7 +74,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # only return requested file name in resource parameter
   # actual state will not be set to property flush and not be accessible in_crete as this is called before setter
   def iso_file
-    resource[:iso_file].first["name"]
+    resource[:iso_file].first["name"] if resource[:iso_file]
   end
 
   def iso_file=(value)
@@ -127,7 +127,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # finds host to add nfs_datastore and returns the host object
   def find_vm_host
-    hosts = datacenter.hostFolder.children.first.host
+    hosts = datacenter.hostFolder.children.map { |child| child.host }
     host = hosts.select { |host|
       host.vm.find { |hvm|
         hvm == vm
