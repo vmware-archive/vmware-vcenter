@@ -127,7 +127,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # finds host to add nfs_datastore and returns the host object
   def find_vm_host
-    hosts = datacenter.hostFolder.children.map { |child| child.host }
+    # datacenter.hostFolder.children is a tree with clusters having hosts in it.
+    # needs to flatten nested array
+    hosts = datacenter.hostFolder.children.map { |child| child.host }.flatten
     host = hosts.select { |host|
       host.vm.find { |hvm|
         hvm == vm
