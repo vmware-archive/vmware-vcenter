@@ -88,6 +88,8 @@ def collect_inventory(obj, parent=nil)
       obj.portgroup.each {|portgroup| hash[:children] << collect_inventory(portgroup)}
     when RbVmomi::VIM::DistributedVirtualPortgroup
       hash[:attributes] = collect_vds_portgroup_attributes(obj)
+    when RbVmomi::VIM::Network
+      hash[:attributes] = collect_portgroup_attributes(obj)
     else
   end
   hash
@@ -224,6 +226,17 @@ def collect_vds_portgroup_attributes(portgroup)
   return {} unless vlan_id.is_a?(Integer)
 
   {:vlan_id => vlan_id}
+end
+
+def collect_portgroup_attributes(network_obj)
+  network = network_obj.host[0].configManager.networkSystem.networkInfo.portgroup.select { |x| x.spec.name == network_obj.name }
+
+  vlan_id = network.first.spec.vlanId
+  vswitch_name = network.first.spec.vswitchName
+
+  return {} unless vlan_id.is_a?(Integer)
+
+  {:vlan_id => vlan_id, :vswitch_name => vswitch_name}
 end
 
 begin
