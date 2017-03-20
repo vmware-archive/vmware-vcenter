@@ -89,7 +89,7 @@ def collect_inventory(obj, parent=nil)
     when RbVmomi::VIM::DistributedVirtualPortgroup
       hash[:attributes] = collect_vds_portgroup_attributes(obj)
     when RbVmomi::VIM::Network
-      hash[:attributes] = collect_portgroup_attributes(obj)
+      hash[:attributes] = collect_portgroup_attributes(obj, parent)
     else
   end
   hash
@@ -228,8 +228,13 @@ def collect_vds_portgroup_attributes(portgroup)
   {:vlan_id => vlan_id}
 end
 
-def collect_portgroup_attributes(network_obj)
-  network = network_obj.host[0].configManager.networkSystem.networkInfo.portgroup.select { |x| x.spec.name == network_obj.name }
+def collect_portgroup_attributes(network_obj, parent)
+  # In case ESXi server is in non-responding state then need to skip port-group information
+  network_host = network_obj.host.select {|h| h.name == parent.name}.first
+  return {} if network_host.summary.runtime.connectionState == "disconnected"
+  return {} unless network_host.configManager
+
+  network = network_host.configManager.networkSystem.networkInfo.portgroup.select { |x| x.spec.name == network_obj.name }
 
   vlan_id = network.first.spec.vlanId
   vswitch_name = network.first.spec.vswitchName
