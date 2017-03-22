@@ -232,7 +232,9 @@ def collect_portgroup_attributes(network_obj, parent)
   # In case ESXi server is in non-responding state then need to skip port-group information
   network_host = network_obj.host.select {|h| h.name == parent.name}.first
   return {} if network_host.summary.runtime.connectionState == "disconnected"
+
   return {} unless network_host.configManager
+  return {} unless network_host.configManager.networkSystem.networkInfo
 
   network = network_host.configManager.networkSystem.networkInfo.portgroup.select { |x| x.spec.name == network_obj.name }
 
