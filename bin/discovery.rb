@@ -216,7 +216,8 @@ def get_host_config(host)
 end
 
 def collect_vm_attributes(vm)
-  {:template => vm.summary.config.template}
+  {:template => vm.summary.config.template,
+  :datastore => vm.datastore.first.name}
 end
 
 def collect_vds_portgroup_attributes(portgroup)

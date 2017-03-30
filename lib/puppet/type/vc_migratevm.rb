@@ -48,6 +48,15 @@ Puppet::Type.newtype(:vc_migratevm) do
     end
   end
 
+  newparam(:cluster) do
+    desc "Name of the cluster."
+    validate do |value|
+      if value.strip.length == 0
+        raise ArgumentError, "Invalid cluster name."
+      end
+    end
+  end
+
   newparam(:disk_format) do
     desc "Type of virtual disk format"
     newvalues(:thin, :thick , :same_as_source)
