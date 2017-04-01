@@ -94,9 +94,68 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
   end
 
   def get_ds_view(target_datastore)
-    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
-    ds ||= dc.find_datastore(target_datastore)
+    ds ||= datacenter.find_datastore(get_cluster_datastore(target_datastore))
     return ds
+  end
+
+  def get_cluster_datastore(target_datastore)
+    vm_disk_usage = vm.storage.perDatastoreUsage.first.committed + vm.storage.perDatastoreUsage.first.uncommitted
+    vm_datastore_name = vm.storage.perDatastoreUsage.first.datastore.name
+
+    paths = %w(name info.url info summary summary.accessible summary.capacity summary.freeSpace)
+    propSet = [{ :type => "Datastore", :pathSet => paths }]
+    filterSpec = { :objectSet => cluster.datastore.map { |ds| { :obj => ds } }, :propSet => propSet }
+    data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
+    datastore_info = data.map do |ds_info|
+      size = ds_info["summary.capacity"]
+      free = ds_info["summary.freeSpace"]
+      used = size - free
+      is_local = ds_info["name"].match(/local-storage-\d+/)
+      info = {
+          "name" => ds_info["name"], "size" => size, "free" => free, "used" => used,
+          "info" => ds_info["info"], "summary" => ds_info["summary"], "is_local" => is_local
+      }
+      info if ds_info["summary.accessible"] && !is_local
+    end
+
+    datastore_info += get_cluster_storage_pods
+    datastore_info.compact!
+
+    #Sort order: Pod -> Remote Datastore -> Local Datastore (each sorted by free size)
+    datastore_info.sort_by! {|h| [h["pod"] ? 0 : 1, h["is_local"] ? 1 : 0, -h["free"]]}
+
+    if !target_datastore.empty?
+      info = datastore_info.find { |d| d["name"] == target_datastore }
+      raise("Datastore #{target_datastore} not found") unless info
+      raise("In-sufficient space in datastore %s") % [target_datastore] unless free < vm_disk_usage
+      info["name"]
+    else
+      # Reject the name of the datastore where VM is currently hosted
+      datastore_info.reject! {|d| d["name"] == vm_datastore_name}
+      datastore_selected = datastore_info.find { |d| d["free"] >= vm_disk_usage }
+      raise("No datastore found with sufficient free space") unless datastore_selected
+      Puppet.debug("Selected datastore: %s") % [datastore_selected["name"]]
+      datastore_selected["name"]
+    end
+  end
+
+  def get_cluster_storage_pods
+    paths = %w(name summary.capacity summary.freeSpace)
+    property_set = [{:type => "StoragePod", :pathSet => paths}]
+    filter_spec = {:objectSet => datacenter.datastoreFolder.childEntity.map {|ds| {:obj => ds} }, :propSet => property_set}
+    data = vim.propertyCollector.RetrieveProperties(:specSet => [filter_spec])
+    datastore_info = data.map do |ds_info|
+      size = ds_info["summary.capacity"]
+      free = ds_info["summary.freeSpace"]
+      used = size - free
+      name = ds_info["name"]
+      info = {
+          "name" => name, "size" => size, "free" => free, "used" => used, "pod" => true, "obj" => ds_info.obj
+      }
+      info
+    end.compact
+    Puppet.debug("Found Storage Pods: %s") % [datastore_info]
+    datastore_info
   end
 
   def relocate_vm(args={})
@@ -140,5 +199,15 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
     vm ||=dc.find_vm(vmname)
     raise Puppet::Error, "Unable to find the Virtual Machine '#{vmname}' because the specified Virtual machine is either invalid or does not exist." unless vm
     return vm
+  end
+
+  def datacenter
+    @datacenter ||= vim.serviceInstance.find_datacenter(resource[:datacenter])
+  end
+
+  def cluster(name=resource[:cluster])
+    cluster = datacenter.find_compute_resource(name)
+    raise Puppet::Error, "Unable to find the cluster '#{name}'" unless cluster
+    cluster
   end
 end

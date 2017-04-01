@@ -6,6 +6,7 @@ $migrate_vm = {
   target_host      => '172.16.100.56' ,
   target           => '172.16.100.56, gale-fsr',
   datacenter       => 'DDCQA',
+  cluster          => 'MyCluster'
 }
 
 transport { 'vcenter':
@@ -20,6 +21,7 @@ vc_migratevm { $migrate_vm['vmname']:
   #migratevm_host           => $migrate_vm['target_host'],
   #migratevm_host_datastore => $migrate_vm['target'],
   datacenter                => $migrate_vm['datacenter'],
+  cluster                   => $migrate_vm['cluster'],
   disk_format               => 'thin' ,
   transport                 => Transport['vcenter'],
 }
