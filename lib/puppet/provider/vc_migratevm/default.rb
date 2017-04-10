@@ -154,7 +154,7 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
       }
       info
     end.compact
-    Puppet.debug("Found Storage Pods: %s") % [datastore_info]
+    Puppet.debug("Found Storage Pods: %s" % [datastore_info])
     datastore_info
   end
 
