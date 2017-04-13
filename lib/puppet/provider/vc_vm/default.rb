@@ -25,7 +25,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def flush
     if resource[:ensure] == :present
-      self.power_state = :poweredOff unless @property_flush.empty?
+     self.power_state = :poweredOff unless (@property_flush.empty? || power_state == "poweredOff")
 
       if @property_flush[:network_vm_spec]
         vm.ReconfigVM_Task(
@@ -36,8 +36,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       end
 
       configure_iso if @property_flush[:cd_iso_spec]
-
-      self.power_state = :poweredOn unless (resource[:power_state] == :poweredOff || power_state == "poweredOn")
+        self.power_state = :poweredOn unless (resource[:power_state] == :poweredOff || power_state == "poweredOn")
     end
   end
 
