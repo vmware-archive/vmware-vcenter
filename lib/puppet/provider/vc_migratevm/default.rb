@@ -134,7 +134,7 @@ Puppet::Type.type(:vc_migratevm).provide(:vc_migratevm, :parent => Puppet::Provi
       datastore_info.reject! {|d| d["name"] == vm_datastore_name}
       datastore_selected = datastore_info.find { |d| d["free"] >= vm_disk_usage }
       raise("No datastore found with sufficient free space") unless datastore_selected
-      Puppet.debug("Selected datastore: %s") % [datastore_selected["name"]]
+      Puppet.debug("Selected datastore: %s" % [datastore_selected["name"]])
       datastore_selected["name"]
     end
   end
