@@ -2,11 +2,13 @@
 class vcenter::package (
 ) inherits vcenter::params {
 
-  package { [
-    'rest-client',
-  ]:
-    ensure   => present,
-    provider => $::vcenter::params::provider,
+  # rest-client gem 1.6.7 until problems with current gem are fixed
+  $rest_client_version = '1.6.7'
+
+  package { 'rest-client':
+    ensure          => $rest_client_version,
+    install_options => [ '--no-ri', '--no-rdoc' ],
+    provider        => $::vcenter::params::provider,
   }
 
   # net-ssh gem 2.1.4 (PE3) is incompatible with vcsa 5.5 security settings:
