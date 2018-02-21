@@ -566,7 +566,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       size = d['summary.capacity']
       free = d['summary.freeSpace']
       used = size - free
-      is_local = d['name'].match(/local-storage-\d+/)
+      is_local = d['name'].match(/local-storage-\d+|DAS\d+/)
       info = {
           'name' => d['name'], 'size' => size, 'free' => free, 'used' => used,
           'info' => d['info'], 'summary' => d['summary'], 'is_local' => is_local
@@ -584,8 +584,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if !requested_datastore.empty?
       info = datastore_info.find { |d| d['name'] == requested_datastore }
       raise("Datastore #{requested_datastore} not found") unless info
-      raise("In-sufficient space in datastore #{requested_datastore}") unless free < requested_size
-      requested_datastore
+      raise("In-sufficient space in datastore #{requested_datastore}") unless info['free'] < requested_size
+      info
     else
       datastore_selected = datastore_info.find { |d| d['free'] >= requested_size }
       raise("No datastore found with sufficient free space") unless datastore_selected
