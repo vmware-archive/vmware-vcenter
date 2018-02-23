@@ -30,30 +30,24 @@ describe "Create vSwitch behavior testing" do
 
   context "when esx_vswitch is created " do
     it "should create vSwitch" do
-      #Then
-      @fixture.provider.should_receive(:create_vswitch)
+      @fixture.provider.expects(:create_vswitch)
 
-      #When
       @fixture.provider.create
     end
   end
 
   context "when esx_vswitch is destroyed " do
     it "should destroy vSwitch" do
-      #Then
-      @fixture.provider.should_receive(:remove_vswitch)
+      @fixture.provider.expects(:remove_vswitch)
 
-      #When
       @fixture.provider.destroy
     end
   end
 
   context "when esx_vswitch is checked for existence " do
     it "should check its existence" do
-      #Then
-      @fixture.provider.should_receive(:find_vswitch)
+      @fixture.provider.expects(:find_vswitch)
 
-      #When
       @fixture.provider.exists?
     end
   end

@@ -28,35 +28,19 @@ describe "esx datastore behavior testing" do
   end
 
   context "when esx_datastore is created " do
-     it "should create datastore" do
-       #Then
-       @fixture.provider.stub(:create_vmfs_lun).and_return(0)
-       @fixture.provider.should_receive(:create_vmfs_lun)
-	   @fixture.provider.stub(:exists?).and_return(true)
-       @fixture.provider.should_receive(:exists?)
+    it "should create datastore" do
+      @fixture.provider.expects(:create_vmfs_lun).returns(true)
+      @fixture.provider.expects(:exists?).returns(true)
 
-       #When
-       @fixture.provider.create
-     end 
-        
-    it "should not create datastore" do
-        #Then
-        @fixture.provider.stub(:create_vmfs_lun).and_return(1)
-        @fixture.provider.should_receive(:create_vmfs_lun)
-        @fixture.provider.stub(:exists?).and_return(false)
-        @fixture.provider.should_receive(:exists?)
-
-        #When
-        @fixture.provider.create
+      @fixture.provider.create
     end
 
     it "should destroy datastore" do
-       #Then
-       @fixture.provider.stub(:destroy).and_return(0)
-       @fixture.provider.should_receive(:destroy)
-	   Puppet.should_not_receive(:err)
-       #When
-       @fixture.provider.destroy
-     end 
+      @fixture.provider.expects(:destroy).returns(0)
+
+      Puppet.expects(:err).never
+
+      @fixture.provider.destroy
+    end
   end
 end

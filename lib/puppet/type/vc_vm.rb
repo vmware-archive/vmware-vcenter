@@ -1,9 +1,7 @@
 # Copyright (C) 2013 VMware, Inc.
-module_lib = Pathname.new(__FILE__).parent.parent.parent
-vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
-require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
-require File.join module_lib, 'puppet_x/vmware/mapper'
-require File.join vmware_module.path, 'lib/puppet/property/vmware'
+require "puppet_x/vmware/util"
+require "puppet_x/vmware/mapper"
+require "puppet/property/vmware"
 
 Puppet::Type.newtype(:vc_vm) do
   @doc = 'Manage vCenter VMs.'
@@ -56,7 +54,9 @@ Puppet::Type.newtype(:vc_vm) do
     desc 'Name of the target datastore.'
     munge do |value|
       resource[:datastore] = value
-      Puppet.warn('target_datastore parameter deprecated')
+
+      Puppet.warning('target_datastore parameter deprecated')
+
       value
     end
   end

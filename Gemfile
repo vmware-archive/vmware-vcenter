@@ -2,14 +2,17 @@ source 'https://rubygems.org'
 
 gem 'hashdiff'
 gem 'rbvmomi'
+gem 'net-ssh'
+gem 'dell-asm-util', :git => 'https://github.com/dell-asm/dell-asm-util.git', :branch => 'master'
 
 group :development, :test do
   gem 'rake'
-  gem 'rspec', "~> 2.11.0", :require => false
-  gem 'mocha', "~> 0.10.5", :require => false
+  gem 'rspec', :require => false
+  gem 'mocha', :require => false
   gem 'puppetlabs_spec_helper', :require => false
   gem 'rspec-puppet', :require => false
   gem 'puppet-lint', :require => false
+  gem "pry"
 end
 
 facterversion = ENV['GEM_FACTER_VERSION']

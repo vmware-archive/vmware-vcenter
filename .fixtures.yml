@@ -1,6 +1,7 @@
 fixtures:
   repositories:
     staging: 'git://github.com/nanliu/puppet-staging.git'
+    transport: 'git://github.com/nanliu/puppet-transport.git'
     vmware_lib: 'git://github.com/vmware/vmware-vmware_lib.git'
   symlinks:
     'vcenter': "#{source_dir}"

@@ -978,8 +978,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     cluster.datastore.find { |ds| "[#{ds.name}]" == datastore_name || ds.name == datastore_name}
   end
 
-  private
-
   def findvm(folder, vm_name)
     folder.children.each do |f|
       case f

@@ -7,7 +7,7 @@ require 'fixtures/unit/puppet/provider/esx_get_iqns/esx_get_iqns_fixture'
 describe "Get iqns operation testing for esx" do
   before(:each) do
     @fixture = Esx_get_iqns_fixture.new
-    @fixture.provider.stub(:get_iqn)
+    @fixture.provider.stubs(:get_iqn)
   end
 
   context "when esx_get_iqns provider is executed " do
@@ -22,23 +22,19 @@ describe "Get iqns operation testing for esx" do
 
   context "when esx_get_iqns is created " do
     it "should return list of iqns" do
-      #Then
       list = Array.new
-      @fixture.provider.stub(:get_iqn_from_host).and_return(list)
-      @fixture.provider.should_receive(:get_iqn_from_host)
-      @fixture.provider.should_receive(:get_iqn).once.with(list).ordered
-      #When
+      @fixture.provider.expects(:get_iqn_from_host).returns(list)
+      @fixture.provider.expects(:get_iqn).with(list).returns(list)
+
       @fixture.provider.get_esx_iqns
     end
 
     it "should not return iqns if host does not have hbas" do
-      #Then
-      @fixture.provider.stub(:get_iqn_from_host).and_return(nil)
-      @fixture.provider.should_receive(:get_iqn_from_host)
-	  @fixture.provider.should_not_receive(:get_iqn)
-      Puppet.should_receive(:err).twice
+      @fixture.provider.expects(:get_iqn_from_host)
+      @fixture.provider.expects(:get_iqn).never
 
-      #When
+      @fixture.provider.expects(:fail)
+
       @fixture.provider.get_esx_iqns
     end
   end

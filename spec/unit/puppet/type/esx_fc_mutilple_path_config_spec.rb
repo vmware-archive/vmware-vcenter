@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:esx_fc_mutilple_path_config) do
+describe Puppet::Type.type(:esx_fc_multiple_path_config) do
 
   let(:title) { 'esx_fc_mutilple_path_config' }
 

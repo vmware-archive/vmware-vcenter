@@ -7,7 +7,6 @@ require 'fixtures/unit/puppet/provider/esx_portgroup/esx_portgroup_fixture'
 describe "Create portgroup behavior testing" do
   before(:each) do
     @fixture = Esx_portgroup_fixture.new
-
   end
 
   context "when esx_portgroup provider is created " do
@@ -30,32 +29,25 @@ describe "Create portgroup behavior testing" do
 
   context "when esx_portgroup is created " do
     it "should create esx_portgroup" do
-      #Then
-      @fixture.provider.should_receive(:create_port_group)
+      @fixture.provider.expects(:create_port_group)
 
-      #When
       @fixture.provider.create
     end
   end
 
   context "when esx_portgroup is destroyed " do
     it "should destroy esx_portgroup" do
-      #Then
-      @fixture.provider.should_receive(:remove_port_group)
+      @fixture.provider.expects(:remove_port_group)
 
-      #When
       @fixture.provider.destroy
     end
   end
 
   context "when esx_portgroup is checked for existence " do
     it "should check its existence" do
-      #Then
-      @fixture.provider.should_receive(:check_portgroup_existance)
+      @fixture.provider.expects(:check_portgroup_existance)
 
-      #When
       @fixture.provider.exists?
     end
   end
-
 end

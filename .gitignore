@@ -2,6 +2,7 @@ lib/puppet/type/esx_debug.rb
 lib/puppet/provider/esx_debug/default.rb
 *.gem
 *.rbc
+*.lock
 .bundle
 .config
 .bak
@@ -20,3 +21,6 @@ tmp
 .yardoc
 _yardoc
 doc/
+
+# IntelliJ
+*.iml
