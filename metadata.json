@@ -1,0 +1,16 @@
+{
+  "name": "vmware-vcenter",
+  "version": "0.10.0",
+  "author": "Puppet Labs | VMware 2013",
+  "license": "Apache-2.0",
+  "summary": "VMware vCenter puppet module",
+  "source": "git@github.com:vmware/vmware-vcenter.git",
+  "project_page": "https://github.com/vmware/vmware-vcenter",
+  "issues_url": "https://github.com/vmware/vmware-vcenter/issues",
+  "tags": ["vmware", "vcenter"],
+  "dependencies": [
+    { "name": "puppetlabs/stdlib", "version_requirement": ">= 2.0.0" },
+    { "name": "vmware/vmware_lib", "version_requirement": ">= 0.7.0" },
+    { "name": "nanliu/staging", "version_requirement": ">= 0.2.1" }
+  ]
+}
