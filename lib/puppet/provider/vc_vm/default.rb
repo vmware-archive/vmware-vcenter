@@ -540,57 +540,137 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   end
 
   def host
-
     @host ||= vim.searchIndex.FindByIp(:datacenter => datacenter , :ip => get_host_management_ip, :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}'")
   end
 
-  def get_cluster_datastore
-    requested_datastore = (resource[:datastore] || '')
-    
-    # Disk size is in KB and the information coming back from 
-    # API is in Bytes
-    if resource[:virtual_disks]
-      requested_size = 0
-      # virtual_disks size is originally in gb
-      resource[:virtual_disks].each{ |disk| requested_size += disk["size"].to_i * 1024 * 1024}
-      requested_size  *= 1024
-    else
-      requested_size = resource[:disk_size].to_i * 1024
+   # Whether the datastore is an internal NFS datastore
+   #
+   # An NFS datastore is used for mounting a virtual ISO. This returns true if
+   # the name appears to be one of those.
+   #
+   # @param [String] the datastore name
+   # @return [Boolean] if it is an internal NFS datastore
+  def is_internal_nfs_datastore?(name)
+    name.start_with?("_nfs_asm")
+  end
+
+   # Whether the datastore name refers to a local datastore
+   #
+   # @param [String] the datastore name
+   # @return [Boolean] if it is a local datastore
+  def is_local_datastore?(name)
+    !!name.match(/local-storage-\d+|DAS\d+/)
+  end
+
+   # Whether the datastore can be used for deploying VMs
+   #
+   # Returns true if the datastore is appropriate for deploying a VM to.
+   #
+   # @param [<Hash>] The datastore info. See the #get_cluster_datastore example response for the Hash format.
+   # @return [Boolean] true if the datastore is usable
+  def usable_datastore?(datastore)
+    return false if is_internal_nfs_datastore?(datastore["name"])
+
+    return false unless datastore["summary.accessible"]
+
+    return true unless is_local_datastore?(datastore["name"])
+
+    resource[:skip_local_datastore] == :false
+  end
+
+   # Return an ordered list of datastore info hashes
+   #
+   # Returns an ordered list of datastore summary info hashes. The non-local
+   # datastores will be returned first with those that have the most available
+   # space returned first. Local datastores will be returned after the
+   # non-local datastores also in order of those with the most available space
+   # first.
+   #
+   # @param [Array<RbVmomi::VIM::ObjectContent>]
+   # @return [Array<Hash>] priority ordered list of datastore info. See the
+   #                       #get_cluster_datastore example response for the Hash format.
+  def prioritized_datastores(datastores)
+    datastore_info = datastores.map do |d|
+      size = d["summary.capacity"]
+      free = d["summary.freeSpace"]
+      used = size - free
+      is_local = is_local_datastore?(d["name"])
+
+      info = {
+          "name" => d["name"], "size" => size, "free" => free, "used" => used,
+          "info" => d["info"], "summary" => d["summary"], "is_local" => is_local
+      }
+
+      info if usable_datastore?(d)
     end
 
-    paths = %w(name info.url info summary summary.accessible summary.capacity summary.freeSpace)
-    propSet = [{ :type => 'Datastore', :pathSet => paths }]
-    filterSpec = { :objectSet => cluster.datastore.map { |ds| { :obj => ds } }, :propSet => propSet }
-    data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
-    datastore_info = data.map do |d|
-      size = d['summary.capacity']
-      free = d['summary.freeSpace']
-      used = size - free
-      is_local = d['name'].match(/local-storage-\d+|DAS\d+/)
-      info = {
-          'name' => d['name'], 'size' => size, 'free' => free, 'used' => used,
-          'info' => d['info'], 'summary' => d['summary'], 'is_local' => is_local
-      }
-      info if d['summary.accessible'] && (resource[:skip_local_datastore] == :false || !is_local)
-    end
     datastore_info += get_cluster_storage_pods
     datastore_info.compact!
 
     #Sort order: Pod -> Remote Datastore -> Local Datastore (each sorted by free size)
     datastore_info.sort_by! {|h| [h["pod"] ? 0 : 1, h["is_local"] ? 1 : 0, -h["free"]]}
+  end
+
+   # Return the cluster datastore to deploy the VM on
+   #
+   # If `resource[:datastore]` is specified, that is returned if it has enough
+   # available space.
+   #
+   # Otherwise the non-local datastore with the most available space will be
+   # returned. If there are no non-local datastores the local datastore with
+   # the most available space will be returned.
+   #
+   # @example response
+   #   {
+   #      "name"=>"gs4esx2-local-storage-1",
+   #      "size"=>591363309568,
+   #      "free"=>564766179328,
+   #      "used"=>26597130240,
+   #      "info"=>#<RbVmomi::VIM::VmfsDatastoreInfo>,
+   #      "summary"=>#<RbVmomi::VIM::DatastoreSummary>,
+   #      "is_local"=>#<MatchData "local-storage-1">
+   #   }
+   #
+   # @return [Hash] Hash of datastore info as shown in example
+   # @raise [StandardException] if no datastore meeting space requirements is found
+  def get_cluster_datastore
+    requested_datastore = (resource[:datastore] || '')
+
+    # Disk size is in KB and the information coming back from 
+    # API is in Bytes
+    if resource[:virtual_disks]
+      requested_size = 0
+      # virtual_disks size is originally in gb
+      resource[:virtual_disks].each {|disk| requested_size += disk["size"].to_i * 1024 * 1024}
+      requested_size *= 1024
+    else
+      requested_size = resource[:disk_size].to_i * 1024
+    end
+
+    paths = %w(name info.url info summary summary.accessible summary.capacity summary.freeSpace)
+    propSet = [{:type => 'Datastore', :pathSet => paths}]
+    filterSpec = {:objectSet => cluster.datastore.map {|ds| {:obj => ds}}, :propSet => propSet}
+    data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
+
+    datastore_info = prioritized_datastores(data)
 
     Puppet.debug("Datastore info: #{datastore_info}")
     Puppet.debug("Requested size: #{requested_size}")
+
     if !requested_datastore.empty?
-      info = datastore_info.find { |d| d['name'] == requested_datastore }
+      info = datastore_info.find {|d| d['name'] == requested_datastore}
+
       raise("Datastore #{requested_datastore} not found") unless info
-      raise("In-sufficient space in datastore #{requested_datastore}") unless info['free'] < requested_size
+
+      raise("In-sufficient space in datastore #{requested_datastore}") if info['free'] < requested_size
+
       info
     else
-      datastore_selected = datastore_info.find { |d| d['free'] >= requested_size }
+      datastore_selected = datastore_info.find {|d| d['free'] >= requested_size}
+
       raise("No datastore found with sufficient free space") unless datastore_selected
       Puppet.debug("Selected datastore: #{datastore_selected['name']}")
-      # Why are we putting [] around the name in this case??
+
       datastore_selected
     end
   end
