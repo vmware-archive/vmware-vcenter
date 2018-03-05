@@ -31,10 +31,7 @@ describe "Unit tests - vsphere hosts entering and exiting maintenance mode" do
   
   context "when create is called on esx_maintmode" do
     it "should call enterMaintenanceMode - if there is no error exception should not be raised" do
-      #Then
-      @fixture.provider.stub(:enterMaintenanceMode)      
-	  expect { @fixture.provider.should_receive(:enterMaintenanceMode) }.to_not raise_error
-      #When
+      @fixture.provider.expects(:enterMaintenanceMode)
       @fixture.provider.create
     end
 	
@@ -64,10 +61,8 @@ describe "Unit tests - vsphere hosts entering and exiting maintenance mode" do
 
     context "when destroy is called on esx_maintmode" do
       it "if host exists and is in maintenance mode it should exit it from maintenance mode" do
-        #Then
-        @fixture.provider.stub(:exitMaintenanceMode)        
-		expect { @fixture.provider.should_receive(:exitMaintenanceMode) }.to_not raise_error
-        #When
+        @fixture.provider.expects(:exitMaintenanceMode)
+
         @fixture.provider.destroy
       end
 

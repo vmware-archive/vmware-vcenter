@@ -32,41 +32,31 @@ describe "esx mem configuration and installation behavior testing" do
   end
 
   context "when esx_mem is created " do
-     it "should configure mem" do
-       #Then
-       @fixture.provider.stub(:esx_main_enter_exists).and_return(0)
-	   @fixture.provider.stub(:execute_system_cmd).and_return(0)
-	   @fixture.provider.stub(:esx_main_enter_exists).and_return(0)
-	   
-	   @fixture.provider.should_receive(:esx_main_enter_exists)
-	   @fixture.provider.should_receive(:execute_system_cmd)
-	   @fixture.provider.should_receive(:esx_main_enter_exists)
+    it "should configure mem" do
+      @fixture.provider.expects(:enterMaintenanceMode)
+      @fixture.provider.expects(:execute_system_cmd).returns(0)
+      @fixture.provider.expects(:exitMaintenanceMode).returns(0)
 
-	   Puppet.should_not_receive(:err)
-       
-       #When
-       @fixture.provider.configure_mem=('test')
-     end 
-  
+      Puppet.expects(:err).never
 
-	 
+      @fixture.provider.configure_mem = ('test')
+    end
+
     it "should install mem" do
-       #Then
-       @fixture.provider.stub(:esx_main_enter_exists).and_return(0)
-	   @fixture.provider.should_receive(:esx_main_enter_exists)
-	   
-       @fixture.provider.stub(:execute_system_cmd).and_return(0)
-	   @fixture.provider.should_receive(:execute_system_cmd)
-	   
-       @fixture.provider.stub(:esx_main_enter_exists).and_return(0)       
-       @fixture.provider.should_receive(:esx_main_enter_exists)
-	   
-	   Puppet.should_not_receive(:err)
-       
-       #When
-       @fixture.provider.install_mem=('test')
-    end 
+      #Then
+      @fixture.provider.expects(:enterMaintenanceMode)
 
+      @fixture.provider.expects(:execute_system_cmd).returns(0)
+
+      @fixture.provider.expects(:exitMaintenanceMode)
+      @fixture.provider.expects(:toggle_ssh)
+      @fixture.provider.expects(:restart_hostd)
+      @fixture.provider.expects(:reset_ssh)
+
+      Puppet.expects(:err).never
+
+      #When
+      @fixture.provider.install_mem = ('test')
+    end
   end
-  
 end

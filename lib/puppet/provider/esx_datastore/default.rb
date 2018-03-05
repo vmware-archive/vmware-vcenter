@@ -22,6 +22,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
       when 'VMFS'
         attempt = 10
         while ! create_vmfs_lun and ! exists? and attempt > 0
+          require "pry"; binding.pry
           Puppet.debug('Rescanning for volume')
           host.configManager.storageSystem.RescanAllHba() unless find_disk
           host.configManager.storageSystem.RescanVmfs()

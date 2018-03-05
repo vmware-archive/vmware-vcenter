@@ -53,7 +53,11 @@ Puppet::Type.newtype(:esx_vswitch) do
   newproperty(:num_ports) do
     desc "The number of ports that this virtual switch is configured to use. The maximum value is 4088"
     dvalue = '128'
-    defaultto(dvalue)    
+    defaultto(dvalue)
+    validate do |value|
+      raise Puppet::Error, "Invalid num_ports value" if value.to_i > 4088
+    end
+
     munge do |value|
       if value.to_i == 0
         dvalue.to_i

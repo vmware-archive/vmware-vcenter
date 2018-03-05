@@ -10,6 +10,20 @@ def io_popen(command)
   end
 end
 
+task :default => ["spec_prep", "spec:suite:unit"]
+
+namespace :spec do
+  namespace :suite do
+    desc 'Run all specs in unit spec suite'
+    RSpec::Core::RakeTask.new('unit') do |t|
+      t.pattern = './spec/unit/**/*_spec.rb'
+      if ENV["TRAVIS"] == "true"
+        t.rspec_opts = '--profile'
+      end
+    end
+  end
+end
+
 # Customize lint option
 task :lint do
   PuppetLint.configuration.send("disable_80chars")

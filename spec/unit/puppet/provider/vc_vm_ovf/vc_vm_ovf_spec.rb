@@ -29,52 +29,50 @@ describe "vm export import behavior testing" do
    end
    
   context "when vc_vm_ovf is created " do
-     it "should import ovf if file exist" do
-     #Then
-       @fixture.provider.stub(:importovf).and_return(0)
-       @fixture.provider.should_receive(:importovf)
-       responce = "Successfully created the Virtual Machine #{ @fixture.vc_vm_ovf.name}."
-       Puppet.should_receive(:notice).once.with(responce).ordered
-       
-       #When
-       @fixture.provider.create
-     end 
-        
+    it "should import ovf if file exist" do
+      #Then
+      @fixture.provider.expects(:importovf).returns(0)
+      responce = "Successfully created the Virtual Machine #{ @fixture.vc_vm_ovf.name}."
+      Puppet.expects(:notice).with(responce).once
+
+      #When
+      @fixture.provider.create
+    end
+
     it "should not import ovf if file does not exist" do
-        #Then
-          @fixture.provider.stub(:importovf).and_return(1)
-          @fixture.provider.should_receive(:importovf)
-          responce =  "Unable to import the OVF file #{@fixture.get_ovf_name}."
-            Puppet.should_receive(:err).once.with(responce).ordered
-          
-          #When
-          @fixture.provider.create
-        end 
-   end
-   
+      #Then
+      @fixture.provider.expects(:importovf).returns(1)
+
+      responce = "Unable to import the OVF file #{@fixture.get_ovf_name}."
+
+      Puppet.expects(:err).with(responce).once
+
+      #When
+      @fixture.provider.create
+    end
+  end
+
   context "when vc_vm_ovf calls destroy " do
-       it "should export ovf if vm exist" do
-       #Then
-         @fixture.provider.stub(:exportovf).and_return(0)
-         @fixture.provider.should_receive(:exportovf)
-         responce = "Successfully exported the OVF file at #{@fixture.get_ovf_name} location."
-         Puppet.should_receive(:notice).once.with(responce).ordered
-         
-         #When
-         @fixture.provider.destroy
-       end 
-          
-      it "should not export ovf if vm does not exist" do
-          #Then
-            @fixture.provider.stub(:exportovf).and_return(1)
-            @fixture.provider.should_receive(:exportovf)
-            responce = "Unable to export the Virtual Machine #{@fixture.vc_vm_ovf.name} OVF file."
-            Puppet.should_receive(:err).once.with(responce).ordered
-            
-            #When
-        @fixture.provider.destroy
-          end 
-     end
-   
-   
+    it "should export ovf if vm exist" do
+      #Then
+      @fixture.provider.expects(:exportovf).returns(0)
+
+      responce = "Successfully exported the OVF file at #{@fixture.get_ovf_name} location."
+      Puppet.expects(:notice).with(responce).once
+
+      #When
+      @fixture.provider.destroy
+    end
+
+    it "should not export ovf if vm does not exist" do
+      #Then
+      @fixture.provider.expects(:exportovf).returns(1)
+
+      responce = "Unable to export the Virtual Machine #{@fixture.vc_vm_ovf.name} OVF file."
+      Puppet.expects(:err).with(responce).once
+
+      #When
+      @fixture.provider.destroy
+    end
+  end
 end

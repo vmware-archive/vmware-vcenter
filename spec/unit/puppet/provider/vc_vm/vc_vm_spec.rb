@@ -7,10 +7,10 @@ require 'fixtures/unit/puppet/provider/vc_vm/vc_vm_fixture'
 describe "vm create and clone behavior testing" do
   before(:each) do
     @fixture = Vc_vm_fixture.new
-    @fixture.provider.stub(:create_vm)
-    @fixture.provider.stub(:clone_vm)
-    @fixture.provider.stub(:delete_vm)
-    @fixture.provider.stub(:check_vm)
+    @fixture.provider.stubs(:create_vm)
+    @fixture.provider.stubs(:clone_vm)
+    @fixture.provider.stubs(:delete_vm)
+    @fixture.provider.stubs(:check_vm)
   end
 
   context "when vc_vm provider is created " do
@@ -32,61 +32,47 @@ describe "vm create and clone behavior testing" do
   end
 
   context "when vc_vm is created " do
-    it "should create vm  if value of operation is create" do
-      #Then
-      @fixture.provider.stub(:get_operation_name).and_return('create')
-      @fixture.provider.should_receive(:get_operation_name)
-      @fixture.provider.should_receive(:create_vm)
+    before(:each) do
+      @fixture.provider.expects(:vm).at_least_once.returns(nil).returns(mock("vm_object"))
+      @fixture.provider.expects(:cdrom_iso).returns(mock("cdrom_object"))
+      @fixture.provider.expects(:configure_iso)
+    end
 
-      #When
+    it "should create vm  if value of operation is create" do
+      @fixture.provider.expects(:create_vm)
+
       @fixture.provider.create
     end
 
     it "should clone vm  if value of operation is clone" do
-      #Then
-      @fixture.provider.stub(:get_operation_name).and_return('clone')
-      @fixture.provider.should_receive(:get_operation_name)
-      @fixture.provider.should_receive(:clone_vm)
+      @fixture.provider.resource[:template] = "mock_template"
+      @fixture.provider.expects(:clone_vm)
 
-      #When
       @fixture.provider.create
     end
   end
 
   context "when vc_vm calls destroy " do
-    it "should delete vm " do
-      #Then
-      @fixture.provider.stub(:get_vm_from_datacenter).and_return("VM")
-      @fixture.provider.stub(:get_power_state).and_return("poweredOff")
-      @fixture.provider.should_receive(:get_vm_from_datacenter)
-      @fixture.provider.should_receive(:get_power_state)
-      @fixture.provider.should_receive(:delete_vm)
+    let(:destroy_task) {mock("destroy_task")}
 
-      #When
+    before(:each) do
+      @fixture.provider.stubs(:power_state).returns("poweredOff")
+      @fixture.provider.stubs(:cdrom_iso)
+      @fixture.provider.stubs(:nfs_vm_datastore)
+    end
+
+    it "should delete vm " do
+      @fixture.provider.stubs(:vm).returns(mock(:Destroy_Task => destroy_task))
+
+      destroy_task.expects(:wait_for_completion)
+
       @fixture.provider.destroy
     end
 
     it "should receive error if vm not exist" do
-      #Then
-      @fixture.provider.stub(:get_vm_from_datacenter).and_return(nil)
-      @fixture.provider.stub(:get_power_state).and_return("poweredOff")
-      @fixture.provider.should_receive(:get_vm_from_datacenter)
-      Puppet.should_receive(:err)
-      #When
-      @fixture.provider.destroy
-    end
-    it "should receive notice if vm exist and state is powered off/suspended " do
-      #Then
-      @fixture.provider.stub(:get_vm_from_datacenter).and_return("VM")
-      @fixture.provider.stub(:get_power_state).and_return("poweredOff")
-      @fixture.provider.should_receive(:get_vm_from_datacenter)
-      @fixture.provider.should_receive(:get_power_state)
-      Puppet.should_receive(:notice)
+      @fixture.provider.stubs(:vm)
 
-      #When
-      @fixture.provider.destroy
+      expect {@fixture.provider.destroy}.to raise_error(/undefined method `Destroy_Task' for nil/)
     end
-
   end
-
 end

@@ -31,8 +31,8 @@ describe "Create esx_fc_multiple_path_config behavior testing" do
   context "when esx_fc_multiple_path_config is created " do
     it "should configure esx_fc_multiple_path_config" do
       #Then
-      @fixture.provider.stub(:host).and_return("test")
-      @fixture.provider.should_receive(:change_policy)
+      @fixture.provider.expects(:host).returns("test")
+      @fixture.provider.expects(:change_policy)
 
       #When
       @fixture.provider.create

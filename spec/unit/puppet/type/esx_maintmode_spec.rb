@@ -81,7 +81,7 @@ describe Puppet::Type.type(:esx_maintmode) do
 
       describe "validating evacuate_powered_off_vms param" do
         it "should support boolean values" do
-          described_class.new(:ensure => :present, :hostseq  => '172.16.100.56:e1',:host => '172.16.100.56',:timeout => 0,:evacuate_powered_off_vms => true)[:evacuate_powered_off_vms].should be_true 
+          described_class.new(:ensure => :present, :hostseq  => '172.16.100.56:e1',:host => '172.16.100.56',:timeout => 0,:evacuate_powered_off_vms => true)[:evacuate_powered_off_vms].should eq(:true)
         end
 
         it "should not support non boolean values" do

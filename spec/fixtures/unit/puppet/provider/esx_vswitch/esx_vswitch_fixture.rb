@@ -16,8 +16,8 @@ class Esx_vswitch_fixture
     :num_ports      => 1024,
     :nics           => ["vmnic1", "vmnic2", "vmnic3", "vmnic4"],
     :nicorderpolicy => {
-      activenic  => ["vmnic1", "vmnic4"],
-      standbynic => ["vmnic3", "vmnic2"]
+      :activenic  => ["vmnic1", "vmnic4"],
+      :standbynic => ["vmnic3", "vmnic2"]
     },
     :mtu            => 5000,
     :checkbeacon    => false
