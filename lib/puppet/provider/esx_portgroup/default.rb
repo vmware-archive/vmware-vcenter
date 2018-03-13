@@ -653,7 +653,7 @@ Puppet::Type.type(:esx_portgroup).provide(:esx_portgroup, :parent => Puppet::Pro
       hostnicorderpolicy = nil
     end
 
-    hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:nicOrder => hostnicorderpolicy)
+    hostnicteamingpolicy = RbVmomi::VIM.HostNicTeamingPolicy(:nicOrder => hostnicorderpolicy, :policy => resource[:uplinkteamingpolicy])
     hostnetworkpolicy = RbVmomi::VIM.HostNetworkPolicy(:nicTeaming=> hostnicteamingpolicy)
 
     if (actualspec.policy != nil )

@@ -88,7 +88,7 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
         Puppet.debug "requiring: #{@properties_reqd.sort.inspect} are required"
         # properties_reqd may change
         # properties_rcvd will change unless resource has no value for property
-        properties_reqd.dup.each{|p| 
+        properties_reqd.dup.each{|p|
           self.send "#{p}=".to_sym, @resource[p] unless @resource[p].nil?
         }
       end

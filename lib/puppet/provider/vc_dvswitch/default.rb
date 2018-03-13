@@ -62,7 +62,6 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
         PuppetX::VMware::Util::nested_value(config_is_now, leaf.path_is_now)
       )
     end
-
     define_method("#{leaf.prop_name}=".to_sym) do |value|
       PuppetX::VMware::Util::nested_value_set(config_should, leaf.path_should, value)
       properties_rcvd.add leaf.prop_name
@@ -90,7 +89,7 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
         Puppet.debug "requiring: #{@properties_reqd.inspect} are required"
         # properties_reqd may change
         # properties_rcvd will change unless resource has no value for property
-        properties_reqd.dup.each{|p| 
+        properties_reqd.dup.each {|p|
           self.send "#{p}=".to_sym, @resource[p] unless @resource[p].nil?
         }
       end

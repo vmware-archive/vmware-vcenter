@@ -73,6 +73,11 @@ Puppet::Type.newtype(:esx_portgroup) do
     desc "nic order ploicy to be applied to vSwitch"
   end
 
+  newparam(:uplinkteamingpolicy) do
+    desc "teaming policy for portgroup"
+    defaultto("loadbalance_srcid")
+  end
+
   newparam(:portgrouptype) do
     desc "Type of port group."
     newvalues(:VirtualMachine, :VMkernel)
