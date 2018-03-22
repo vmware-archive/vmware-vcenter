@@ -79,7 +79,12 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
   end
 
   def reboot_and_wait_for_host
+    host.EnterMaintenanceMode_Task(:timeout => resource[:reboot_timeout],
+                                   :evacuatePoweredOffVms => false).wait_for_completion
+
     host.RebootHost_Task({:force => false}).wait_for_completion
     wait_for_host(300, resource[:reboot_timeout])
+
+    host.ExitMaintenanceMode_Task(:timeout => resource[:reboot_timeout]).wait_for_completion
   end
 end
