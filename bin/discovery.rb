@@ -3,6 +3,7 @@ require "json"
 require "rbvmomi"
 require_relative "../lib/puppet_x/puppetlabs/transport/rbvmomi_patch" # Use patched library to workaround rbvmomi issues
 require "trollop"
+require "nokogiri"
 
 opts = Trollop::options do
   opt :server, 'vcenter address', :type => :string, :required => true
@@ -136,6 +137,8 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
+  attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
+  attributes[:installed_software] = collect_host_vib_list(host)
   if get_host_config(host)
     attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
     attributes[:version] = get_host_config(host).product.version
@@ -143,6 +146,30 @@ def collect_host_attributes(host)
     attributes[:syslog] = host.configManager.advancedOption.setting.select { |x| x.key == "Syslog.global.logDir" }.first.value
   end
   attributes
+end
+
+def collect_host_vib_list(host)
+  task = host.configManager.patchManager.ScanHostPatchV2_Task
+  vib_list = []
+  attempts = 1
+  until task.info.state  == "success" || attempts > 6 do
+    attempts += 1
+    sleep 5
+  end
+  if task.info.state == "success" 
+    xml_result = Nokogiri::XML(task.info[:result][:xmlResult])
+    vib_list = xml_result.xpath("//vib-scan-data//id//text()").map(&:to_s)
+  else
+    STDERR.puts "Could not query host %s for installed software: Operation did not complete before timeout." % [host.name]
+  end
+  vib_list
+rescue
+  STDERR.puts "Could not query host %s for installed software: %s: %s" % [host.name, $!.class, $!.to_s]
+end
+
+def collect_host_vmk_ips(host)
+  host_virtual_nic_array = host.config.network.vnic
+  virtual_nic_ip_array = host_virtual_nic_array.map { |hv_nic| hv_nic[:spec][:ip][:ipAddress] }
 end
 
 def collect_datastore_attributes(ds, parent=nil)
