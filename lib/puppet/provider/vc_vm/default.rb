@@ -217,7 +217,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def configure_iso
     cdrom = vm.config.hardware.device.find { |hw| hw.class == RbVmomi::VIM::VirtualCdrom }
 
-    if iso_file
+    if iso_file && iso_file != :undef
       nfs_ds = add_nfs_datastore
       # attach iso from cd/DVD drive
       vm.ReconfigVM_Task(:spec => vm_reconfig_spec(nfs_ds, cdrom)).wait_for_completion
