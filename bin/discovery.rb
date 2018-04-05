@@ -243,7 +243,13 @@ def get_host_config(host)
 end
 
 def collect_vm_attributes(vm)
+  nics = vm.guest.net
+  unless nics.nil?
+    ip_list = nics.map { |this_nic| this_nic.ipAddress[0] }
+  end
   {:template => vm.summary.config.template,
+  :hostname => vm.summary.guest.hostName,
+  :vm_ips => ip_list,
   :datastore => vm.datastore.first.name}
 end
 
