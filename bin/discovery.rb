@@ -124,9 +124,12 @@ def collect_host_attributes(host)
   attributes = {}
   # For blades, there are 2 service tags from this data.  1 for chassis, and one for the blade itself, and there doesn't seem to be anything distinguishing the 2
   # Seems unreliable to rely on the ordering of the serviceTags, but the 2nd tag seems to always be the blade's tag
-  service_tag_array = host.summary.hardware.otherIdentifyingInfo
+  service_tag_array = []
+  if host.summary.hardware
+    service_tag_array = host.summary.hardware.otherIdentifyingInfo
                           .select{|x| x.identifierType.key=='ServiceTag'}
                           .collect{|x| x.identifierValue}
+  end
   #Sometimes vcenter inventory doesn't have the otherIdentifyingInfo populated as expected, so we try to get the data a different way in those cases
   if service_tag_array.empty? && host.summary.runtime.connectionState == 'connected'
     begin
