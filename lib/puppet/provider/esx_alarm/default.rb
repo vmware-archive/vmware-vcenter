@@ -7,7 +7,12 @@ Puppet::Type.type(:esx_alarm).provide(:esx_alarm, :parent => Puppet::Provider::V
   @doc = "Manages ESXi host alarm."
 
   def exists?
-    @alarms = host.triggeredAlarmState
+    @host_alarms = host.triggeredAlarmState
+
+    @vm_alarms = []
+    @vm_alarms = vm.triggeredAlarmState if resource[:vm_name] && vm
+
+    @alarm = @host_alarms + @vm_alarms
   end
 
   def create
@@ -15,7 +20,11 @@ Puppet::Type.type(:esx_alarm).provide(:esx_alarm, :parent => Puppet::Provider::V
   end
 
   def destroy
-    @alarms.each do |alarm|
+    @host_alarms.each do |alarm|
+      alarm.alarm.RemoveAlarm
+    end
+
+    @vm_alarms.each do |alarm|
       alarm.alarm.RemoveAlarm
     end
   end
@@ -28,5 +37,8 @@ Puppet::Type.type(:esx_alarm).provide(:esx_alarm, :parent => Puppet::Provider::V
     @datacenter ||= vim.serviceInstance.find_datacenter(resource[:datacenter]) or raise(Puppet::Error, "datacenter '#{resource[:datacenter]}' not found.")
   end
 
+  def vm
+    @vm ||= datacenter.vmFolder.childEntity.grep(RbVmomi::VIM::VirtualMachine).find {|v| v.name == resource[:vm_name]}
+  end
 end
 

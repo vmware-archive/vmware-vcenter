@@ -10,6 +10,9 @@ Puppet::Type.newtype(:esx_alarm) do
   newparam(:host) do
   end
 
+  newparam(:vm_name) do
+  end
+
   newparam(:datacenter) do
   end
 
