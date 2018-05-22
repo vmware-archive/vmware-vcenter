@@ -260,13 +260,20 @@ def collect_vm_attributes(vm)
 end
 
 def collect_vds_portgroup_attributes(portgroup)
-  return {} unless portgroup.config.defaultPortConfig.vlan.respond_to?(:vlanId)
+  active_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
+  standby_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort
+  default_response = {
+    :active_uplinks => active_uplinks,
+    :standby_uplinks => standby_uplinks
+  }
+  return default_response unless portgroup.config.defaultPortConfig.vlan.respond_to?(:vlanId)
 
   vlan_id = portgroup.config.defaultPortConfig.vlan.vlanId
-  return {} unless vlan_id.is_a?(Integer)
+  return default_response unless vlan_id.is_a?(Integer)
 
-  {:vlan_id => vlan_id}
+  {:vlan_id => vlan_id, :active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks}
 end
+
 
 def collect_portgroup_attributes(network_obj, parent)
   # In case ESXi server is in non-responding state then need to skip port-group information
