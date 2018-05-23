@@ -746,7 +746,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     config = {
         :name => resource[:name],
         :memoryMB => resource[:memory_mb],
-        :numCPUs => resource[:num_cpus] ,
+        :numCPUs => resource[:num_cpus],
+        :numCoresPerSocket => resource[:num_cpus],
         :guestId => resource[:guestid],
         :files => { :vmPathName => path },
         :memoryHotAddEnabled => resource[:memory_hot_add_enabled],
@@ -1058,6 +1059,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       :name => vm_name,
       :memoryMB => resource[:memory_mb],
       :numCPUs => resource[:num_cpus],
+      :numCoresPerSocket => resource[:num_cpus],
       :deviceChange => vm_devices
     )
 
