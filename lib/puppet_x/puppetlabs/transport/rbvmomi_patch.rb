@@ -66,3 +66,25 @@ RbVmomi::VIM.send(:define_method, :close) do
     puts "Failed to close VIM session %s:%s" % [$!.class, $!.message]
   end
 end
+
+# Patch for RbVmomi::VIM::ReflectManagedMethodExecuter::execute method
+#
+# Seems current implementation of execute only supports esxi versions greater than 6.5. This
+# patch will overide execute method and supports esxi versions 6 and above
+RbVmomi::VIM::ReflectManagedMethodExecuter.send(:define_method, :execute) do |moid, method, args|
+  soap_args = args.map do |k, v|
+    VIM::ReflectManagedMethodExecuterSoapArgument.new.tap do |soap_arg|
+      soap_arg.name = k
+      xml = Builder::XmlMarkup.new :indent => 0
+      _connection.obj2xml xml, k, :anyType, false, v
+      soap_arg.val = xml.target!
+    end
+  end
+  result = ExecuteSoap(:moid => moid, :version => 'urn:vim25/6.0',
+                       :method => method, :argument => soap_args)
+  if result
+    _connection.deserializer.deserialize Nokogiri(result.response).root, nil
+  else
+    nil
+  end
+end
