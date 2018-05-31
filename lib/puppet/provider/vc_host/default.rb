@@ -54,9 +54,13 @@ Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcent
     begin
       parentFolder = host.parent
       if parentFolder.to_s =~ /ClustercomputeResource/i
+        # disconnect host
+        host.DisconnectHost_Task.wait_for_completion
         # remove host from cluster
         host.Destroy_Task.wait_for_completion
       else
+        # disconnect host from datacenter
+        host.parent.DisconnectHost_Task.wait_for_completion
         # remove host from datacenter
         host.parent.Destroy_Task.wait_for_completion
       end
