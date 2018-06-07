@@ -113,6 +113,11 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     @host
   end
 
+  def hide_password(config)
+
+    config.gsub(/\s+:password=>(\S+),/,":Password => \"*******\",")
+  end
+
   def reset_connection
     if @transport && @transport.respond_to?(:reconnect)
       @transport.reconnect

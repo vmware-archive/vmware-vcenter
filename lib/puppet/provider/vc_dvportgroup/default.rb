@@ -100,8 +100,8 @@ Puppet::Type.type(:vc_dvportgroup).provide(:vc_dvportgroup, :parent => Puppet::P
     end
 
     # create RbVmomi objects with properties in place of hashes with keys
-    Puppet.debug "'is_now' is #{config_is_now.inspect}'}"
-    Puppet.debug "'should' is #{config_should.inspect}'}"
+    Puppet.debug "'is_now' is #{hide_password(config_is_now.inspect)}'}"
+    Puppet.debug "'should' is #{hide_password(config_should.inspect)}'}"
     spec = map.objectify config_should
     Puppet.debug "'object' is #{spec.inspect}'}"
     spec

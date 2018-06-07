@@ -70,8 +70,8 @@ Puppet::Type.type(:vc_cluster_ha).provide(:vc_cluster_ha, :parent => Puppet::Pro
     end
 
     # create RbVmomi objects with properties in place of hashes with keys
-    Puppet.debug "'is_now' is #{configurationEx_is_now.inspect}'}"
-    Puppet.debug "'should' is #{configurationEx_should.inspect}'}"
+    Puppet.debug "'is_now' is #{hide_password(configurationEx_is_now.inspect)}'}"
+    Puppet.debug "'should' is #{hide_password(configurationEx_should.inspect)}'}"
     configurationEx_object = 
       clusterConfigSpecExMap.objectify configurationEx_should
     Puppet.debug "'object' is #{configurationEx_object.inspect}'}"
