@@ -998,7 +998,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def network_specs(interfaces=resource[:network_interfaces], action='add')
     interfaces.each_with_index.collect do |nic, index|
       portgroup = nic['portgroup']
-      if portgroup.match(/(\S+)\s*\((\S+)\)/)
+      if portgroup.match(/^(\b.*?)\ \((.*?)\)$/)
         backing = RbVmomi::VIM.VirtualEthernetCardDistributedVirtualPortBackingInfo
         port = RbVmomi::VIM.DistributedVirtualSwitchPortConnection
         port.portgroupKey = dvportgroup($2,$1).key
