@@ -89,7 +89,8 @@ def collect_inventory(obj, parent=nil)
     when RbVmomi::VIM::Datastore
       hash[:attributes] = collect_datastore_attributes(obj, parent)
     when RbVmomi::VIM::VmwareDistributedVirtualSwitch
-      obj.portgroup.each {|portgroup| hash[:children] << collect_inventory(portgroup)}
+       hash[:attributes] = collect_distributed_switch_attributes(obj, parent)
+       obj.portgroup.each {|portgroup| hash[:children] << collect_inventory(portgroup)}
     when RbVmomi::VIM::DistributedVirtualPortgroup
       hash[:attributes] = collect_vds_portgroup_attributes(obj)
     when RbVmomi::VIM::Network
@@ -257,6 +258,14 @@ def collect_vm_attributes(vm)
   :hostname => vm.summary.guest.hostName,
   :vm_ips => ip_list,
   :datastore => vm.datastore.first.name}
+end
+
+def collect_distributed_switch_attributes(obj, parent)
+  active_uplinks = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort || []
+  standby_uplinks = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort || []
+  uplinks = active_uplinks + standby_uplinks
+
+  {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks}
 end
 
 def collect_vds_portgroup_attributes(portgroup)
