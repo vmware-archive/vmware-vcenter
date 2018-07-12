@@ -2,6 +2,8 @@
 provider_path = Pathname.new(__FILE__).parent.parent
 require File.join(provider_path, 'vcenter')
 require 'rbvmomi'
+require 'rbvmomi/utils/deploy'
+require 'yaml'
 require File.join(provider_path, 'spbmapiutils')
 
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
@@ -202,6 +204,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     unless vm
       if resource[:template]
         clone_vm
+      elsif resource[:ovf_url]
+	Puppet.debug "Starting ovf deploy from url %s" % resource[:ovf_url].to_s      
+        deploy_ovf 	
       else
         create_vm
       end
@@ -1023,6 +1028,120 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
         :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation(action)
       )
     end
+  end
+
+  # Returns the host associated with the provided datastore
+   # and compute resource which is the cluster.
+  def host_from_datastore(datastore, cluster)
+    pc = vim.serviceContent.propertyCollector
+    hosts = cluster.host
+    hosts_props = pc.collectMultiple(
+        hosts,
+        'datastore', 'runtime.connectionState',
+        'runtime.inMaintenanceMode', 'name'
+    )
+    host = hosts.shuffle.find do |x|
+      host_props = hosts_props[x]
+      is_connected = host_props['runtime.connectionState'] == 'connected'
+      is_ds_accessible = host_props['datastore'].member?(datastore)
+      is_connected && is_ds_accessible && !host_props['runtime.inMaintenanceMode']
+    end
+    raise("No host in the cluster available to upload OVF to") unless host
+
+    host
+  end
+
+  # Returns the portgroup name and VDS name as a list
+  # The first element is the portgroup name and the second is the VDS name
+  def network_names(net)
+    net["portgroup"].match(/^(\b.*?)\ \((.*?)\)$/)
+    [$1,$2]
+  end
+
+  # Returns a hash of the network mappings from VM Networks in the
+  # provided OVF file to the networks that exist on a host.  It takes
+  # the desired network names as input, and finds the associated network
+  # object on the host to include in the mapping.
+  def network_mappings(ovf_url, cluster)
+    network_mappings = {}
+    # Query OVF to find any networks which need to be mapped
+    ovf = open(ovf_url, 'r'){|io| Nokogiri::XML(io.read)}
+    raise("Unable to obtain ovf from: %s" % ovf_url) unless ovf
+
+    ovf.remove_namespaces!
+    networks = ovf.xpath('//NetworkSection/Network').map{|x| x['name']}
+    return network_mappings unless networks
+
+    # If list of networks were passed as input then map them to the VM Networks in the
+    # OVF.  If fewer networks are passed in that what are available on the OVF the last
+    # input network will be repeated on all available VMNetworks
+    if resource[:network_interfaces]
+      this_net = nil
+      resource[:network_interfaces].size <= networks.size
+      resource[:network_interfaces].each_with_index do |net,index|
+        portgroup_name = network_names(net).first
+        this_net = cluster.network.find{|x| x.name == portgroup_name}
+        raise("Input network name: %s is not found in cluster" % portgroup_name) unless this_net
+        Puppet.debug("Mapping network %s to %s" % [networks[index], this_net.name])
+        network_mappings[networks[index]] = this_net
+      end
+      # If input network list was smaller than number of VM Networks in the OVF
+      # Fill in remaining OVF networks with last available input network
+      if resource[:network_interfaces].size < networks.size
+        networks[resource[:network_interfaces].size..-1].each do |net|
+          network_mappings[net] = this_net
+          Puppet.debug("Mapping network %s to %s" % [net, this_net.name])
+        end
+      end
+    else
+      network = cluster.network[0]
+      network_mappings = Hash[networks.map{|x| [x, network]}]
+    end
+
+    network_mappings
+  end
+
+  # This method create a VMware Virtual Machine instance based on an OVF provided
+  # via a URL location.
+  def deploy_ovf
+    vm_name = resource[:name]
+    ovf_url = resource[:ovf_url]
+    dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
+    datastore = dc.find_datastore(resource[:datastore])
+    cluster = dc.find_compute_resource(resource[:cluster])
+    raise("Could not find datacenter, datastore, or cluster") unless dc && datastore && cluster
+
+    Puppet.debug("Deploying vm %s, to datacenter: %s and cluster: %s and datastore: %s" % [vm_name.to_s, dc.name, cluster.name, datastore.name])
+
+    # Use root vm folder for deployment if no folder passed in as input
+    root_vm_folder = dc.vmFolder
+    vm_folder = root_vm_folder
+    if resource[:vm_folder_path]
+      vm_folder = root_vm_folder.traverse(resource[:vm_folder_path], VIM::Folder)
+      raise("Could not find VM folder: %s" % resource[:vm_folder_path])
+    end
+    Puppet.debug("Using vm folder: %s" % vm_folder.name)
+
+    # Find host associated with the target datastore for this VM
+    host = host_from_datastore(datastore, cluster)
+    Puppet.debug("Deploying vm: %s to host: %s" % [vm_name.to_s, host.name.to_s])
+    vm = nil
+    begin
+      vm = vim.serviceContent.ovfManager.deployOVF(
+          uri: ovf_url,
+          vmName: vm_name,
+          vmFolder: vm_folder,
+          host: host,
+          resourcePool: cluster.resourcePool,
+          datastore: datastore,
+          networkMappings: network_mappings(ovf_url, cluster),
+          propertyMappings: {})
+    rescue RbVmomi::Fault => fault
+      Puppet.debug("Failure during OVF deployment for vm: %s with error %s: %s" % [vm_name.to_s, $!.to_s, $!.class])
+    end
+
+    Puppet.debug("Attempting to power on vm: %s" % vm_name.to_s)
+    power_state = resource[:power_state].to_sym
   end
 
   # This method creates a VMware Virtual Machine instance based on the specified base image

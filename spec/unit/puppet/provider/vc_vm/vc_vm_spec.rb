@@ -5,10 +5,23 @@ require "rspec/mocks"
 require "fixtures/unit/puppet/provider/vc_vm/vc_vm_fixture"
 require "hashie"
 
+provider_path = Pathname.new(__FILE__).parent.parent.parent.parent.parent.parent
+
 describe "vm create and clone behavior testing" do
   let(:fixture) {Vc_vm_fixture.new}
   let(:provider) {fixture.provider}
-
+  let(:datacenter) {mock("datacenter")}
+  let(:datastore) {mock(:name => "FlexDatastore")}
+  let(:vmFolder) {mock(:name => "vm")}
+  let(:computeResource) {mock("compute_resource")}
+  let(:ovfManager) {mock("ovf_manager")}
+  let(:serviceContent) {mock(:ovfManager => ovfManager)}
+  let(:host) {mock(:name => "newFlexVM")}
+  let(:serviceInstance) {mock(:find_datacenter => datacenter)}
+  let(:vim) {mock(:serviceInstance => serviceInstance)}
+  let(:net1) {mock("network1")}
+  let(:net2) {mock("network2")}
+  
   context "when vc_vm provider is created " do
     it "should have a create method defined for vc_vm" do
       expect(provider.class.instance_method(:create)).to be_truthy
@@ -46,6 +59,34 @@ describe "vm create and clone behavior testing" do
 
       provider.create
     end
+ 
+    it "should deploy ovf if value of operation is deploy as ovf_url provided" do	    
+      provider.resource[:ovf_url] = "http://test/test.ovf"
+      provider.resource[:power_state] = "poweredOn"
+      datacenter.expects(:find_datastore).returns(datastore)
+      datacenter.expects(:find_compute_resource).returns(computeResource)
+      datacenter.expects(:vmFolder).returns(vmFolder)
+      datacenter.expects(:name).returns("FlexDC")
+      vim.expects(:serviceContent).returns(serviceContent)
+      ovfManager.expects(:deployOVF).returns("vm")
+      computeResource.expects(:resourcePool).returns("rp")
+      computeResource.expects(:name).returns("FlexCluster")
+      provider.expects(:host_from_datastore).returns(host)
+      provider.expects(:network_mappings).returns({})
+      provider.expects(:vim).twice.returns(vim)
+      provider.create      
+    end
+  end
+
+  context "#network mappings" do
+    it "should provide network mappings when ovf has networks" do
+      ovf_url = File.join(provider_path, '/spec/fixtures/unit/puppet/provider/vc_vm/ovf.xml')
+      net1.stubs(:name).returns("FlexMgmt")
+      net2.stubs(:name).returns("FlexData1")
+      provider.resource[:network_interfaces] = [{"portgroup" => "FlexMgmt (VDS1)"}, {"portgroup" => "FlexData1 (VDS2)"}]
+      computeResource.stubs(:network).returns([net1, net2])
+      expect(provider.network_mappings(ovf_url,computeResource)).to eq({"VM Network" => net1, "VM Network 1" => net2, "VM Network 2" => net2})
+    end  
   end
 
   context "when vc_vm calls destroy " do
