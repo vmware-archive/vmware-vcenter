@@ -124,6 +124,15 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto(:'LSI Logic SAS')
   end
 
+  # parameters for deploy ovf
+  newparam(:ovf_url) do
+    desc 'Url for OVF location to deploy VM from'
+  end
+
+  newparam(:vm_folder_path) do
+    desc 'Folder to deploy VM into'
+  end
+
   # parameters for clone vm operation
   newparam(:template) do
     desc 'Template to clone from'
