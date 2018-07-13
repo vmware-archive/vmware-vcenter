@@ -15,6 +15,8 @@ describe "vm create and clone behavior testing" do
   let(:vmFolder) {mock(:name => "vm")}
   let(:computeResource) {mock("compute_resource")}
   let(:ovfManager) {mock("ovf_manager")}
+  let(:vm) {mock("vm")}
+  let(:task) {mock("task")}
   let(:serviceContent) {mock(:ovfManager => ovfManager)}
   let(:host) {mock(:name => "newFlexVM")}
   let(:serviceInstance) {mock(:find_datacenter => datacenter)}
@@ -68,13 +70,40 @@ describe "vm create and clone behavior testing" do
       datacenter.expects(:vmFolder).returns(vmFolder)
       datacenter.expects(:name).returns("FlexDC")
       vim.expects(:serviceContent).returns(serviceContent)
-      ovfManager.expects(:deployOVF).returns("vm")
+      task.stubs(:wait_for_completion)
+      task.stubs(:info).returns({:state => "success"})
+      vm.expects(:ReconfigVM_Task).returns(task)
+      ovfManager.expects(:deployOVF).returns(vm)
       computeResource.expects(:resourcePool).returns("rp")
       computeResource.expects(:name).returns("FlexCluster")
       provider.expects(:host_from_datastore).returns(host)
       provider.expects(:network_mappings).returns({})
       provider.expects(:vim).twice.returns(vim)
       provider.create      
+    end
+  end
+
+  context "Configuring CPU and memory" do
+    it "should raise error if vm reconfiguration fails" do
+      provider.expects(:vm).at_least_once.returns(nil).returns(mock("vm_object"))
+      provider.resource[:ovf_url] = "http://test/test.ovf"
+      provider.resource[:power_state] = "poweredOn"
+      datacenter.expects(:find_datastore).returns(datastore)
+      datacenter.expects(:find_compute_resource).returns(computeResource)
+      datacenter.expects(:vmFolder).returns(vmFolder)
+      datacenter.expects(:name).returns("FlexDC")
+      vim.expects(:serviceContent).returns(serviceContent)
+      task.stubs(:wait_for_completion)
+      task.stubs(:info).returns({:state => "error", :error => {:localizedMessage => "Failed to reconfig VM"}})
+      vm.stubs(:name).returns("FlexVM")
+      vm.expects(:ReconfigVM_Task).returns(task)
+      ovfManager.expects(:deployOVF).returns(vm)
+      computeResource.expects(:resourcePool).returns("rp")
+      computeResource.expects(:name).returns("FlexCluster")
+      provider.expects(:host_from_datastore).returns(host)
+      provider.expects(:network_mappings).returns({})
+      provider.expects(:vim).twice.returns(vim)
+      expect { provider.create }.to raise_error(RuntimeError)
     end
   end
 

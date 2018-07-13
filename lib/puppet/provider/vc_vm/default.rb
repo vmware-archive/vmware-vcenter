@@ -1101,6 +1101,21 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     network_mappings
   end
 
+  # Use reconfigure VM task to set memory and CPU on VM
+  # This will return error if VM is not in the powered off state
+  # Input memory is in MB
+  def configure_vm_memory_and_cpu(vm, memory_in_mb, num_cpu)
+    Puppet.debug("Configuring VM memory: %s MB, and %s CPUs" % [memory_in_mb.to_s, num_cpu])
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
+        :memoryMB => memory_in_mb,
+        :numCPUs => num_cpu,
+        :numCoresPerSocket => num_cpu
+    )
+    task = vm.ReconfigVM_Task(:spec => config_spec)
+    task.wait_for_completion
+    raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
+  end
+
   # This method create a VMware Virtual Machine instance based on an OVF provided
   # via a URL location.
   def deploy_ovf
@@ -1138,6 +1153,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           propertyMappings: {})
     rescue RbVmomi::Fault => fault
       Puppet.debug("Failure during OVF deployment for vm: %s with error %s: %s" % [vm_name.to_s, $!.to_s, $!.class])
+    end
+
+    if resource[:memory_mb] || resource[:num_cpus]
+      configure_vm_memory_and_cpu(vm, resource[:memory_mb], resource[:num_cpus])
     end
 
     Puppet.debug("Attempting to power on vm: %s" % vm_name.to_s)
