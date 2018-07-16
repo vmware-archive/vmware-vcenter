@@ -202,11 +202,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def create
     unless vm
-      if resource[:template]
-        clone_vm
-      elsif resource[:ovf_url]
+      if resource[:ovf_url]
 	Puppet.debug "Starting ovf deploy from url %s" % resource[:ovf_url].to_s      
         deploy_ovf 	
+      elsif resource[:template]
+        clone_vm
       else
         create_vm
       end
