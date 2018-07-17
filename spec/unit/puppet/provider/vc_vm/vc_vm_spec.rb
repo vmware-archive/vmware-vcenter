@@ -16,9 +16,14 @@ describe "vm create and clone behavior testing" do
   let(:computeResource) {mock("compute_resource")}
   let(:ovfManager) {mock("ovf_manager")}
   let(:vm) {mock("vm")}
+  let(:pci_dev) {mock("pci_device")}
+  let(:hardware) {mock("hardware")}
+  let(:device) {mock("device")}
+  let(:config) {mock("config")}
   let(:task) {mock("task")}
   let(:serviceContent) {mock(:ovfManager => ovfManager)}
-  let(:host) {mock(:name => "newFlexVM")}
+  #let(:host) {mock(:name => "newFlexVM")}
+  let(:host) {mock("newFlex")}
   let(:serviceInstance) {mock(:find_datacenter => datacenter)}
   let(:vim) {mock(:serviceInstance => serviceInstance)}
   let(:net1) {mock("network1")}
@@ -47,6 +52,7 @@ describe "vm create and clone behavior testing" do
       provider.expects(:vm).at_least_once.returns(nil).returns(mock("vm_object"))
       provider.expects(:cdrom_iso).returns(mock("cdrom_object"))
       provider.expects(:configure_iso)
+      provider.expects(:configure_pci_passthru)
     end
 
     it "should create vm  if value of operation is create" do
@@ -73,9 +79,13 @@ describe "vm create and clone behavior testing" do
       task.stubs(:wait_for_completion)
       task.stubs(:info).returns({:state => "success"})
       vm.expects(:ReconfigVM_Task).returns(task)
+      hardware.expects(:device).returns([])
+      config.expects(:hardware).returns(hardware)
+      vm.expects(:config).returns(config)
       ovfManager.expects(:deployOVF).returns(vm)
       computeResource.expects(:resourcePool).returns("rp")
       computeResource.expects(:name).returns("FlexCluster")
+      host.expects(:name).returns("FlexHost")
       provider.expects(:host_from_datastore).returns(host)
       provider.expects(:network_mappings).returns({})
       provider.expects(:vim).twice.returns(vim)
@@ -97,9 +107,13 @@ describe "vm create and clone behavior testing" do
       task.stubs(:info).returns({:state => "error", :error => {:localizedMessage => "Failed to reconfig VM"}})
       vm.stubs(:name).returns("FlexVM")
       vm.expects(:ReconfigVM_Task).returns(task)
+      hardware.expects(:device).returns([])
+      config.expects(:hardware).returns(hardware)
+      vm.expects(:config).returns(config)
       ovfManager.expects(:deployOVF).returns(vm)
       computeResource.expects(:resourcePool).returns("rp")
       computeResource.expects(:name).returns("FlexCluster")
+      host.expects(:name).returns("FlexHost")
       provider.expects(:host_from_datastore).returns(host)
       provider.expects(:network_mappings).returns({})
       provider.expects(:vim).twice.returns(vim)
@@ -116,6 +130,30 @@ describe "vm create and clone behavior testing" do
       computeResource.stubs(:network).returns([net1, net2])
       expect(provider.network_mappings(ovf_url,computeResource)).to eq({"VM Network" => net1, "VM Network 1" => net2, "VM Network 2" => net2})
     end  
+  end
+
+  context "#pci_passthru_device" do
+    it "returns passthrough device" do
+      provider.stubs(:find_vm_host).returns(host)
+      host.expects(:config).returns(config)
+      host.stubs(:vm).returns([vm])
+      pci_dev.stubs(:passthruActive).returns(true)
+      hardware.expects(:device).returns(["RbVmomi::VIM::VirtualPCIPassthrough"])
+      config.expects(:pciPassthruInfo).returns([pci_dev])
+      config.expects(:hardware).returns(hardware)
+      vm.expects(:config).returns(config)
+      expect(provider.available_pci_passthru_device).to eq(pci_dev)
+    end
+ 
+    it "should configure passthrough device" do
+      provider.expects(:available_pci_passthru_device).returns(pci_dev)	
+      provider.expects(:pci_passthru_device_spec).returns({})
+      task.stubs(:wait_for_completion)
+      task.stubs(:info).returns({:state => "success"})
+      vm.expects(:ReconfigVM_Task).returns(task)
+      provider.expects(:vm).returns(vm)
+      provider.configure_pci_passthru
+    end	    
   end
 
   context "when vc_vm calls destroy " do

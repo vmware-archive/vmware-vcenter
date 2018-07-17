@@ -214,7 +214,24 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise(Puppet::Error, "Unable to create VM: '#{resource[:name]}'") unless vm
     end
 
+    # PCI passthrough can be enabled after VM is created because vm_host is required for this process
+    configure_pci_passthru
+
     configure_iso unless cdrom_iso == iso_file
+  end
+
+  # Configure pci passthrough device if one is available
+  # PCI passthrough can be enabled after VM is created because vm_host is required for this process
+  def configure_pci_passthru
+    if available_pci_passthru_device
+      Puppet.debug("Adding pci passthrough devices to: %s" % resource[:name])
+      spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => [pci_passthru_device_spec], :memoryAllocation => {:reservation => resource[:memory_mb]})
+      task = vm.ReconfigVM_Task(:spec => spec)
+      task.wait_for_completion
+      raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
+    else
+      Puppet.debug("Skipping PCI pass through configuration for vm: as no devices available." % resource[:name])
+    end
   end
 
   # mount iso to cd drive or detach iso based on iso_file resource
@@ -724,12 +741,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
     datacenter.vmFolder.CreateVM_Task(:config => vm_config_spec("[#{ds_path}]"), :pool => resource_pool).wait_for_completion
 
-    # PCI passthrough can be enabled after VM is created because vm_host is required for this process
-    if available_pci_passthru_device
-      spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => [pci_passthru_device_spec], :memoryAllocation => {:reservation => resource[:memory_mb]})
-      vm.ReconfigVM_Task(:spec => spec)
-    end
-
     # power_state= did not work.
     self.send(:power_state=, resource[:power_state].to_sym)
   end
@@ -1110,12 +1121,23 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # Use reconfigure VM task to set memory and CPU on VM
   # This will return error if VM is not in the powered off state
   # Input memory is in MB
-  def configure_vm_memory_and_cpu(vm, memory_in_mb, num_cpu)
-    Puppet.debug("Configuring VM memory: %s MB, and %s CPUs" % [memory_in_mb.to_s, num_cpu])
+  def vm_memory_cpu_scsi_for_svm(vm, memory_in_mb, num_cpu)
+    Puppet.debug("Setting VM memory: %s MB, %s CPUs, and reserving guest memory" % [memory_in_mb.to_s, num_cpu])
+    scsis = vm.config.hardware.device.find_all { |dev| dev.is_a?(RbVmomi::VIM::ParaVirtualSCSIController)}
+    device_change_spec = []
+    if scsis.size > 1
+      scsis[1..-1].each do |scsi|
+        device_change_spec << RbVmomi::VIM.VirtualDeviceConfigSpec(:device => scsi, 
+                                                    :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation("remove"))
+      end
+      Puppet.debug("Removing %s extra ParaVirtualSCSIControllers from VM %s" % [device_change_spec.size.to_s, resource[:name]])
+    end
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
             :memoryMB => memory_in_mb,
             :numCPUs => num_cpu,
-            :numCoresPerSocket => num_cpu
+            :numCoresPerSocket => num_cpu,
+            :memoryReservationLockedToMax => true,
+            :deviceChange => device_change_spec
     )
     task = vm.ReconfigVM_Task(:spec => config_spec)
     task.wait_for_completion
@@ -1163,11 +1185,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     end
 
     if resource[:memory_mb] || resource[:num_cpus]
-      configure_vm_memory_and_cpu(vm, resource[:memory_mb], resource[:num_cpus]) if vm
+      vm_memory_cpu_scsi_for_svm(vm, resource[:memory_mb], resource[:num_cpus]) if vm
       Puppet.warn("Could not configure CPU and memory for VM: %s because virtual machine creation failed." % vm_name) unless vm
     end
 
-    Puppet.debug("Attempting to power on vm: %s" % vm_name.to_s)
     power_state = resource[:power_state].to_sym
   end
 
