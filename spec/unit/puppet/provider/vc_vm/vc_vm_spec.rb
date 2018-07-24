@@ -51,8 +51,10 @@ describe "vm create and clone behavior testing" do
     before(:each) do
       provider.expects(:vm).at_least_once.returns(nil).returns(mock("vm_object"))
       provider.expects(:cdrom_iso).returns(mock("cdrom_object"))
-      provider.expects(:configure_iso)
+      provider.expects(:iso_file).returns(mock("cdrom_object"))
       provider.expects(:configure_pci_passthru)
+
+      provider.initialize_property_flush
     end
 
     it "should create vm  if value of operation is create" do
