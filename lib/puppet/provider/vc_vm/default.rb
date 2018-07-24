@@ -10,9 +10,11 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   @doc = 'Manages vCenter Virtual Machines.'
 
   def exists?
-    @property_flush = {}
+    initialize_property_flush
 
-    vm
+    return !!vm if resource[:ensure] == :absent
+
+    vm && cdrom_iso == resource[:iso_file]
   end
 
    # return the mounted iso file name
@@ -55,6 +57,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   def srm
     @srm ||= vim.serviceInstance.content.storageResourceManager
+  end
+
+  def initialize_property_flush
+    @property_flush = {}
   end
 
   def network_interfaces
@@ -217,7 +223,8 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # PCI passthrough can be enabled after VM is created because vm_host is required for this process
     configure_pci_passthru
 
-    configure_iso unless cdrom_iso == iso_file
+   # configures cdrom in flush method
+    @property_flush[:cd_iso_spec] = true unless cdrom_iso == iso_file
   end
 
   # Configure pci passthrough device if one is available
