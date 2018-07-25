@@ -58,7 +58,12 @@ Puppet::Type.type(:esx_vmknic_type).provide(:esx_vmknic_type, :parent => Puppet:
     device = @resource[:nicname]
 
     select.sort.each do |type|
-      vnm.SelectVnicForNicType(:nicType => type, :device => device)
+      begin
+        next if type == :vmotion && selected_with_tcp_ip_netstack?(type, device)
+        vnm.SelectVnicForNicType(:nicType => type, :device => device)
+      rescue RbVmomi::VIM::InvalidArgument => e
+        fail e.message
+      end
     end
     deselect.sort.each do |type|
       begin
@@ -75,13 +80,28 @@ Puppet::Type.type(:esx_vmknic_type).provide(:esx_vmknic_type, :parent => Puppet:
         end
       end
     end
-
   end
 
   private
 
+  def selected_with_tcp_ip_netstack?(type, device)
+    vnm = esxhost.configManager.virtualNicManager
+    nconfig = vnm.info.netConfig
+
+    target_netconfigs = nconfig.select {|nc| nc.nicType == type.to_s}
+    fail "More than one vnic is selected for the target nicType" if target_netconfigs.count > 1
+
+    target_netconfig = target_netconfigs.first
+    target_devices = target_netconfig.candidateVnic.select {|vnic| vnic.device == device}
+    fail "More than one vnic is found for one device" if target_devices.count > 1
+
+    target_device = target_devices.first
+    result = target_device.spec.netStackInstanceKey == type.to_s
+
+    result
+  end
+
   def esxhost
     host(@resource[:esxi_host])
   end
-
 end
