@@ -682,8 +682,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     data = vim.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
 
     datastore_info = prioritized_datastores(data)
-
-    Puppet.debug("Datastore info: %s" % hide_password(datastore_info.to_s))
     Puppet.debug("Requested size: #{requested_size}")
 
     if !requested_datastore.empty?
