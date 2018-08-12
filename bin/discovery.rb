@@ -90,6 +90,7 @@ def collect_inventory(obj, parent=nil)
       hash[:attributes] = collect_datastore_attributes(obj, parent)
     when RbVmomi::VIM::VmwareDistributedVirtualSwitch
        hash[:attributes] = collect_distributed_switch_attributes(obj, parent)
+       hash[:attributes]["hosts"] = obj.FetchDVPorts!.map {|d| d.proxyHost.name if d.proxyHost}.compact.uniq || []
        obj.portgroup.each {|portgroup| hash[:children] << collect_inventory(portgroup)}
     when RbVmomi::VIM::DistributedVirtualPortgroup
       hash[:attributes] = collect_vds_portgroup_attributes(obj)
