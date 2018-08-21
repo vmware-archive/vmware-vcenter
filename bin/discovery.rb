@@ -61,7 +61,7 @@ rescue
 end
 
 def collect_inventory(obj, parent=nil)
-  hash = {:name => obj.name, :id => obj._ref, :type => obj.class, :attributes => {}, :children => []}
+  hash = collect_simple_inventory(obj, parent)
   case obj
     when RbVmomi::VIM::Folder
       obj.children.each { |resource| hash[:children] << collect_inventory(resource) }
@@ -99,6 +99,10 @@ def collect_inventory(obj, parent=nil)
     else
   end
   hash
+end
+
+def collect_simple_inventory(obj, parent=nil)
+ {:name => obj.name, :id => obj._ref, :type => obj.class, :attributes => {}, :children => []}
 end
 
 def collect_cluster_attributes(obj)
@@ -147,9 +151,11 @@ def collect_host_attributes(host)
   attributes[:service_tags] = service_tag_array
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
   attributes[:installed_software] = collect_host_vib_list(host)
-  if get_host_config(host)
-    attributes[:hostname] = get_host_config(host).network.dnsConfig.hostName
-    attributes[:version] = get_host_config(host).product.version
+  attributes[:host_physical_nic] = collect_host_pnic_mac(host)
+  host_config = get_host_config(host)
+  if host_config
+    attributes[:hostname] = host_config.network.dnsConfig.hostName
+    attributes[:version] = host_config.product.version
     attributes[:maintenance_mode] = host.runtime.inMaintenanceMode
     attributes[:syslog] = host.configManager.advancedOption.setting.select { |x| x.key == "Syslog.global.logDir" }.first.value
   end
@@ -178,6 +184,12 @@ end
 def collect_host_vmk_ips(host)
   host_virtual_nic_array = host.config.network.vnic
   virtual_nic_ip_array = host_virtual_nic_array.map { |hv_nic| hv_nic[:spec][:ip][:ipAddress] }
+end
+
+def collect_host_pnic_mac(host)
+  physical_nic_mac_array = host.config.network.pnic.map { |pnic| pnic[:mac] }
+  physical_nic_mac_array = physical_nic_mac_array.compact
+  physical_nic_mac_array
 end
 
 def collect_datastore_attributes(ds, parent=nil)
@@ -267,22 +279,32 @@ def collect_distributed_switch_attributes(obj, parent)
   uplinks = active_uplinks + standby_uplinks
 
   {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks}
+
 end
 
 def collect_vds_portgroup_attributes(portgroup)
   active_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
   standby_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort
+  hostIps = portgroup.host.map do |host|
+    vnic = host.config.network.vnic.select { |vnic| vnic.spec.distributedVirtualPort.portgroupKey == portgroup._ref unless vnic.spec.distributedVirtualPort.nil? }
+    v = (vnic || []).first
+    detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
+    detail
+  end
+
   default_response = {
-    :active_uplinks => active_uplinks,
-    :standby_uplinks => standby_uplinks
+      :active_uplinks => active_uplinks,
+      :standby_uplinks => standby_uplinks,
+      :host_ip_addresses => hostIps.compact
   }
   return default_response unless portgroup.config.defaultPortConfig.vlan.respond_to?(:vlanId)
 
   vlan_id = portgroup.config.defaultPortConfig.vlan.vlanId
   return default_response unless vlan_id.is_a?(Integer)
-
-  {:vlan_id => vlan_id, :active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks}
+  default_response[:vlan_id] = vlan_id
+  default_response
 end
+
 
 
 def collect_portgroup_attributes(network_obj, parent)
