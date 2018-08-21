@@ -149,6 +149,7 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
+  attributes[:os_ip_address] = host.config.network.vnic[0].spec.ip.ipAddress
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
   attributes[:installed_software] = collect_host_vib_list(host)
   attributes[:host_physical_nic] = collect_host_pnic_mac(host)
