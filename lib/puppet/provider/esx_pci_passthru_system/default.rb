@@ -15,13 +15,13 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
       # sleep for 30 seconds to make sure that the configuration change is written
       sleep 30
 
-      if !active?
+      if !active? && resource[:require_reboot]
         Puppet.debug "Reboot the host to activate the PCI passthrough"
-        reboot_and_wait_for_host
+        reboot if resource[:require_reboot]
         unless active?
           fail "Failed to enable and activate PCI passthrough on the target device with id, #{resource[:pci_device_id]}"
         end
-      elsif enabled? && active?
+      elsif (enabled? && active?) || (enabled? && !resource[:require_reboot])
         Puppet.debug "Target device has already been enabled and activated.. Nothing to do!"
       end
 
@@ -39,13 +39,13 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
       # sleep for 30 seconds to make sure that the configuration change is written
       sleep 30
 
-      if active?
+      if active? && resource[:require_reboot]
         Puppet.debug "Reboot the host to deactivate the PCI passthrough"
-        reboot_and_wait_for_host
-        unless !active?
+        reboot if resource[:require_reboot]
+        if active? || !resource[:require_reboot]
           fail "Failed to disable and deactivate PCI passthrough on the target device with id, #{resource[:pci_device_id]}"
         end
-      elsif enabled? && active?
+      elsif (!enabled? && !active?) || (!enabled && !resource[:require_reboot])
         Puppet.debug "Target device is disabled and deactivated.. Nothing to do!"
       end
 
@@ -55,7 +55,7 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
   end
 
   def exists?
-    enabled? && active?
+    enabled? && (active? || !resource[:require_reboot])
   end
 
   def enabled?
@@ -78,13 +78,8 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
     @pci_passthru_sys ||= host.configManager.pciPassthruSystem
   end
 
-  def reboot_and_wait_for_host
-    host.EnterMaintenanceMode_Task(:timeout => resource[:reboot_timeout],
-                                   :evacuatePoweredOffVms => false).wait_for_completion
-
+  def reboot
     host.RebootHost_Task({:force => false}).wait_for_completion
     wait_for_host(300, resource[:reboot_timeout])
-
-    host.ExitMaintenanceMode_Task(:timeout => resource[:reboot_timeout]).wait_for_completion
   end
 end
