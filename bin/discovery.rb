@@ -157,6 +157,8 @@ def collect_host_attributes(host)
   if host_config
     attributes[:hostname] = host_config.network.dnsConfig.hostName
     attributes[:version] = host_config.product.version
+    attributes[:productName] = host_config.product.licenseProductName
+    attributes[:productVersion] = host_config.product.licenseProductVersion
     attributes[:maintenance_mode] = host.runtime.inMaintenanceMode
     attributes[:syslog] = host.configManager.advancedOption.setting.select { |x| x.key == "Syslog.global.logDir" }.first.value
   end
@@ -188,9 +190,7 @@ def collect_host_vmk_ips(host)
 end
 
 def collect_host_pnic_mac(host)
-  physical_nic_mac_array = host.config.network.pnic.map { |pnic| pnic[:mac] }
-  physical_nic_mac_array = physical_nic_mac_array.compact
-  physical_nic_mac_array
+  host.config.network.pnic.map { |pnic| {:device => pnic[:device], :mac => pnic[:mac] } }
 end
 
 def collect_datastore_attributes(ds, parent=nil)
@@ -278,8 +278,11 @@ def collect_distributed_switch_attributes(obj, parent)
   active_uplinks = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort || []
   standby_uplinks = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort || []
   uplinks = active_uplinks + standby_uplinks
+  host_pnic_devices = obj.config.host.map do |host|
+    { :host_id => host.config.host._ref, :devices => host.config.backing.pnicSpec.map { |pnic_spec| pnic_spec[:pnicDevice] }}
+  end
 
-  {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks}
+  {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks, :host_pnic_devices => host_pnic_devices}
 
 end
 
@@ -305,8 +308,6 @@ def collect_vds_portgroup_attributes(portgroup)
   default_response[:vlan_id] = vlan_id
   default_response
 end
-
-
 
 def collect_portgroup_attributes(network_obj, parent)
   # In case ESXi server is in non-responding state then need to skip port-group information
