@@ -34,6 +34,10 @@ Puppet::Type.newtype(:esx_pci_passthru_system) do
     desc "Timeout value for host reboot event."
   end
 
+  newparam(:require_reboot, :boolean => false, :parent => Puppet::Parameter::Boolean) do
+    desc "Determines if host reboot is required."
+  end
+
   autorequire(:vc_host) do
     self[:host]
   end
