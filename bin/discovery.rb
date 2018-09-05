@@ -154,6 +154,7 @@ def collect_host_attributes(host)
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
   attributes[:installed_software] = collect_host_vib_list(host)
   attributes[:host_physical_nic] = collect_host_pnic_mac(host)
+  attributes[:ntp_servers] = host.config.dateTimeInfo.ntpConfig.server
   host_config = get_host_config(host)
   if host_config
     attributes[:hostname] = host_config.network.dnsConfig.hostName
@@ -269,10 +270,16 @@ def collect_vm_attributes(vm)
   unless nics.nil?
     ip_list = nics.map { |this_nic| this_nic.ipAddress[0] }
   end
+  unless vm.summary.storage.nil?
+    disk_size_gb = (vm.summary.storage.committed + vm.summary.storage.uncommitted) / (1024 * 1024 * 1024)
+  end
   {:template => vm.summary.config.template,
   :hostname => vm.summary.guest.hostName,
   :vm_ips => ip_list,
-  :datastore => vm.datastore.first.name}
+  :datastore => vm.datastore.first.name,
+  :num_cpu => vm.summary.config.numCpu,
+  :disk_size_gb => disk_size_gb,
+  :memory_size_mb => vm.summary.config.memorySizeMB}
 end
 
 def collect_distributed_switch_attributes(obj, parent)
