@@ -129,6 +129,10 @@ def collect_cluster_attributes(obj)
   attributes
 end
 
+def host_connected?(host)
+  host.summary.runtime.connectionState == 'connected'
+end
+
 def collect_host_attributes(host)
   attributes = {}
   # For blades, there are 2 service tags from this data.  1 for chassis, and one for the blade itself, and there doesn't seem to be anything distinguishing the 2
@@ -152,7 +156,7 @@ def collect_host_attributes(host)
   attributes[:os_ip_address] = host.config.network.vnic[0].spec.ip.ipAddress
   attributes[:host_ip_addresses] = host.config.network.vnic.map { |vnic| vnic.spec.ip.ipAddress }
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
-  attributes[:installed_software] = collect_host_vib_list(host)
+  attributes[:installed_software] = collect_host_vib_list(host) if host_connected?(host)
   attributes[:host_physical_nic] = collect_host_pnic_mac(host)
   attributes[:ntp_servers] = host.config.dateTimeInfo.ntpConfig.server
   host_config = get_host_config(host)
