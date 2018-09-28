@@ -69,4 +69,10 @@ Puppet::Type.newtype(:esx_maintmode) do
       v == :true
     end
   end
+
+  newparam(:check_disconnected_state) do
+    desc "Check server connected state, perform operation only when server is connected"
+    newvalues(true, false)
+    defaultto(false)
+  end
 end
