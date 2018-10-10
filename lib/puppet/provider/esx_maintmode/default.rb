@@ -6,6 +6,11 @@ require 'rbvmomi'
 Puppet::Type.type(:esx_maintmode).provide(:esx_maintmode, :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages vsphere hosts entering and exiting maintenance mode."
   def enterMaintenanceMode
+    if resource[:check_disconnected_state] && host.summary.runtime.connectionState != 'connected'
+      Puppet.debug("Server is not in connected state. Maintenance mode operation is skipped")
+      return true
+    end
+
     if resource[:vsan_action].nil?
       host.EnterMaintenanceMode_Task(:timeout => resource[:timeout],
                                      :evacuatePoweredOffVms => resource[:evacuate_powered_off_vms]).wait_for_completion
