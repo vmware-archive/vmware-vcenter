@@ -93,7 +93,7 @@ def collect_inventory(obj, parent=nil)
        hash[:attributes]["hosts"] = obj.FetchDVPorts!.map {|d| d.proxyHost.name if d.proxyHost}.compact.uniq || []
        obj.portgroup.each {|portgroup| hash[:children] << collect_inventory(portgroup)}
     when RbVmomi::VIM::DistributedVirtualPortgroup
-      hash[:attributes] = collect_vds_portgroup_attributes(obj)
+      hash[:attributes] = collect_vds_portgroup_attributes(obj, parent)
     when RbVmomi::VIM::Network
       hash[:attributes] = collect_portgroup_attributes(obj, parent)
     else
@@ -298,20 +298,29 @@ def collect_distributed_switch_attributes(obj, parent)
 
 end
 
-def collect_vds_portgroup_attributes(portgroup)
+def collect_vds_portgroup_attributes(portgroup, parent=nil)
   active_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
   standby_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort
-  hostIps = portgroup.host.map do |host|
+
+  if parent
+    hostIps = []
+    host = parent
     vnic = host.config.network.vnic.select { |vnic| vnic.spec.distributedVirtualPort.portgroupKey == portgroup._ref unless vnic.spec.distributedVirtualPort.nil? }
     v = (vnic || []).first
-    detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
-    detail
+    hostIps <<  v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
+  else
+    hostIps = portgroup.host.map do |host|
+      vnic = host.config.network.vnic.select { |vnic| vnic.spec.distributedVirtualPort.portgroupKey == portgroup._ref unless vnic.spec.distributedVirtualPort.nil? }
+      v = (vnic || []).first
+      detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
+      detail
+    end
   end
 
   default_response = {
-      :active_uplinks => active_uplinks,
-      :standby_uplinks => standby_uplinks,
-      :host_ip_addresses => hostIps.compact
+    :active_uplinks => active_uplinks,
+    :standby_uplinks => standby_uplinks,
+    :host_ip_addresses => (hostIps || []).compact
   }
   return default_response unless portgroup.config.defaultPortConfig.vlan.respond_to?(:vlanId)
 
