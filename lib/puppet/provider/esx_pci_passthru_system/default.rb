@@ -17,14 +17,12 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
 
       if !active? && resource[:require_reboot]
         Puppet.debug "Reboot the host to activate the PCI passthrough"
-        reboot if resource[:require_reboot]
-        unless active?
-          fail "Failed to enable and activate PCI passthrough on the target device with id, #{resource[:pci_device_id]}"
-        end
-      elsif (enabled? && active?) || (enabled? && !resource[:require_reboot])
-        Puppet.debug "Target device has already been enabled and activated.. Nothing to do!"
+        reboot
+      elsif (enabled? && active?)
+        Puppet.debug "Target device is already enabled and activated."
+      elsif (enabled? && !resource[:require_reboot])
+        Puppet.debug "It is enabled, but activation requires a reboot later."
       end
-
     rescue
       fail "Failed to enable PCI passthrough with following error, %s:%s" % [$!.class, $!.message]
     end
@@ -41,14 +39,12 @@ Puppet::Type.type(:esx_pci_passthru_system).provide(:esx_pci_passthru_system, :p
 
       if active? && resource[:require_reboot]
         Puppet.debug "Reboot the host to deactivate the PCI passthrough"
-        reboot if resource[:require_reboot]
-        if active? || !resource[:require_reboot]
-          fail "Failed to disable and deactivate PCI passthrough on the target device with id, #{resource[:pci_device_id]}"
-        end
-      elsif (!enabled? && !active?) || (!enabled && !resource[:require_reboot])
-        Puppet.debug "Target device is disabled and deactivated.. Nothing to do!"
+        reboot
+      elsif (!enabled? && !active?)
+        Puppet.debug "Target device is disabled and deactivated."
+      elsif(!enabled && !resource[:require_reboot])
+        Puppet.debug "Target device is disabled. Its deactivation requires a reboot."
       end
-
     rescue
       fail "Failed to disable PCI passthrough with following error, %s:%s" % [$!.class, $!.message]
     end
