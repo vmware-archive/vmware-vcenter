@@ -6,12 +6,7 @@ Puppet::Type.type(:vc_vm_pci_passthru).provide(:vc_vm_pci_passthru, :parent => P
   @doc = "Manages ESXi VM PCI Pass-Thru configuration."
 
   def exists?
-    @vm_pci_device = nil
-    if host_pci_device
-      @vm_pci_device = vm.config.hardware.device.grep(RbVmomi::VIM::VirtualPCIPassthrough).find { |vm_device| vm_device.backing.id == @host_pci_device.id }
-    end
-
-   !@host_pci_device.nil? && !@vm_pci_device.nil? && @host_pci_device.id == @vm_pci_device.backing.id
+   !host_pci_devices.empty? && !vm_pci_device.nil?
   end
 
   def create
@@ -19,61 +14,55 @@ Puppet::Type.type(:vc_vm_pci_passthru).provide(:vc_vm_pci_passthru, :parent => P
     # Possible scenarios:
     # 1. VM do not have PCI device configuration
     # 2. VM have different PCI device configuration
+    # 3. VM have a correct PCI device configuration but stale PCI device configuration(s) also exist
 
-    # Trying #2
-    pci_device = find_vm_host.hardware.pciDevice.find { |pci_dev| pci_dev.id ==  host_pci_device.id }
-    pci_id = pci_device.id
-    pci_device_id = pci_device.deviceId.to_s(16)
-    vendor_id = pci_device.vendorId
-    host_uuid = find_vm_host.esxcli.system.uuid.get
+    Puppet.debug("Checking existing VM PCI device configurations...")
+    stale_vm_pci_devices = []
+    vm_pci_devices.each do |vm_pci_dev|
+      stale_vm_pci_devices << vm_pci_dev unless host_pci_device_ids.include? vm_pci_dev.backing.id
+    end
 
-    backing = RbVmomi::VIM.VirtualPCIPassthroughDeviceBackingInfo(
-      :id => pci_id,
-      :deviceId => pci_device_id,
-      :vendorId => vendor_id,
-      :systemId => host_uuid,
-      :deviceName => ""
-    )
+    Puppet.debug("There exist one or more VM PCI Device configurations, which does not match with host PCI Device configuration. They will be removed") unless stale_vm_pci_devices.empty?
+    device_change = []
+    stale_vm_pci_devices.each do |stale_vm_pci_dev|
+      pci_passthru_device_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(
+          :device => stale_vm_pci_dev,
+          :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('remove')
+      )
+      device_change << pci_passthru_device_spec
+    end
 
-    if vm_pci_device.nil?
-      Puppet.debug("VM PCI Device configuration is missing")
-      update_power_state("poweredOff".to_sym)
+    # find an active pci passthru device on host, which is not yet configured on VM
+    vm_pci_device_ids = vm_pci_devices.map {|host_pci_dev| host_pci_dev.backing.id }
+    pci_device = find_vm_host.hardware.pciDevice.find { |pci_dev| !vm_pci_device_ids.include?(pci_dev.id) && host_pci_device_ids.include?(pci_dev.id) }
+
+    if pci_device
+      pci_id = pci_device.id
+      pci_device_id = pci_device.deviceId.to_s(16)
+      vendor_id = pci_device.vendorId
+      host_uuid = find_vm_host.esxcli.system.uuid.get
+
+      Puppet.debug("VM PCI Device configuration is missing for device with id, %s." % pci_id)
+      backing = RbVmomi::VIM.VirtualPCIPassthroughDeviceBackingInfo(
+        :id => pci_id,
+        :deviceId => pci_device_id,
+        :vendorId => vendor_id,
+        :systemId => host_uuid,
+        :deviceName => ""
+      )
 
       pciDevice = RbVmomi::VIM.send(:VirtualPCIPassthrough, :backing => backing, :key => 0)
-      pci_passthru_device_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(
+      new_pci_passthru_device_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(
         :device => pciDevice,
         :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
       )
-      spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => [pci_passthru_device_spec])
-      Puppet.debug("Adding VM PCI Device Spec #{spec}")
-      vm.ReconfigVM_Task(:spec => spec)
+      device_change << new_pci_passthru_device_spec
+    end
 
-      Puppet.debug("Initiating VM power-on operation")
-      update_power_state("poweredOn".to_sym)
-    elsif host_pci_device.id != vm_pci_device.backing.id
-      Puppet.debug("VM PCI Device configuration is not matching with VM PCI Device configuration")
+    unless device_change.empty?
       update_power_state("poweredOff".to_sym)
-
-      pciDevice = RbVmomi::VIM.send(:VirtualPCIPassthrough, :backing => backing, :key => 0)
-
-      # Remove stale PCI device configuration
-      Puppet.debug("Removing VM PCI device configuration")
-      pci_passthru_device_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(
-        :device => vm_pci_device,
-        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('remove')
-      )
-      spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => [pci_passthru_device_spec])
-      Puppet.debug("VM PCI Device Remove SPEC #{spec}")
-      vm.ReconfigVM_Task(:spec => spec)
-
-      # Add new PCI device configuraion
-      Puppet.debug("Adding new VM PCI device")
-      pci_passthru_device_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(
-          :device => pciDevice,
-          :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
-      )
-      spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => [pci_passthru_device_spec])
-      Puppet.debug("Adding VM PCI Device Spec #{spec}")
+      spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => device_change)
+      Puppet.debug("Modifying VM PCI Device Spec #{spec}")
       vm.ReconfigVM_Task(:spec => spec)
 
       Puppet.debug("Initiating VM power-on operation")
@@ -85,24 +74,34 @@ Puppet::Type.type(:vc_vm_pci_passthru).provide(:vc_vm_pci_passthru, :parent => P
     Puppet.debug("Inside destroy block")
   end
 
-  def host_pci_device
-    @host_pci_device ||= find_vm_host.config.pciPassthruInfo.find { |pci| pci.passthruActive == true }
+  def host_pci_devices
+    @__host_pci_devices ||= find_vm_host.config.pciPassthruInfo.select { |pci| pci.passthruActive == true }
+  end
+
+  def host_pci_device_ids
+    host_pci_devices.map {|host_pci_dev| host_pci_dev.id }
+  end
+
+  def vm_pci_devices
+    @__vm_pci_devices ||= vm.config.hardware.device.grep(RbVmomi::VIM::VirtualPCIPassthrough)
   end
 
   def vm_pci_device
-    @vm_pci_device ||= vm.config.hardware.device.grep(RbVmomi::VIM::VirtualPCIPassthrough).find { |vm_device| vm_device.backing.id == host_pci_device.id }
+    @__vm_pci_device ||= begin
+      vm_pci_devices.find { |vm_device| host_pci_device_ids.include? vm_device.backing.id }
+    end
   end
 
   def host
-    @host ||= vim.searchIndex.FindByDnsName(:datacenter => datacenter , :dnsName => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}")
+    @__host ||= vim.searchIndex.FindByDnsName(:datacenter => datacenter , :dnsName => resource[:host], :vmSearch => false) or raise(Puppet::Error, "Unable to find the host '#{resource[:host]}")
   end
 
   def datacenter
-    @datacenter ||= vim.serviceInstance.find_datacenter(resource[:datacenter]) or raise(Puppet::Error, "datacenter '#{resource[:datacenter]}' not found.")
+    @__datacenter ||= vim.serviceInstance.find_datacenter(resource[:datacenter]) or raise(Puppet::Error, "datacenter '#{resource[:datacenter]}' not found.")
   end
 
   def vm
-    @vm ||= datacenter.vmFolder.childEntity.grep(RbVmomi::VIM::VirtualMachine).find {|v| v.name == resource[:name]}
+    @__vm ||= datacenter.vmFolder.childEntity.grep(RbVmomi::VIM::VirtualMachine).find {|v| v.name == resource[:name]}
   end
 
   # finds host to add nfs_datastore and returns the host object
@@ -148,4 +147,3 @@ Puppet::Type.type(:vc_vm_pci_passthru).provide(:vc_vm_pci_passthru, :parent => P
     end
   end
 end
-
