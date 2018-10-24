@@ -1099,7 +1099,6 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # input network will be repeated on all available VMNetworks
     if resource[:network_interfaces]
       this_net = nil
-      resource[:network_interfaces].size <= networks.size
       resource[:network_interfaces].each_with_index do |net,index|
         portgroup_name = network_names(net).first
         this_net = cluster.network.find{|x| x.name == portgroup_name}
@@ -1119,7 +1118,20 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       network = cluster.network[0]
       network_mappings = Hash[networks.map{|x| [x, network]}]
     end
+    
+    network_mappings = adjust_networks_flex_svm(network_mappings, networks) if resource[:network_interfaces]
+    
+    network_mappings     
+  end
 
+  # Fixes issue with VMware Network mapping not being applied in logical order
+  def adjust_networks_flex_svm(network_mappings, networks)
+    mgmt = network_mappings[networks[0]]
+    d1 = network_mappings[networks[1]]
+    d2 = network_mappings[networks[2]]
+    network_mappings[networks[0]] = d1
+    network_mappings[networks[1]] = d2
+    network_mappings[networks[2]] = mgmt
     network_mappings
   end
 

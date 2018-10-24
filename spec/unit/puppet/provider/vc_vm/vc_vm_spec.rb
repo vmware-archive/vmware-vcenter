@@ -28,6 +28,7 @@ describe "vm create and clone behavior testing" do
   let(:vim) {mock(:serviceInstance => serviceInstance)}
   let(:net1) {mock("network1")}
   let(:net2) {mock("network2")}
+  let(:net3) {mock("network3")}
   
   context "when vc_vm provider is created " do
     it "should have a create method defined for vc_vm" do
@@ -130,8 +131,30 @@ describe "vm create and clone behavior testing" do
       net2.stubs(:name).returns("FlexData1")
       provider.resource[:network_interfaces] = [{"portgroup" => "FlexMgmt (VDS1)"}, {"portgroup" => "FlexData1 (VDS2)"}]
       computeResource.stubs(:network).returns([net1, net2])
-      expect(provider.network_mappings(ovf_url,computeResource)).to eq({"VM Network" => net1, "VM Network 1" => net2, "VM Network 2" => net2})
+      expect(provider.network_mappings(ovf_url,computeResource)).to eq({"VM Network" => net2, "VM Network 1" => net2, "VM Network 2" => net1})
     end  
+  end
+
+  context "#adjust_networks_flex_svm" do
+    it "should reorder networks" do
+      ovf_url = File.join(provider_path, '/spec/fixtures/unit/puppet/provider/vc_vm/ovf.xml')
+      network_mappings = {}
+      # Query OVF to find any networks which need to be mapped
+      begin
+        ovf = open(ovf_url, 'r'){|io| Nokogiri::XML(io.read)}
+      rescue
+        Puppet.debug("Failed to open ovf: %s for reason: %s" % [ovf_url.to_s, $!.to_s])
+        raise
+      end
+      net1.stubs(:name).returns("FlexMgmt")
+      net2.stubs(:name).returns("FlexData1")
+      net3.stubs(:name).returns("FlexData2")
+      ovf.remove_namespaces!
+      networks = ovf.xpath('//NetworkSection/Network').map{|x| x['name']}
+      net_maps = {"VM Network" => net1, "VM Network 1" => net2, "VM Network 2" => net3}
+      new_map = provider.adjust_networks_flex_svm(net_maps, networks)
+      expect(new_map).to eq({"VM Network" => net2, "VM Network 1" => net3, "VM Network 2" => net1})
+    end
   end
 
   context "#pci_passthru_device" do
