@@ -86,6 +86,14 @@ Puppet::Type.newtype(:esx_datastore) do
     desc "Target IQN of lun created on storage."
   end
 
+  newparam(:target_model) do
+    desc "Target disk model name."
+  end
+
+  newparam(:target_disk_id) do
+    desc "Target disk unique identifier."
+  end
+
   newparam(:path) do
     desc "Datacenter path where host resides"
   end
