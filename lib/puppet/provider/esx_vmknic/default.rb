@@ -35,8 +35,21 @@ Puppet::Type.type(:esx_vmknic).provide(:esx_vmknic, :parent => Puppet::Provider:
     end
     nic_spec = flush_prep
     # :portgroup should be '' if working against dvswitch, else give it a value
-    esxhost.configManager.networkSystem.AddVirtualNic(:portgroup => @resource[:portgroup], 
-      :nic => nic_spec)
+    begin
+      esxhost.configManager.networkSystem.AddVirtualNic(:portgroup => @resource[:portgroup],
+                                                        :nic => nic_spec)
+    rescue
+      retry_counter ||= 1
+      if retry_counter <= 3
+        Puppet.debug("Failed to create VMK NIC %s for server %s. Retrying VMK NIC operation %s" % [vmknicname, esxihostname, retry_counter])
+        sleep(30)
+        retry_counter += 1
+        retry
+      else
+        raise
+      end
+    end
+
     @flush_required = false
   end
 
