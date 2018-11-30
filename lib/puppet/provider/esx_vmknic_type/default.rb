@@ -63,6 +63,15 @@ Puppet::Type.type(:esx_vmknic_type).provide(:esx_vmknic_type, :parent => Puppet:
         vnm.SelectVnicForNicType(:nicType => type, :device => device)
       rescue RbVmomi::VIM::InvalidArgument => e
         fail e.message
+      rescue
+        retry_counter ||= 1
+        fail $!.message if retry_counter > 5
+
+        Puppet.debug("Failed to update NIC Type %s for %s" % [should, device])
+        sleep(60)
+        retry_counter += 1
+
+        retry
       end
     end
     deselect.sort.each do |type|
