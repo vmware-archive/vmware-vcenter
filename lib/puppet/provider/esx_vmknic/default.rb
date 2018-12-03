@@ -33,9 +33,10 @@ Puppet::Type.type(:esx_vmknic).provide(:esx_vmknic, :parent => Puppet::Provider:
         @create_message << "#{leaf.full_name} => #{value.inspect}"
       end
     end
-    nic_spec = flush_prep
-    # :portgroup should be '' if working against dvswitch, else give it a value
+    
     begin
+      nic_spec = flush_prep
+      # :portgroup should be '' if working against dvswitch, else give it a value
       esxhost.configManager.networkSystem.AddVirtualNic(:portgroup => @resource[:portgroup],
                                                         :nic => nic_spec)
     rescue
