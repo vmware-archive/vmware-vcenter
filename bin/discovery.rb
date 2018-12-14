@@ -280,7 +280,7 @@ def collect_vm_attributes(vm)
   {:template => vm.summary.config.template,
   :hostname => vm.summary.guest.hostName,
   :vm_ips => ip_list,
-  :datastore => vm.datastore.first.nil? || vm.datastore.first.empty? ? "" : vm.datastore.first.name,
+  :datastore => vm.datastore&.first&.name || "",
   :num_cpu => vm.summary.config.numCpu,
   :disk_size_gb => disk_size_gb,
   :memory_size_mb => vm.summary.config.memorySizeMB}
