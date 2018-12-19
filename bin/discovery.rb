@@ -310,6 +310,7 @@ def collect_vds_portgroup_attributes(portgroup, parent=nil)
     hostIps <<  v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
   else
     hostIps = portgroup.host.map do |host|
+      next unless host.config
       vnic = host.config.network.vnic.select { |vnic| vnic.spec.distributedVirtualPort.portgroupKey == portgroup._ref unless vnic.spec.distributedVirtualPort.nil? }
       v = (vnic || []).first
       detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
