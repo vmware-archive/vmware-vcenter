@@ -222,6 +222,20 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
     component = qualified_path.is_a?(Array) ? qualified_path.first : qualified_path
     install_param = component =~ /zip$/ ? :depot : :viburl
     Puppet.debug("%s: Installing %s: %s" % [Time.now, install_param, qualified_path.to_s])
+
+    if component =~ /zip$/
+      # if the depot file is passed, treat it as an OS upgrade as long as profile exists
+      begin
+        sources_raw_data = host.esxcli.software.sources.profile.list(:depot => qualified_path)
+        profile_name = sources_raw_data.first.Name
+
+        return host.esxcli.software.profile.update(install_param => qualified_path, :profile => profile_name)
+      rescue
+        # skip if the result is a "[MetadataDownloadError]"; it will cause parsing error
+        Puppet.debug("%s is not a valid depot for ESXi OS upgrade. Continue and treat it as a batch of vibs.." % qualified_path)
+      end
+    end
+
     host.esxcli.software.vib.install(install_param => qualified_path)
   end
 
