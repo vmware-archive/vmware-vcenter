@@ -47,6 +47,12 @@ Puppet::Type.newtype(:esx_software_update) do
     end
   end
 
+  newparam(:no_sign_check) do
+    desc "Parameter to allow un-signed VIBs to be installed on the server."
+    newvalues(true, false)
+    defaultto(false)
+  end
+
   newparam(:host, :namevar => true) do
     desc "The ESX host"
     validate do |value|
