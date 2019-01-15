@@ -60,6 +60,26 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     vms
   end
 
+  def findvm_by_name(folder, vm_name)
+    folder.children.each do |f|
+      case f
+        when RbVmomi::VIM::Folder
+          foundvm = find_vm_by_name(f, vm_name)
+          return foundvm if foundvm
+        when RbVmomi::VIM::VirtualMachine
+          return f if f.name == vm_name
+        when RbVmomi::VIM::VirtualApp
+          f.vm.each do |v|
+            return f if v.name == vm_name
+          end
+        else
+          raise(Puppet::Error, "unknown child type found: #{f.class}")
+      end
+    end
+
+    nil
+  end
+
   def locate(path, type=nil)
     folder = rootfolder
     Pathname.new(path).each_filename do |dir|

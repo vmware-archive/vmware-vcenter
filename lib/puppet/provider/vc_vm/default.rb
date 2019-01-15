@@ -1222,7 +1222,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_name = resource[:name]
 
     dc = vim.serviceInstance.find_datacenter(resource[:template_datacenter])
-    template = findvm(dc.vmFolder, resource[:template]) or raise(Puppet::Error, "Unable to find template #{resource[:template]}.")
+    template = findvm_by_name(dc.vmFolder, resource[:template]) or raise(Puppet::Error, "Unable to find template #{resource[:template]}.")
     template_cd_drive = template.config.hardware.device.select{ |d|d.deviceInfo.label.include?("CD/DVD")}
 
     vm_devices=[]
@@ -1295,31 +1295,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     cluster.datastore.find { |ds| "[#{ds.name}]" == datastore_name || ds.name == datastore_name}
   end
 
-  def findvm(folder, vm_name)
-    folder.children.each do |f|
-      case f
-      when RbVmomi::VIM::Folder
-        findvm(f, vm_name)
-      when RbVmomi::VIM::VirtualMachine
-        return f if f.name == vm_name
-      when RbVmomi::VIM::VirtualApp
-        f.vm.each do |v|
-        return f if v.name == vm_name
-        end
-      else
-        raise(Puppet::Error, "unknown child type found: #{f.class}")
-      end
-    end
-
-    nil
-  end
-
   def datacenter(name=resource[:datacenter])
     @datacenter ||= vim.serviceInstance.find_datacenter(name) or raise(Puppet::Error, "datacenter '#{name}' not found.")
   end
 
   def vm
-    @vm ||= findvm(datacenter.vmFolder, resource[:name])
+    @vm ||= findvm_by_name(datacenter.vmFolder, resource[:name])
   end
 
   def dvswitch(dv_switch_name)
