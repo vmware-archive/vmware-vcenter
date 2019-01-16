@@ -100,28 +100,8 @@ Puppet::Type.type(:vc_vm_pci_passthru).provide(:vc_vm_pci_passthru, :parent => P
     @__datacenter ||= vim.serviceInstance.find_datacenter(resource[:datacenter]) or raise(Puppet::Error, "datacenter '#{resource[:datacenter]}' not found.")
   end
 
-  def findvm(folder, vm_name)
-    folder.children.each do |f|
-      case f
-        when RbVmomi::VIM::Folder
-          foundvm = findvm(f, vm_name)
-          return foundvm if foundvm
-        when RbVmomi::VIM::VirtualMachine
-          return f if f.name == vm_name
-        when RbVmomi::VIM::VirtualApp
-          f.vm.each do |v|
-            return f if v.name == vm_name
-          end
-        else
-          raise(Puppet::Error, "unknown child type found: #{f.class}")
-      end
-    end
-
-    nil
-  end
-
   def vm
-    @__vm ||= findvm(datacenter.vmFolder, resource[:name])
+    @__vm ||= findvm_by_name(datacenter.vmFolder, resource[:name])
   end
 
   # finds host to add nfs_datastore and returns the host object
