@@ -64,7 +64,7 @@ class Puppet::Provider::Vcenter <  Puppet::Provider
     folder.children.each do |f|
       case f
         when RbVmomi::VIM::Folder
-          foundvm = find_vm_by_name(f, vm_name)
+          foundvm = findvm_by_name(f, vm_name)
           return foundvm if foundvm
         when RbVmomi::VIM::VirtualMachine
           return f if f.name == vm_name
