@@ -31,6 +31,19 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
     end
   end
 
+  def disable_maintenance_mode
+    begin
+      is_mm = host.runtime.inMaintenanceMode
+      Puppet.debug("Host Maintenance mode = %s " % is_mm )
+      if is_mm
+        Puppet.warning("Host is in maintenance mode. Exiting Maintenance mode...")
+        host.ExitMaintenanceMode_Task(:timeout => 600).wait_for_completion
+      end
+    rescue
+      fail "Cannot disable maintenance mode due to error %s:%s" % [$!.class, $!.message]
+    end
+  end
+
   # Method called by puppet to create a resource i.e. when exists returns false
   def create
     ensure_maintenance_mode
@@ -77,6 +90,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
     unmount_mounted_nfs_shares
     # Reboot if needed
     reboot_and_wait_for_host if reboot_required
+    disable_maintenance_mode
     fail "Failed to install VIBs" if failures > 0
   end
 
