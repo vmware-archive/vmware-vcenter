@@ -236,7 +236,7 @@ Puppet::Type.type(:esx_software_update).provide(:esx_software_update, :parent =>
       end
     end
 
-    host.esxcli.software.vib.install(install_param => qualified_path)
+    host.esxcli.software.vib.install(install_param => qualified_path, :nosigcheck => @resource[:no_sign_check])
   end
 
   # Esxcli wrapper method to remove a VIB represented by VIB name
