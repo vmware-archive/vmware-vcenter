@@ -64,6 +64,20 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     return @disk
   end
 
+  def existing_vmfs?(disk_to_check)
+    ds_options = host.configManager.datastoreSystem.QueryVmfsDatastoreCreateOptions("devicePath" => disk_to_check.deviceName)
+    raise("Could not determine whether VMFS datastore already exists") unless ds_options
+
+    ds_options.each do |ds_option|
+      next unless ds_option.info
+      next if ds_option.info.partitionFormatChange.nil?
+
+      return true unless ds_option.info.partitionFormatChange
+    end
+
+    false
+  end
+
   def create_vmfs_lun
     if host_scsi_disk = find_disk
       vmfs_ds_options = host.configManager.datastoreSystem.QueryVmfsDatastoreCreateOptions(
@@ -74,6 +88,8 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
       spec.vmfs[:volumeName] = resource[:datastore]
       # create the datastore
       Puppet.debug("Creating VMFS volume #{resource[:datastore]} on device #{host_scsi_disk.canonicalName}")
+      raise ("Existing VMFS partition on disk, cannot create datastore on %s" % host_scsi_disk.deviceName) if existing_vmfs?(host_scsi_disk)
+
       host.configManager.datastoreSystem.CreateVmfsDatastore(:spec => spec)
     else
       false

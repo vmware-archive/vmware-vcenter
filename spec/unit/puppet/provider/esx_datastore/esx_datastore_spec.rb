@@ -43,4 +43,32 @@ describe "esx datastore behavior testing" do
       @fixture.provider.destroy
     end
   end
+
+  describe "#existing_vmfs?" do
+    let(:disk_info) {mock("disk_info")}
+    let(:disk_options) {mock("options")}
+    let(:host) {mock("host")}
+    let(:disk) {mock("disk")}
+    let(:datastore_system) {"datastoreSystem"}
+    let(:config_manager) {"configManager"}
+
+    before(:each) do
+      disk_options.stubs(:info).returns(disk_info)
+      datastore_system.stubs(:QueryVmfsDatastoreCreateOptions).returns([disk_options])
+      config_manager.stubs(:datastoreSystem).returns(datastore_system)
+      host.stubs(:configManager).returns(config_manager)
+      @fixture.provider.stubs(:host).returns(host)
+      disk.stubs(:deviceName).returns("test_path")
+    end
+
+    it "should return true when no partition change required because VMFS exists" do
+      disk_info.stubs(:partitionFormatChange).returns(false)
+      expect(@fixture.provider.existing_vmfs?(disk)).to eq(true)
+    end
+
+    it "should return false when a partition change is required because no VMFS exists" do
+      disk_info.stubs(:partitionFormatChange).returns(true)
+      expect(@fixture.provider.existing_vmfs?(disk)).to eq(false)
+    end
+  end
 end
