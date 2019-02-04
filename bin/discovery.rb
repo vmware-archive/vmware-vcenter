@@ -22,8 +22,10 @@ def collect_vcenter_facts(vim)
   name = vim.serviceContent.setting.setting.find{|x| x.key == 'VirtualCenter.InstanceName'}.value
   customization_specs = vim.serviceContent.customizationSpecManager.info.collect{|spec| spec.name}
   storage_profiles = (exiting_profiles(vim).collect {|x| x.name} || [])
+  version = vim.serviceContent.about.version
   {
       :vcenter_name => name,
+      :vcenter_version => version,
       :datacenter_count => @datacenter_count.to_s,
       :cluster_count => @cluster_count.to_s,
       :vm_count => @vm_count.to_s,
