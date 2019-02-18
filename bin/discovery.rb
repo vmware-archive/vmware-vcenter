@@ -10,7 +10,7 @@ opts = Trollop::options do
   opt :port, 'vcenter port', :default => 443
   opt :username, 'vcenter username', :type => :string, :required => true
   opt :password, 'vcenter password', :type => :string, :default => ENV['PASSWORD']
-  opt :timeout, 'command timeout', :default => 900
+  opt :timeout, 'command timeout', :default => 1800
   opt :community_string, 'dummy value for ASM, not used'
   opt :credential_id, 'dummy value for ASM, not used'
   opt :output, 'output facts to a file', :type => :string, :required => true
