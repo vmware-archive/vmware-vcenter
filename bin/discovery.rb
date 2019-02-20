@@ -23,9 +23,11 @@ def collect_vcenter_facts(vim)
   customization_specs = vim.serviceContent.customizationSpecManager.info.collect{|spec| spec.name}
   storage_profiles = (exiting_profiles(vim).collect {|x| x.name} || [])
   version = vim.serviceContent.about.version
+  build = vim.serviceContent.about.build
   {
       :vcenter_name => name,
       :vcenter_version => version,
+      :vcenter_build => build,
       :datacenter_count => @datacenter_count.to_s,
       :cluster_count => @cluster_count.to_s,
       :vm_count => @vm_count.to_s,
