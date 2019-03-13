@@ -16,11 +16,13 @@ opts = Trollop::options do
   opt :output, 'output facts to a file', :type => :string, :required => true
 end
 facts = {}
+@port_group_info = {}
 
 def collect_vcenter_facts(vim)
+  create_port_group_metadata(vim.serviceContent.rootFolder)
   inventory = collect_inventory(vim.serviceContent.rootFolder)
-  name = vim.serviceContent.setting.setting.find{|x| x.key == 'VirtualCenter.InstanceName'}.value
-  customization_specs = vim.serviceContent.customizationSpecManager.info.collect{|spec| spec.name}
+  name = vim.serviceContent.setting.setting.find {|x| x.key == 'VirtualCenter.InstanceName'}.value
+  customization_specs = vim.serviceContent.customizationSpecManager.info.collect {|spec| spec.name}
   storage_profiles = (exiting_profiles(vim).collect {|x| x.name} || [])
   version = vim.serviceContent.about.version
   build = vim.serviceContent.about.build
@@ -160,7 +162,6 @@ def collect_host_attributes(host)
   attributes[:os_ip_address] = host.config.network.vnic[0].spec.ip.ipAddress
   attributes[:host_ip_addresses] = host.config.network.vnic.map { |vnic| vnic.spec.ip.ipAddress }
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
-  attributes[:installed_software] = collect_host_vib_list(host) if host_connected?(host)
   attributes[:host_physical_nic] = collect_host_pnic_mac(host)
   attributes[:ntp_servers] = host.config.dateTimeInfo.ntpConfig.server
   host_config = get_host_config(host)
@@ -302,36 +303,51 @@ def collect_distributed_switch_attributes(obj, parent)
 
 end
 
-def collect_vds_portgroup_attributes(portgroup, parent=nil)
-  active_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
-  standby_uplinks = portgroup.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort
+def create_port_group_metadata(obj)
+  obj.children.each do |dc|
+    dc.networkFolder.children.each do |network_obj|
+      if network_obj.class == RbVmomi::VIM::DistributedVirtualPortgroup && RbVmomi::VIM::Network
+        active_uplinks = network_obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
+        standby_uplinks = network_obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort
 
+        portgroup_hosts_info = {network_obj.name => {"hosts_info" => {}, "uplinks" => {:active_uplinks => active_uplinks,
+                                                                                       :standby_uplinks => standby_uplinks}}}
+        if network_obj.config.defaultPortConfig.vlan.respond_to?(:vlanId)
+          portgroup_hosts_info[network_obj.name]["vlan_id"] = network_obj.config.defaultPortConfig.vlan.vlanId
+        end
+
+        network_obj.host.map do |host|
+          next unless host.config
+          vnic = host.config.network.vnic.select {|vnic| vnic.spec.distributedVirtualPort.portgroupKey == network_obj._ref unless vnic.spec.distributedVirtualPort.nil?}
+          v = (vnic || []).first
+          detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
+
+          portgroup_hosts_info[network_obj.name]["hosts_info"].merge!({host.name => detail})
+          detail
+        end
+
+        @port_group_info.merge!(portgroup_hosts_info)
+      end
+    end
+  end
+end
+
+def collect_vds_portgroup_attributes(portgroup, parent = nil)
+  portgroup_data = @port_group_info[portgroup.name]
   if parent
     hostIps = []
     host = parent
-    vnic = host.config.network.vnic.select { |vnic| vnic.spec.distributedVirtualPort.portgroupKey == portgroup._ref unless vnic.spec.distributedVirtualPort.nil? }
-    v = (vnic || []).first
-    hostIps <<  v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
+    host_ip_info = portgroup_data["hosts_info"].select {|h, _| h == host.name}
+    hostIps << host_ip_info[host.name] if host_ip_info && host_ip_info[host.name]
   else
-    hostIps = portgroup.host.map do |host|
-      next unless host.config
-      vnic = host.config.network.vnic.select { |vnic| vnic.spec.distributedVirtualPort.portgroupKey == portgroup._ref unless vnic.spec.distributedVirtualPort.nil? }
-      v = (vnic || []).first
-      detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
-      detail
-    end
+    hostIps = portgroup_data["hosts_info"].values if @port_group_info[portgroup.name]
   end
+  default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => (hostIps || []).compact)
+  return default_response unless portgroup_data["vlan_id"]
 
-  default_response = {
-    :active_uplinks => active_uplinks,
-    :standby_uplinks => standby_uplinks,
-    :host_ip_addresses => (hostIps || []).compact
-  }
-  return default_response unless portgroup.config.defaultPortConfig.vlan.respond_to?(:vlanId)
+  return default_response unless portgroup_data["vlan_id"].is_a?(Integer)
+  default_response[:vlan_id] = portgroup_data["vlan_id"]
 
-  vlan_id = portgroup.config.defaultPortConfig.vlan.vlanId
-  return default_response unless vlan_id.is_a?(Integer)
-  default_response[:vlan_id] = vlan_id
   default_response
 end
 
