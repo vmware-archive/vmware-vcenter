@@ -305,6 +305,8 @@ end
 
 def create_port_group_metadata(obj)
   obj.children.each do |dc|
+    next unless dc.respond_to?(:networkFolder)
+
     dc.networkFolder.children.each do |network_obj|
       if network_obj.class == RbVmomi::VIM::DistributedVirtualPortgroup && RbVmomi::VIM::Network
         active_uplinks = network_obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
