@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'hashdiff'
-gem 'rbvmomi'
+gem 'rbvmomi', '2.0.1'
 gem 'net-ssh'
 gem 'dell-asm-util', :git => 'https://github.com/dell-asm/dell-asm-util.git', :branch => 'master'
 

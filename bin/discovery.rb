@@ -184,7 +184,7 @@ def collect_host_vib_list(host)
     attempts += 1
     sleep 5
   end
-  if task.info.state == "success" 
+  if task.info.state == "success"
     xml_result = Nokogiri::XML(task.info[:result][:xmlResult])
     vib_list = xml_result.xpath("//vib-scan-data//id//text()").map(&:to_s)
   else
@@ -272,6 +272,19 @@ end
 def get_host_config(host)
   @host_configs ||= {}
   @host_configs[host.name] ||= host.config
+end
+
+# MONKEY PATCH TO CACHE ALL host.config CALLS
+RbVmomi::VIM::HostSystem.class_eval do
+  alias :config_intercepted :config
+
+  HOST_CONFIG_CACHE = {}
+
+  def config
+    HOST_CONFIG_CACHE[self.name] ||= begin
+      config_intercepted
+    end
+  end
 end
 
 def collect_vm_attributes(vm)
