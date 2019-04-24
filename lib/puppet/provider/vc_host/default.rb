@@ -77,6 +77,14 @@ Puppet::Type.type(:vc_host).provide(:default, :parent => Puppet::Provider::Vcent
   def path=(value)
   end
 
+  def power_profile
+    host.configManager.powerSystem.info.currentPolicy.key.to_s
+  end
+
+  def power_profile=(value)
+    host.configManager.powerSystem.ConfigurePowerPolicy(:key => value)
+  end
+
   def exists?
     find_host ? true : false
   end

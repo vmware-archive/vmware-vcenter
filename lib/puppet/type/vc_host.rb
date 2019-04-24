@@ -60,6 +60,13 @@ Puppet::Type.newtype(:vc_host) do
     end
   end
 
+  newproperty(:power_profile) do
+    desc "Update ESXi host power policy 1-HighPerformance, 2-Balanced, 3-LowPower, 4-Custom"
+    newvalues(1, 2, 3, 4)
+
+    defaultto(1)
+  end
+
   autorequire(:vc_datacenter) do
     # autorequire immediate parent Datacenter
     self[:path]
