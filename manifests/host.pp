@@ -28,8 +28,8 @@ define vcenter::host (
       policy => 'off',
     },
     ssh => {
-      running => false,
-      policy => 'off',
+      running => true,
+      policy => 'on',
     },
     esxi_shell_time_out => 0,
     esxi_shell_interactive_time_out => 0,
