@@ -42,6 +42,10 @@ Puppet::Type.newtype(:vc_vm) do
     end
   end
 
+  newparam(:version) do
+    desc 'Upgrade version for VM'
+  end
+
   newparam(:cluster) do
     desc 'Name of the cluster.'
   end
@@ -175,10 +179,16 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto(:false)
   end
 
+  newparam(:enable_nvdimm ) do
+    desc 'Enable nvdimm device from host'
+    newvalues(:true, :false)
+    defaultto(:false)
+  end
+
   newparam(:guest_type) do
     desc 'Guest VM OS type'
     newvalues(:windows, :linux)
-    defaultto(:windows)
+    defaultto(:linux)
   end
 
   newparam(:timezone) do
