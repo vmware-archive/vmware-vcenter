@@ -48,13 +48,138 @@ describe "vm create and clone behavior testing" do
     end
   end
 
+  context "when vc_vm will create nvdimm configuration" do
+    it "should return host datastores" do
+      host = mock("host")
+      datastore1 = mock("datastore1")
+      datastore2 = mock("datastore2")
+      summary1 = mock("summary1")
+      summary2 = mock("summary2")
+      summary1.expects(:type).returns("Other")
+      summary2.expects(:type).returns("PMEM")
+      datastore1.expects(:summary).returns(summary1)
+      datastore2.expects(:summary).returns(summary2)
+      datastores = [datastore1, datastore2]
+      host.expects(:datastore).returns(datastores)
+      provider.expects(:find_vm_host).returns(host)
+      expect(provider.host_nvdimm_datastores).to eq([datastore2])
+    end
+
+    it "should return host nvdimm datastore names" do
+      host = mock("host")
+      datastore1 = mock("datastore1")
+      datastore2 = mock("datastore2")
+      info1 = mock("info1")
+      info2 = mock("info2")
+      info1.expects(:name).returns("Other")
+      info2.expects(:name).returns("PMemDS-14ed2a15-2e15-7f4a-bbfd-c0b1058a03d2")
+      datastore1.expects(:info).returns(info1)
+      datastore2.expects(:info).returns(info2)
+      datastores = [datastore1, datastore2]
+      provider.expects(:host_nvdimm_datastores).returns(datastores)
+      expect(provider.host_nvdimm_datastore_names).to eq(["Other", "PMemDS-14ed2a15-2e15-7f4a-bbfd-c0b1058a03d2"])
+    end
+
+    it "should return vm datastores" do
+      this_vm = mock("vm")
+      datastore1 = mock("datastore1")
+      datastore2 = mock("datastore2")
+      datastores = [datastore1, datastore2]
+      this_vm.expects(:datastore).returns(datastores)
+      provider.expects(:vm).returns(this_vm)
+      expect(provider.vm_datastores).to eq(datastores)
+    end
+
+    it "should return vm nvdimm datastore" do
+      datastore1 = mock("datastore1")
+      datastore2 = mock("datastore2")
+      summary1 = mock("summary1")
+      summary2 = mock("summary2")
+      summary1.expects(:name).returns("Other")
+      summary2.expects(:name).returns("PMemDS-14ed2a15-2e15-7f4a-bbfd-c0b1058a03d2")
+      datastore1.expects(:summary).returns(summary1)
+      datastore2.expects(:summary).returns(summary2)
+      datastores = [datastore1, datastore2]
+      provider.expects(:host_nvdimm_datastore_names).returns(["PMemDS-14ed2a15-2e15-7f4a-bbfd-c0b1058a03d2"]).at_least_once
+      provider.expects(:vm_datastores).returns(datastores)
+      expect(provider.vm_nvdimm_datastore).to eq(datastore2)
+    end
+
+    it "should return nvdimm device spec" do
+      datastore1 = mock("datastore1")
+      host = mock("host")
+      summary = mock("summary")
+      quick_stat = mock("quick_stat")
+      provider.expects(:host_nvdimm_datastores).returns(datastore1)
+      quick_stat.expects(:availablePMemCapacity).returns(48000)
+      summary.expects(:quickStats).returns(quick_stat)
+      host.expects(:summary).returns(summary)
+      provider.expects(:find_vm_host).returns(host)
+      RbVmomi::VIM.expects(:VirtualNVDIMM)
+      RbVmomi::VIM.expects(:VirtualNVDIMMBackingInfo)
+      RbVmomi::VIM.expects(:VirtualMachineDefinedProfileSpec)
+      RbVmomi::VIM.expects(:Description)
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpec)
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpecOperation)
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpecFileOperation)
+      provider.nvdimm_device_spec
+    end
+
+    it "should raise error if insufficient nvdimm host capacity" do
+      datastore1 = mock("datastore1")
+      host = mock("host")
+      summary = mock("summary")
+      quick_stat = mock("quick_stat")
+      provider.expects(:host_nvdimm_datastores).returns(datastore1)
+      quick_stat.expects(:availablePMemCapacity).returns(0)
+      summary.expects(:quickStats).returns(quick_stat)
+      host.expects(:summary).returns(summary)
+      provider.expects(:find_vm_host).returns(host)
+      RbVmomi::VIM.expects(:VirtualNVDIMM).never
+      RbVmomi::VIM.expects(:VirtualNVDIMMBackingInfo).never
+      RbVmomi::VIM.expects(:VirtualMachineDefinedProfileSpec).never
+      RbVmomi::VIM.expects(:Description).never
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpec).never
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpecOperation).never
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpecFileOperation).never
+      expect {provider.nvdimm_device_spec}
+          .to raise_error(RuntimeError, "The capacity 0 is too small to attach NVDIMM.")
+    end
+
+    it "should return nvdimm controller spec" do
+      RbVmomi::VIM.expects(:VirtualNVDIMMController)
+      RbVmomi::VIM.expects(:Description)
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpec)
+      RbVmomi::VIM.expects(:VirtualDeviceConfigSpecOperation)
+      provider.nvdimm_controller_spec
+    end
+
+    it "should configure nvdimm on VM" do
+      datastore2 = mock("datastore2")
+      datastore = [datastore2]
+      provider.expects(:vm_nvdimm_datastore).returns(nil)
+      provider.expects(:host_nvdimm_datastores).returns(datastore)
+      RbVmomi::VIM.expects(:VirtualMachineConfigSpec)
+      provider.expects(:nvdimm_device_spec)
+      provider.expects(:nvdimm_controller_spec)
+      provider.expects(:power_state).returns("poweredOff").at_least_once
+      nvdimm_vm = mock("vm")
+      task = mock("task")
+      task.expects(:wait_for_completion)
+      task.expects(:info).returns(:state => "success")
+      nvdimm_vm.expects(:ReconfigVM_Task).returns(task)
+      provider.expects(:vm).returns(nvdimm_vm)
+      provider.configure_nvdimm
+    end
+  end
+
   context "when vc_vm is created " do
     before(:each) do
       provider.expects(:vm).at_least_once.returns(nil).returns(mock("vm_object"))
       provider.expects(:cdrom_iso).returns(mock("cdrom_object"))
       provider.expects(:iso_file).returns(mock("cdrom_object"))
       provider.expects(:configure_pci_passthru)
-
+      provider.expects(:configure_nvdimm)
       provider.initialize_property_flush
     end
 
@@ -78,6 +203,7 @@ describe "vm create and clone behavior testing" do
       datacenter.expects(:find_compute_resource).returns(computeResource)
       datacenter.expects(:vmFolder).returns(vmFolder)
       datacenter.expects(:name).returns("FlexDC")
+      provider.expects(:vm_guest_os)
       vim.expects(:serviceContent).returns(serviceContent)
       task.stubs(:wait_for_completion)
       task.stubs(:info).returns({:state => "success"})

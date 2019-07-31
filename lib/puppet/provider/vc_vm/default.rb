@@ -9,6 +9,9 @@ require File.join(provider_path, 'spbmapiutils')
 Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) do
   @doc = 'Manages vCenter Virtual Machines.'
 
+  HOST_LOCAL_PMEM_STORAGE_PROFILE_ID = "c268da1b-b343-49f7-a468-b1deeb7078e0".freeze
+  TEMP_NVDIMM_KEY = -103
+
   def exists?
     initialize_property_flush
 
@@ -223,6 +226,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # PCI passthrough can be enabled after VM is created because vm_host is required for this process
     configure_pci_passthru
 
+    if resource[:enable_nvdimm]
+      configure_nvdimm
+    end
+
    # configures cdrom in flush method
     @property_flush[:cd_iso_spec] = true unless cdrom_iso == iso_file
   end
@@ -238,6 +245,94 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
     else
       Puppet.debug("Skipping PCI pass through configuration for vm: as no devices available." % resource[:name])
+    end
+  end
+
+  def host_nvdimm_datastores
+    find_vm_host.datastore.select { |ds| ds.summary.type == "PMEM"  }
+  end
+
+  def host_nvdimm_datastore_names
+    host_nvdimm_datastores.map { |host_nvdimm_ds| host_nvdimm_ds.info.name }
+  end
+
+  def vm_datastores
+    vm.datastore
+  end
+
+  def vm_nvdimm_datastore
+    vm_datastores.find { |vm_ds| host_nvdimm_datastore_names.include? vm_ds.summary.name  }
+  end
+
+  def nvdimm_device_spec
+    if host_nvdimm_datastores
+      # We can do first, because there should only be one PMEM datastore on host
+      # See vmware doc: https://docs.vmware.com/en/VMware-vSphere/6.7/com.vmware.vsphere.storage.doc/GUID-93E5390A-8FCF-4CE1-8927-9FC36E889D00.html
+      capacity = find_vm_host.summary.quickStats.availablePMemCapacity
+
+      Puppet.debug("The specified NVDIMM capacity was %s" % capacity.to_s)
+      raise("The capacity %s is too small to attach NVDIMM." % capacity.to_s) if capacity < 4
+      backing = RbVmomi::VIM.VirtualNVDIMMBackingInfo(:fileName => "")
+
+      # Profile ID for default storage policy for the PMEM datastore backing
+      # Host Local PMEM profile
+      # Can also be queried from VCenter using rest API: https://{{vc}}/rest/vcenter/datastore/{{datastore moid}}/default-policy
+      profile = RbVmomi::VIM.VirtualMachineDefinedProfileSpec(:profileId => HOST_LOCAL_PMEM_STORAGE_PROFILE_ID)
+
+      nvdimm_dev = RbVmomi::VIM.VirtualNVDIMM(:key => TEMP_NVDIMM_KEY,
+                                              :deviceInfo => RbVmomi::VIM.Description(:label => "New NVDIMM",
+                                                                                      :summary => "New NVDIMM"),
+                                              :backing => backing,
+                                              :controllerKey => TEMP_NVDIMM_KEY,
+                                              :capacityInMB => capacity)
+      RbVmomi::VIM.VirtualDeviceConfigSpec(:operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'),
+                                           :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
+                                           :device => nvdimm_dev,
+                                           :profile => [profile])
+    end
+
+  end
+
+  def nvdimm_controller_spec
+    control_dev = RbVmomi::VIM.VirtualNVDIMMController(:key => TEMP_NVDIMM_KEY,
+                                                       :deviceInfo => RbVmomi::VIM.Description(:label => "New NVDIMM Controller",
+                                                                                               :summary => "New NVDIMM Controller"),
+                                                       :busNumber => 0)
+    control_spec = RbVmomi::VIM.VirtualDeviceConfigSpec(:operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add'),
+                                                        :device => control_dev)
+  end
+
+   # Configure NVDIMM if PMEM datastore is available on the host
+  def configure_nvdimm
+    if vm_nvdimm_datastore
+      Puppet.debug("VM NVDIMM device already configured, no action to take.")
+      return
+    end
+
+    unless host_nvdimm_datastores
+      Puppet.debug("Skipping nvdimm configuration for vm: as no devices available." % resource[:name])
+      return
+    end
+
+    Puppet.debug("Adding nvdimm device to: %s" % resource[:name])
+    spec = RbVmomi::VIM.VirtualMachineConfigSpec(:deviceChange => [nvdimm_device_spec, nvdimm_controller_spec])
+
+    if power_state == 'poweredOn'
+      Puppet.notice "Powering off VM #{resource[:name]} prior to attaching NVDIMM."
+      power_state='poweredOff'
+    else
+      Puppet.debug "Virtual machine state: #{power_state}"
+    end
+
+    task = vm.ReconfigVM_Task(:spec => spec)
+    task.wait_for_completion
+    raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
+
+    if power_state == 'poweredOff'
+      Puppet.notice "Powering on VM #{resource[:name]} after attaching NVDIMM."
+      power_state='poweredOn'
+    else
+      Puppet.debug "Virtual machine state: #{power_state}"
     end
   end
 
@@ -1161,6 +1256,30 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
   end
 
+   # Use reconfigure VM task to set guest OS on VM
+   # This will return error if VM is not in the powered off state
+  def vm_guest_os(vm, guest_type, guestid)
+    Puppet.debug("Setting VM guest OS: %s and guest ID: %s" % [guest_type.to_s, guestid.to_s])
+
+    config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
+        :alternateGuestName => guest_type,
+        :guestId => guestid,
+    )
+    task = vm.ReconfigVM_Task(:spec => config_spec)
+    task.wait_for_completion
+    raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
+  end
+
+   # Use upgrade VM task to upgrade to specified version on VM
+   # This will return error if VM is not in the powered off state
+  def vm_version_upgrade(vm, version)
+    Puppet.debug("Upgrading vm to version: %s" % [version.to_s])
+
+    task = vm.UpgradeVM_Task(:version => version)
+    task.wait_for_completion
+    raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
+  end
+
   # This method create a VMware Virtual Machine instance based on an OVF provided
   # via a URL location.
   def deploy_ovf
@@ -1204,6 +1323,14 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if resource[:memory_mb] || resource[:num_cpus]
       vm_memory_cpu_scsi_for_svm(vm, resource[:memory_mb], resource[:num_cpus]) if vm
       Puppet.warn("Could not configure CPU and memory for VM: %s because virtual machine creation failed." % vm_name) unless vm
+    end
+
+    if resource[:guest_type] && resource[:guestid]
+      vm_guest_os(vm, resource[:guest_type], resource[:guestid])
+    end
+
+    if resource[:version]
+      vm_version_upgrade(vm, resource[:version])
     end
 
     power_state = resource[:power_state].to_sym
