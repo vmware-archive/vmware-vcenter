@@ -226,7 +226,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # PCI passthrough can be enabled after VM is created because vm_host is required for this process
     configure_pci_passthru
 
-    if resource[:enable_nvdimm]
+    if resource[:enable_nvdimm] && resource[:enable_nvdimm] == true
       configure_nvdimm
     end
 

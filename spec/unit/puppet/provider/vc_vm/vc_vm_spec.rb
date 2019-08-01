@@ -179,7 +179,6 @@ describe "vm create and clone behavior testing" do
       provider.expects(:cdrom_iso).returns(mock("cdrom_object"))
       provider.expects(:iso_file).returns(mock("cdrom_object"))
       provider.expects(:configure_pci_passthru)
-      provider.expects(:configure_nvdimm)
       provider.initialize_property_flush
     end
 
@@ -195,7 +194,16 @@ describe "vm create and clone behavior testing" do
 
       provider.create
     end
- 
+
+    it "should clone vm when nvdimm is enabled" do
+      provider.resource[:template] = "mock_template"
+      provider.resource[:enable_nvdimm] = true
+      provider.expects(:configure_nvdimm)
+      provider.expects(:clone_vm)
+
+      provider.create
+    end
+
     it "should deploy ovf if value of operation is deploy as ovf_url provided" do	    
       provider.resource[:ovf_url] = "http://test/test.ovf"
       provider.resource[:power_state] = "poweredOn"
