@@ -179,10 +179,10 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto(:false)
   end
 
-  newparam(:enable_nvdimm ) do
+  newparam(:enable_nvdimm, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc 'Enable nvdimm device from host'
-    newvalues(:true, :false)
-    defaultto(:false)
+    newvalues(true, false)
+    defaultto(false)
   end
 
   newparam(:guest_type) do
