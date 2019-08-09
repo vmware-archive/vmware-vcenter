@@ -155,6 +155,7 @@ describe "vm create and clone behavior testing" do
     end
 
     it "should configure nvdimm on VM" do
+      provider.resource[:disable_nvdimm_alarm] = true
       datastore2 = mock("datastore2")
       datastore = [datastore2]
       provider.expects(:vm_nvdimm_datastore).returns(nil)
@@ -169,7 +170,24 @@ describe "vm create and clone behavior testing" do
       task.expects(:info).returns(:state => "success")
       nvdimm_vm.expects(:ReconfigVM_Task).returns(task)
       provider.expects(:vm).returns(nvdimm_vm)
+      provider.expects(:disable_nvdimm_ds_alarm)
       provider.configure_nvdimm
+    end
+
+    it "should disable datastore alarm on nvdimm datastore" do
+      datastore = mock("datastore")
+      alarm1 = mock("alarm")
+      alarm2 = mock("alarm2")
+      alarm1.expects(:alarm).returns(alarm2).at_least_once
+      info = mock("info")
+      info.expects(:name).returns("Datastore usage on disk").at_least_once
+      info.expects(:description).returns("Default alarm for datastore usage")
+      info.expects(:expression).returns("Alarm expression")
+      alarm2.expects(:ReconfigureAlarm).returns(nil)
+      alarm2.expects(:info).returns(info).at_least_once
+      datastore.expects(:triggeredAlarmState).returns([alarm1])
+      provider.expects(:vm_nvdimm_datastore).returns(datastore)
+      provider.disable_nvdimm_ds_alarm
     end
   end
 
