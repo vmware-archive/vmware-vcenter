@@ -11,6 +11,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   HOST_LOCAL_PMEM_STORAGE_PROFILE_ID = "c268da1b-b343-49f7-a468-b1deeb7078e0".freeze
   TEMP_NVDIMM_KEY = -103
+  DATASTORE_USAGE_ALARM_NAME = "Datastore usage on disk"
 
   def exists?
     initialize_property_flush
@@ -264,6 +265,18 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     vm_datastores.find { |vm_ds| host_nvdimm_datastore_names.include? vm_ds.summary.name  }
   end
 
+  def disable_nvdimm_ds_alarm
+    ds_alarms = vm_nvdimm_datastore.triggeredAlarmState
+    disk_usage_alarm = ds_alarms.find{|ds_alarm| ds_alarm.alarm.info.name == DATASTORE_USAGE_ALARM_NAME}
+    return unless disk_usage_alarm
+
+    spec = RbVmomi::VIM::AlarmSpec(:enabled => false,
+                                   :name =>  disk_usage_alarm.alarm.info.name,
+                                   :description => disk_usage_alarm.alarm.info.description,
+                                   :expression => disk_usage_alarm.alarm.info.expression)
+    disk_usage_alarm.alarm.ReconfigureAlarm(:spec => spec)
+  end
+
   def nvdimm_device_spec
     if host_nvdimm_datastores
       # We can do first, because there should only be one PMEM datastore on host
@@ -333,6 +346,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       power_state='poweredOn'
     else
       Puppet.debug "Virtual machine state: #{power_state}"
+    end
+
+    if resource[:disable_nvdimm_alarm]
+      disable_nvdimm_ds_alarm
     end
   end
 

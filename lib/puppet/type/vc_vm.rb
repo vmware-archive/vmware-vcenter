@@ -185,6 +185,12 @@ Puppet::Type.newtype(:vc_vm) do
     defaultto(false)
   end
 
+  newparam(:disable_nvdimm_alarm, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+    desc 'Disable datastore usage alarm for nvdimm datastore'
+    newvalues(true, false)
+    defaultto(false)
+  end
+
   newparam(:guest_type) do
     desc 'Guest VM OS type'
     newvalues(:windows, :linux)
