@@ -305,4 +305,7 @@ Puppet::Type.newtype(:vc_vm) do
     end
   end
 
+  newparam(:disk_map_type) do
+    desc 'Disk map type'
+  end
 end
