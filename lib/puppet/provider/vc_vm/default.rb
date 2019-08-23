@@ -1255,9 +1255,16 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     scsis = vm.config.hardware.device.find_all { |dev| dev.is_a?(RbVmomi::VIM::ParaVirtualSCSIController)}
     device_change_spec = []
     if scsis.size > 1
-      scsis[1..-1].each do |scsi|
-        device_change_spec << RbVmomi::VIM.VirtualDeviceConfigSpec(:device => scsi, 
-                                                    :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation("remove"))
+      if resource[:disk_map_type] == "rdm"
+        scsis[2..-1].each do |scsi|
+          device_change_spec << RbVmomi::VIM.VirtualDeviceConfigSpec(:device => scsi,
+                                                                     :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation("remove"))
+        end
+      else
+        scsis[1..-1].each do |scsi|
+          device_change_spec << RbVmomi::VIM.VirtualDeviceConfigSpec(:device => scsi,
+                                                                     :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation("remove"))
+        end
       end
       Puppet.debug("Removing %s extra ParaVirtualSCSIControllers from VM %s" % [device_change_spec.size.to_s, resource[:name]])
     end
@@ -1270,6 +1277,15 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     )
     task = vm.ReconfigVM_Task(:spec => config_spec)
     task.wait_for_completion
+
+    if resource[:disk_map_type] == "rdm"
+      rdm_device_change_spec = rdm_disk_specs
+      config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
+          :deviceChange => rdm_device_change_spec)
+      task = vm.ReconfigVM_Task(:spec => config_spec)
+      task.wait_for_completion
+    end
+
     raise("Failed vm configuration task for %s with error %s" % [vm.name, task.info[:error][:localizedMessage]]) if task.info[:state] == "error"
   end
 
@@ -1507,6 +1523,57 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           nil
         end
     pg
+  end
+
+  def rdm_disk_specs
+    specs = []
+    unit = 1
+    key = 1
+    Puppet.debug("Adding RDM disk specs")
+    scsis = vm.config.hardware.device.find_all { |dev| dev.is_a?(RbVmomi::VIM::ParaVirtualSCSIController)}
+    controller_keys = scsis.map { |scsi| scsi.key }
+    rdm_disk_details = JSON.parse resource[:rdm_disk_details]
+    controller_key = controller_keys[0]
+    rdm_disk_details.each do |disk_serial_number, facts|
+      disk_path = facts["DevfsPath"]
+      disk_size = facts["DeviceSize"]
+      if unit > 15
+        controller_key = controller_keys[1]
+        unit = 0
+      end
+      if unit == 7
+        unit += 1
+      end
+      specs << rdm_disk_spec(disk_path, disk_size, controller_key, unit, key)
+      unit += 1
+      key += 1
+    end
+    specs
+  end
+
+  def rdm_disk_spec(device_name, size, controller_key, unit, key)
+    disk = RbVmomi::VIM.VirtualDisk(
+        :backing => rdm_disk_backing(device_name),
+        :controllerKey => controller_key,
+        :key => key,
+        :unitNumber => unit,
+        :capacityInKB => size.to_i * 1024
+    )
+    config = {
+        :device => disk,
+        :fileOperation => RbVmomi::VIM.VirtualDeviceConfigSpecFileOperation('create'),
+        :operation => RbVmomi::VIM.VirtualDeviceConfigSpecOperation('add')
+    }
+    RbVmomi::VIM.VirtualDeviceConfigSpec(config)
+  end
+
+  def rdm_disk_backing(device_name = nil)
+    RbVmomi::VIM.VirtualDiskRawDiskMappingVer1BackingInfo(
+        :diskMode => "persistent",
+        :fileName => "",
+        :compatibilityMode => "virtualMode",
+        :deviceName => device_name,
+        )
   end
 
 end
