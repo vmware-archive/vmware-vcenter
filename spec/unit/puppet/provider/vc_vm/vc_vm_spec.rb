@@ -222,14 +222,14 @@ describe "vm create and clone behavior testing" do
       provider.create
     end
 
-    it "should deploy ovf if value of operation is deploy as ovf_url provided" do	    
+    it "should deploy ovf if value of operation is deploy as ovf_url provided" do
       provider.resource[:ovf_url] = "http://test/test.ovf"
       provider.resource[:power_state] = "poweredOn"
       datacenter.expects(:find_datastore).returns(datastore)
       datacenter.expects(:find_compute_resource).returns(computeResource)
       datacenter.expects(:vmFolder).returns(vmFolder)
       datacenter.expects(:name).returns("FlexDC")
-      provider.expects(:vm_guest_os)
+      provider.expects(:vm_guest_os).never
       vim.expects(:serviceContent).returns(serviceContent)
       task.stubs(:wait_for_completion)
       task.stubs(:info).returns({:state => "success"})
