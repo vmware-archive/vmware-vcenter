@@ -213,7 +213,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def create
     unless vm
       if resource[:ovf_url]
-	Puppet.debug "Starting ovf deploy from url %s" % resource[:ovf_url].to_s      
+        Puppet.debug "Starting ovf deploy from url %s" % resource[:ovf_url].to_s
         deploy_ovf 	
       elsif resource[:template]
         clone_vm
@@ -227,7 +227,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     # PCI passthrough can be enabled after VM is created because vm_host is required for this process
     configure_pci_passthru
 
-    if resource[:enable_nvdimm] && resource[:enable_nvdimm] == true
+    if resource[:enable_nvdimm]
       configure_nvdimm
     end
 
@@ -1358,7 +1358,9 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       Puppet.warn("Could not configure CPU and memory for VM: %s because virtual machine creation failed." % vm_name) unless vm
     end
 
-    if resource[:guest_type] && resource[:guestid]
+    # We only reconfigure the the guestid in nvdimm case. In other scenarios we should just use the existing guestid
+    # which is set in the OVF. 
+    if resource[:guest_type] && resource[:guestid] && resource[:enable_nvdimm]
       vm_guest_os(vm, resource[:guest_type], resource[:guestid])
     end
 
