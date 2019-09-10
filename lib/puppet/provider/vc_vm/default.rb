@@ -1573,7 +1573,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     RbVmomi::VIM.VirtualDiskRawDiskMappingVer1BackingInfo(
         :diskMode => "persistent",
         :fileName => "",
-        :compatibilityMode => "virtualMode",
+        :compatibilityMode => "physicalMode",
         :deviceName => device_name,
         )
   end
