@@ -86,7 +86,7 @@ Puppet::Type.type(:vc_vm_rdm).provide(:vc_vm_rdm, :parent => Puppet::Provider::V
       end
     end
 
-    rdm_disk_details = JSON.parse resource[:rdm_disk_details]
+    rdm_disk_details = resource[:rdm_disk_details]
     rdm_disk_details.each do |_, facts|
       disk_path = facts["DevfsPath"]
       disk_size = facts["DeviceSize"]
