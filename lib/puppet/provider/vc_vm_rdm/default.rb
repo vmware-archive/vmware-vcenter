@@ -41,6 +41,17 @@ Puppet::Type.type(:vc_vm_rdm).provide(:vc_vm_rdm, :parent => Puppet::Provider::V
   end
 
   def add_rdm_disks
+    rdm_disk_details = resource[:rdm_disk_details]
+    disk_id_to_add = rdm_disk_details.collect do |_, disk_facts|
+      disk_facts["OtherUIDs"]
+    end
+    rdm_disks = vm.config.hardware.device.find_all do |device|
+      device if device.class == RbVmomi::VIM::VirtualDisk &&
+        device.backing.is_a?(RbVmomi::VIM::VirtualDiskRawDiskMappingVer1BackingInfo) &&
+        disk_id_to_add.include?(device.backing.deviceName)
+    end
+    return unless rdm_disks.empty?
+
     Puppet.debug("Adding RDM disks to #{vm.name}")
     rdm_device_change_spec = rdm_disk_specs
     config_spec = RbVmomi::VIM.VirtualMachineConfigSpec(
