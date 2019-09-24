@@ -159,8 +159,10 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
-  attributes[:os_ip_address] = host.config.network.vnic[0].spec.ip.ipAddress
-  attributes[:host_ip_addresses] = host.config.network.vnic.map { |vnic| vnic.spec.ip.ipAddress }
+  if host.config.network.vnic
+    attributes[:os_ip_address] = host.config.network.vnic[0].spec.ip.ipAddress if host.config.network.vnic[0]
+    attributes[:host_ip_addresses] = host.config.network.vnic.map { |vnic| vnic.spec.ip.ipAddress }
+  end
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
   attributes[:host_physical_nic] = collect_host_pnic_mac(host)
   attributes[:ntp_servers] = host.config.dateTimeInfo.ntpConfig.server
