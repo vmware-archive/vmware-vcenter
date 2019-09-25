@@ -353,9 +353,13 @@ def create_port_group_metadata(obj)
 end
 
 def collect_vds_portgroup_attributes(portgroup, parent = nil)
-  portgroup_data = @port_group_info[portgroup.name]
+  portgroup_data = @port_group_info[portgroup.name] || {"uplinks" => {}}
+  hostIps = []
+  default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => [])
+                       .merge("teaming_policy" => portgroup_data["teaming_policy"])
+  return default_response unless portgroup_data["hosts_info"]
+
   if parent
-    hostIps = []
     host = parent
     host_ip_info = portgroup_data["hosts_info"].select {|h, _| h == host.name}
     hostIps << host_ip_info[host.name] if host_ip_info && host_ip_info[host.name]
@@ -363,7 +367,7 @@ def collect_vds_portgroup_attributes(portgroup, parent = nil)
     hostIps = portgroup_data["hosts_info"].values if @port_group_info[portgroup.name]
   end
   default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => (hostIps || []).compact)
-                                              .merge("teaming_policy" => portgroup_data["teaming_policy"])
+                       .merge("teaming_policy" => portgroup_data["teaming_policy"])
   return default_response unless portgroup_data["vlan_id"]
 
   return default_response unless portgroup_data["vlan_id"].is_a?(Integer)
