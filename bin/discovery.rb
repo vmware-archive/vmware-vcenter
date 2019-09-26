@@ -169,7 +169,7 @@ def collect_host_attributes(host)
   attributes[:ntp_servers] = host.config.dateTimeInfo.ntpConfig.server
   host_config = get_host_config(host)
   if host_config
-    attributes[:hostname] = host_config.network.dnsConfig.hostName
+    attributes[:hostname] = host_config.network.dnsConfig.hostName if host_config.network.dnsConfig
     attributes[:version] = host_config.product.version
     attributes[:productName] = host_config.product.licenseProductName
     attributes[:productVersion] = host_config.product.licenseProductVersion
@@ -282,7 +282,14 @@ def create_datastore_metadata(obj)
       datastore_info[ds.name]["hosts"].push(*ds.host.map {|k| k.key.name})
       host = ds.host.first.key
       host_config = host.config
+      next unless host_config
+
+      next unless host_config.fileSystemVolume
+
+      next unless host_config.fileSystemVolume.mountInfo
+
       mount_info = host_config.fileSystemVolume.mountInfo.find{|x| x.volume.name == ds.name}
+      next unless mount_info
 
       attributes[:volume_name] = mount_info.volume.name
       # Capacity will be returned back in gigabytes
