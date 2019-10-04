@@ -369,6 +369,8 @@ def create_port_group_metadata(obj)
         end
         teaming_policy = network_obj.config.defaultPortConfig.uplinkTeamingPolicy.policy.value
         portgroup_hosts_info[network_obj.name]["teaming_policy"] = teaming_policy
+        portgroup_hosts_info[network_obj.name]["uplink"] = !!network_obj&.config&.uplink
+
         @port_group_info.merge!(portgroup_hosts_info)
       elsif network_obj.class == RbVmomi::VIM::Network
         portgroup_hosts_info = {network_obj.name => {"hosts_info" => {}}}
@@ -389,21 +391,23 @@ def create_port_group_metadata(obj)
 end
 
 def collect_vds_portgroup_attributes(portgroup, parent = nil)
-  portgroup_data = @port_group_info[portgroup.name] || {"uplinks" => {}}
-  hostIps = []
+  portgroup_data = @port_group_info[portgroup.name] || {"uplinks" => {}, "uplink" => false}
+
   default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => [])
                        .merge("teaming_policy" => portgroup_data["teaming_policy"])
+                       .merge("uplink" => portgroup_data["uplink"])
   return default_response unless portgroup_data["hosts_info"]
 
+  host_ips = []
   if parent
     host = parent
     host_ip_info = portgroup_data["hosts_info"].select {|h, _| h == host.name}
-    hostIps << host_ip_info[host.name] if host_ip_info && host_ip_info[host.name]
+    host_ips << host_ip_info[host.name] if host_ip_info && host_ip_info[host.name]
   else
-    hostIps = portgroup_data["hosts_info"].values if @port_group_info[portgroup.name]
+    host_ips = portgroup_data["hosts_info"].values if @port_group_info[portgroup.name]
   end
-  default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => (hostIps || []).compact)
-                       .merge("teaming_policy" => portgroup_data["teaming_policy"])
+
+  default_response[:host_ip_addresses] = host_ips || []
   return default_response unless portgroup_data["vlan_id"]
 
   return default_response unless portgroup_data["vlan_id"].is_a?(Integer)
