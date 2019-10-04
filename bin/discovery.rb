@@ -280,6 +280,8 @@ def create_datastore_metadata(obj)
       datastore_info[ds.name] ||= {}
       datastore_info[ds.name]["hosts"] ||= []
       datastore_info[ds.name]["hosts"].push(*ds.host.map {|k| k.key.name})
+      next unless ds.host.first
+      
       host = ds.host.first.key
       host_config = host.config
       next unless host_config
