@@ -17,6 +17,7 @@ opts = Trollop::options do
 end
 facts = {}
 @port_group_info = {}
+@host_config = {}
 
 def collect_vcenter_facts(vim)
   create_port_group_metadata(vim.serviceContent.rootFolder)
@@ -160,22 +161,24 @@ def collect_host_attributes(host)
     end
   end
   attributes[:service_tags] = service_tag_array
-  if host.config.network.vnic
-    attributes[:os_ip_address] = host.config.network.vnic[0].spec.ip.ipAddress if host.config.network.vnic[0]
-    attributes[:host_ip_addresses] = host.config.network.vnic.map { |vnic| vnic.spec.ip.ipAddress }
+  @host_config[host.name] ||= host.config
+  if @host_config[host.name].network.vnic
+    attributes[:os_ip_address] = @host_config[host.name].network.vnic[0].spec.ip.ipAddress if @host_config[host.name].network.vnic[0]
+    attributes[:host_ip_addresses] = @host_config[host.name].network.vnic.map { |vnic| vnic.spec.ip.ipAddress }
   end
   attributes[:host_virtual_nics] = collect_host_vmk_ips(host)
   attributes[:host_physical_nic] = collect_host_pnic_mac(host)
-  attributes[:ntp_servers] = host.config.dateTimeInfo.ntpConfig.server
-  host_config = get_host_config(host)
-  if host_config
-    attributes[:hostname] = host_config.network.dnsConfig.hostName if host_config.network.dnsConfig
-    attributes[:version] = host_config.product.version
-    attributes[:productName] = host_config.product.licenseProductName
-    attributes[:productVersion] = host_config.product.licenseProductVersion
+  attributes[:ntp_servers] = @host_config[host.name].dateTimeInfo.ntpConfig.server
+
+  if @host_config[host.name]
+    attributes[:hostname] = @host_config[host.name].network.dnsConfig.hostName if @host_config[host.name].network.dnsConfig
+    attributes[:version] = @host_config[host.name].product.version
+    attributes[:productName] = @host_config[host.name].product.licenseProductName
+    attributes[:productVersion] = @host_config[host.name].product.licenseProductVersion
     attributes[:maintenance_mode] = host.runtime.inMaintenanceMode
     attributes[:syslog] = host.configManager.advancedOption.setting.select { |x| x.key == "Syslog.global.logDir" }.first.value
   end
+
   attributes
 end
 
@@ -199,12 +202,12 @@ rescue
 end
 
 def collect_host_vmk_ips(host)
-  host_virtual_nic_array = host.config.network.vnic
-  virtual_nic_ip_array = host_virtual_nic_array.map { |hv_nic| hv_nic[:spec][:ip][:ipAddress] }
+  host_virtual_nic_array = @host_config[host.name].network.vnic
+  host_virtual_nic_array.map { |hv_nic| hv_nic[:spec][:ip][:ipAddress] }
 end
 
 def collect_host_pnic_mac(host)
-  host.config.network.pnic.map { |pnic| {:device => pnic[:device], :mac => pnic[:mac] } }
+  @host_config[host.name].network.pnic.map { |pnic| {:device => pnic[:device], :mac => pnic[:mac] } }
 end
 
 def collect_datastore_attributes(ds, parent=nil)
@@ -223,8 +226,8 @@ end
 # Getting the host configuration manager can take 1-2 seconds.  Each datastore querying it can add a large amount of time to the inventory.
 # This method helps by giving a cached version of the configuration manager to save a lot of the query time for the same host
 def get_host_config(host)
-  @host_configs ||= {}
-  @host_configs[host.name] ||= host.config
+  @host_config ||= {}
+  @host_config[host.name] ||= host.config
 end
 
 # MONKEY PATCH TO CACHE ALL host.config CALLS
@@ -245,28 +248,34 @@ def collect_vm_attributes(vm)
   unless nics.nil?
     ip_list = nics.map { |this_nic| this_nic.ipAddress[0] }
   end
-  unless vm.summary.storage.nil?
-    disk_size_gb = (vm.summary.storage.committed + vm.summary.storage.uncommitted) / (1024 * 1024 * 1024)
+
+  vm_summary = vm.summary
+  vm_summary_config = vm_summary.config
+  vm_summary_storage = vm_summary.storage
+  unless vm_summary_storage.nil?
+    disk_size_gb = (vm_summary_storage.committed + vm_summary_storage.uncommitted) / (1024 * 1024 * 1024)
   end
-  {:template => vm.summary.config.template,
-  :hostname => vm.summary.guest.hostName,
+
+  {:template => vm_summary_config.template,
+  :hostname => vm_summary.guest.hostName,
   :vm_ips => ip_list,
   :datastore => vm.datastore&.first&.name || "",
-  :num_cpu => vm.summary.config.numCpu,
+  :num_cpu => vm_summary_config.numCpu,
   :disk_size_gb => disk_size_gb,
-  :memory_size_mb => vm.summary.config.memorySizeMB}
+  :memory_size_mb => vm_summary_config.memorySizeMB}
 end
 
 def collect_distributed_switch_attributes(obj, parent)
-  active_uplinks = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort || []
-  standby_uplinks = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort || []
+  port_order = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder
+  active_uplinks = port_order.activeUplinkPort || []
+  standby_uplinks = port_order.standbyUplinkPort || []
   uplinks = active_uplinks + standby_uplinks
   host_pnic_devices = obj.config.host.map do |host|
-    { :host_id => host.config.host._ref, :devices => host.config.backing.pnicSpec.map { |pnic_spec| pnic_spec[:pnicDevice] }}
+    host_config = host.config
+    { :host_id => host_config.host._ref, :devices => host_config.backing.pnicSpec.map { |pnic_spec| pnic_spec[:pnicDevice] }}
   end
 
   {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks, :host_pnic_devices => host_pnic_devices}
-
 end
 
 def create_datastore_metadata(obj)
@@ -277,13 +286,14 @@ def create_datastore_metadata(obj)
     dss = dc.datastore
     dss.each do |ds|
       attributes = {}
-      datastore_info[ds.name] ||= {}
-      datastore_info[ds.name]["hosts"] ||= []
-      datastore_info[ds.name]["hosts"].push(*ds.host.map {|k| k.key.name})
+      datastore_name = ds.name
+      datastore_info[datastore_name] ||= {}
+      datastore_info[datastore_name]["hosts"] ||= []
+      datastore_info[datastore_name]["hosts"].push(*ds.host.map {|k| k.key.name})
       next unless ds.host.first
       
       host = ds.host.first.key
-      host_config = host.config
+      host_config = @host_config[host.name]
       next unless host_config
 
       next unless host_config.fileSystemVolume
@@ -352,17 +362,22 @@ def create_port_group_metadata(obj)
 
     dc.networkFolder.children.each do |network_obj|
       if network_obj.class == RbVmomi::VIM::DistributedVirtualPortgroup && RbVmomi::VIM::Network
-        active_uplinks = network_obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.activeUplinkPort
-        standby_uplinks = network_obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder.standbyUplinkPort
+        network_obj_config = network_obj.config
+        uplink_port_order = network_obj_config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder
+        active_uplinks = uplink_port_order.activeUplinkPort
+        standby_uplinks = uplink_port_order.standbyUplinkPort
         portgroup_hosts_info = {network_obj.name => {"hosts_info" => {}, "uplinks" => {:active_uplinks => active_uplinks,
                                                                                        :standby_uplinks => standby_uplinks}}}
-        if network_obj.config.defaultPortConfig.vlan.respond_to?(:vlanId)
-          portgroup_hosts_info[network_obj.name]["vlan_id"] = network_obj.config.defaultPortConfig.vlan.vlanId
+        default_port_config_vlan = network_obj_config.defaultPortConfig.vlan
+        if default_port_config_vlan.respond_to?(:vlanId)
+          portgroup_hosts_info[network_obj.name]["vlan_id"] = default_port_config_vlan.vlanId
         end
 
         network_obj.host.map do |host|
-          next unless host.config
-          vnic = host.config.network.vnic.select {|vnic| vnic.spec.distributedVirtualPort.portgroupKey == network_obj._ref unless vnic.spec.distributedVirtualPort.nil?}
+          @host_config[host.name] ||= host.config
+          next unless @host_config[host.name]
+
+          vnic = @host_config[host.name].network.vnic.select {|vnic| vnic.spec.distributedVirtualPort.portgroupKey == network_obj._ref unless vnic.spec.distributedVirtualPort.nil?}
           v = (vnic || []).first
           detail = v.spec.ip.ipAddress if v && v.spec && v.spec.ip && v.spec.ip.ipAddress
 
@@ -378,7 +393,9 @@ def create_port_group_metadata(obj)
         portgroup_hosts_info = {network_obj.name => {"hosts_info" => {}}}
         detail = []
         network_obj.host.map do |host|
-          next unless host.config
+          @host_config[host.name] ||= host.config
+          next unless @host_config[host.name]
+
           port_groups = host.configManager.networkSystem.networkInfo.portgroup
           port_groups.each do |pg|
             detail.push(:name => pg.spec.name, :vlan_id => pg.spec.vlanId, :vswitch => pg.spec.vswitchName)
@@ -393,7 +410,8 @@ def create_port_group_metadata(obj)
 end
 
 def collect_vds_portgroup_attributes(portgroup, parent = nil)
-  portgroup_data = @port_group_info[portgroup.name] || {"uplinks" => {}, "uplink" => false}
+  port_group_name = portgroup.name
+  portgroup_data = @port_group_info[port_group_name] || {"uplinks" => {}, "uplink" => false}
 
   default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => [])
                        .merge("teaming_policy" => portgroup_data["teaming_policy"])
@@ -403,10 +421,11 @@ def collect_vds_portgroup_attributes(portgroup, parent = nil)
   host_ips = []
   if parent
     host = parent
-    host_ip_info = portgroup_data["hosts_info"].select {|h, _| h == host.name}
-    host_ips << host_ip_info[host.name] if host_ip_info && host_ip_info[host.name]
+    host_name = host.name
+    host_ip_info = portgroup_data["hosts_info"].select {|h, _| h == host_name}
+    host_ips << host_ip_info[host_name] if host_ip_info && host_ip_info[host_name]
   else
-    host_ips = portgroup_data["hosts_info"].values if @port_group_info[portgroup.name]
+    host_ips = portgroup_data["hosts_info"].values if @port_group_info[port_group_name]
   end
 
   default_response[:host_ip_addresses] = host_ips || []
@@ -419,9 +438,11 @@ def collect_vds_portgroup_attributes(portgroup, parent = nil)
 end
 
 def collect_portgroup_attributes(network_obj, parent)
-  if @port_group_info[network_obj.name] && @port_group_info[network_obj.name]["hosts_info"] &&
-    @port_group_info[network_obj.name]["hosts_info"][parent.name]
-    info = (@port_group_info[network_obj.name]["hosts_info"][parent.name] || []).find {|n| n[:name] == network_obj.name}
+  pg_name = network_obj.name
+  parent_name = parent.name
+  if @port_group_info[pg_name] && @port_group_info[pg_name]["hosts_info"] &&
+    @port_group_info[pg_name]["hosts_info"][parent_name]
+    info = (@port_group_info[pg_name]["hosts_info"][parent_name] || []).find {|n| n[:name] == pg_name}
     return {} unless info
     vlan_id = info[:vlan_id]
     vswitch_name = info[:vswitch]
