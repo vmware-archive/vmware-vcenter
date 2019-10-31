@@ -412,6 +412,7 @@ end
 def collect_vds_portgroup_attributes(portgroup, parent = nil)
   port_group_name = portgroup.name
   portgroup_data = @port_group_info[port_group_name] || {"uplinks" => {}, "uplink" => false}
+  portgroup_data["uplinks"] ||= {}
 
   default_response = portgroup_data["uplinks"].merge(:host_ip_addresses => [])
                        .merge("teaming_policy" => portgroup_data["teaming_policy"])
