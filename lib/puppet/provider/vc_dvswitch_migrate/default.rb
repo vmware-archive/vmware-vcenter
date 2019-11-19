@@ -1,4 +1,5 @@
 # Copyright (C) 2013 VMware, Inc.
+require 'set'
 
 require 'pathname' # WORK_AROUND #14073 and #7788
 vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
@@ -6,10 +7,23 @@ require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
 module_lib = Pathname.new(__FILE__).parent.parent.parent.parent
 require File.join module_lib, 'puppet/provider/vcenter'
 
-Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate, 
+Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
                      :parent => Puppet::Provider::Vcenter) do
   @doc = "Manages Distributed Virtual Switch migration on an ESXi host"\
          "by moving vmknics and vmnics from standard to distributed switch"
+
+  def host_lacp_lag_ports
+    uplink_ports = []
+    if resource[:lag] && !resource[:lag].empty?
+      proxy_switch = host.config.network.proxySwitch.find{ |this_sw| this_sw.hostLag.find{ |this_lag| this_lag.lagName == resource[:lag]}}
+      host_lag = proxy_switch.hostLag.find{ |this_lag| this_lag.lagName == "lag1"} if proxy_switch
+      uplink_ports = host_lag.uplinkPort if host_lag
+      raise ("Could not locate specified LACP lag %s on dvswitch %s during vmk and vmnic migration" % [resource[:lag], dvswitch.name]) unless uplink_ports && !uplink_ports.empty?
+
+    end
+
+    uplink_ports
+  end
 
   def vmk_get vmknic
     vnic = find_vmknic vmknic
@@ -71,8 +85,8 @@ Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
     host.configManager.networkSystem.networkConfig.
       vswitch.each do |vss|
         # bridge type determines if nicDevice is string or array
-        nicDevice = Array vss.spec.bridge.nicDevice
-        pg_name = vss.name if nicDevice.include? vmnic
+        nicDevice = Array vss.spec.bridge.nicDevice if vss.spec.bridge
+        pg_name = vss.name if nicDevice.include? vmnic if nicDevice
       end
 
     pg_name || host.configManager.networkSystem.networkConfig.
@@ -86,18 +100,36 @@ Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
   end
 
   def vmnic_set vmnic, pg_name
+    @used_lacp_lag_ports ||= []
     msg = "#{vmnic}: \"#{dvswitch.name}\" has no uplink "\
           "portgroup \"#{pg_name}\""
     pg = dvswitch.config.uplinkPortgroup.find{|ulpg|
           ulpg.name == pg_name
         } || (fail msg)
 
-    # create request to move vminc to portgroup on dvswitch
-    hostNetworkConfig.proxySwitch[0].spec.backing.pnicSpec <<
-      RbVmomi::VIM.DistributedVirtualSwitchHostMemberPnicSpec(
-        :pnicDevice => vmnic,
-        :uplinkPortgroupKey => pg.key
-      )
+    uplink_port = nil
+    if resource[:lag] && !resource[:lag].empty?
+      uplink_port = host_lacp_lag_ports.find{ |port| !@used_lacp_lag_ports.include?(port)}
+      if uplink_port && !uplink_port.empty?
+        @used_lacp_lag_ports << uplink_port
+      else
+        raise ("No available LACP lag %s on DV Switch %s for vmnic migration" % [resource[:lag], dvswitch.name])
+      end
+
+      hostNetworkConfig.proxySwitch[0].spec.backing.pnicSpec <<
+          RbVmomi::VIM.DistributedVirtualSwitchHostMemberPnicSpec(
+              :pnicDevice => vmnic,
+              :uplinkPortKey => uplink_port[0],
+              :uplinkPortgroupKey => pg.key
+          )
+    else
+      hostNetworkConfig.proxySwitch[0].spec.backing.pnicSpec <<
+          RbVmomi::VIM.DistributedVirtualSwitchHostMemberPnicSpec(
+              :pnicDevice => vmnic,
+              :uplinkPortgroupKey => pg.key
+          )
+    end
+
     # add vmnic to list to be removed from standard switch
     migrating_pnic << vmnic
 
@@ -150,7 +182,7 @@ Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
           end
         else
           # standard switch for single uplink
-          if migrating_pnic.include? sw.spec.bridge.nicDevice
+          if sw.spec.bridge && migrating_pnic.include?(sw.spec.bridge.nicDevice)
             fail "unexpected standard switch with simple bridge"
             # ? sw.spec.bridge.nicDevice = '' ?
           end

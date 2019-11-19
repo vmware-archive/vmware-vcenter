@@ -1,8 +1,9 @@
 # Copyright (C) 2013 VMware, Inc.
-
 require 'pathname' # WORK_AROUND #14073 and #7788
+module_lib = Pathname.new(__FILE__).parent.parent.parent
 vmware_module = Puppet::Module.find('vmware_lib', Puppet[:environment].to_s)
 require File.join vmware_module.path, 'lib/puppet_x/vmware/util'
+require File.join vmware_module.path, 'lib/puppet/property/vmware'
 
 Puppet::Type.newtype(:vc_dvswitch_migrate) do
   @doc = "Manages Distributed Virtual Switch migration on an ESXi host"\
@@ -25,30 +26,19 @@ Puppet::Type.newtype(:vc_dvswitch_migrate) do
     desc "Path of the destination distributed virtual switch"
   end
 
-  newproperty(:vmk0) do
-    desc "For kernel port vmk0, name of the destination dvportgroup"
-  end
-  newproperty(:vmk1) do
-    desc "For kernel port vmk1, name of the destination dvportgroup"
-  end
-  newproperty(:vmk2) do
-    desc "For kernel port vmk2, name of the destination dvportgroup"
-  end
-  newproperty(:vmk3) do
-    desc "For kernel port vmk3, name of the destination dvportgroup"
+  newparam(:lag) do
+    desc "lacp lag for uplink"
   end
 
-  newproperty(:vmnic0) do
-    desc "For uplink port vmnic0, name of the destination dvportgroup"
-  end
-  newproperty(:vmnic1) do
-    desc "For uplink port vmnic1, name of the destination dvportgroup"
-  end
-  newproperty(:vmnic2) do
-    desc "For uplink port vmnic2, name of the destination dvportgroup"
-  end
-  newproperty(:vmnic3) do
-    desc "For uplink port vmnic3, name of the destination dvportgroup"
-  end
+  ('0'..'16').each do |i|
+    vmk_port = 'vmk' + i
+    newproperty(vmk_port.to_sym) do
+      desc "For kernel port %s, name of the destination dvportgroup" % vmk_port
+    end
 
+    vmnic_port  = 'vmnic' + i
+    newproperty(vmnic_port.to_sym) do
+      desc "For uplink port %s, name of the destination dvportgroup" % vmnic_port
+    end
+  end
 end
