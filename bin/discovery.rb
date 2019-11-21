@@ -17,6 +17,7 @@ opts = Trollop::options do
 end
 facts = {}
 @port_group_info = {}
+@std_port_group_info = {}
 @host_config = {}
 
 def collect_vcenter_facts(vim)
@@ -363,6 +364,7 @@ def create_port_group_metadata(obj)
     dc.networkFolder.children.each do |network_obj|
       if network_obj.class == RbVmomi::VIM::DistributedVirtualPortgroup && RbVmomi::VIM::Network
         network_obj_config = network_obj.config
+
         uplink_port_order = network_obj_config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder
         active_uplinks = uplink_port_order.activeUplinkPort
         standby_uplinks = uplink_port_order.standbyUplinkPort
@@ -403,7 +405,7 @@ def create_port_group_metadata(obj)
           portgroup_hosts_info[network_obj.name]["hosts_info"].merge!({host.name => detail})
           detail
         end
-        @port_group_info.merge!(portgroup_hosts_info)
+        @std_port_group_info.merge!(portgroup_hosts_info)
       end
     end
   end
@@ -430,6 +432,7 @@ def collect_vds_portgroup_attributes(portgroup, parent = nil)
   end
 
   default_response[:host_ip_addresses] = host_ips || []
+
   return default_response unless portgroup_data["vlan_id"]
 
   return default_response unless portgroup_data["vlan_id"].is_a?(Integer)
@@ -441,9 +444,9 @@ end
 def collect_portgroup_attributes(network_obj, parent)
   pg_name = network_obj.name
   parent_name = parent.name
-  if @port_group_info[pg_name] && @port_group_info[pg_name]["hosts_info"] &&
-    @port_group_info[pg_name]["hosts_info"][parent_name]
-    info = (@port_group_info[pg_name]["hosts_info"][parent_name] || []).find {|n| n[:name] == pg_name}
+  if @std_port_group_info[pg_name] && @std_port_group_info[pg_name]["hosts_info"] &&
+    @std_port_group_info[pg_name]["hosts_info"][parent_name]
+    info = (@std_port_group_info[pg_name]["hosts_info"][parent_name] || []).find {|n| n[:name] == pg_name}
     return {} unless info
     vlan_id = info[:vlan_id]
     vswitch_name = info[:vswitch]
