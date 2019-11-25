@@ -1182,7 +1182,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   # Returns the portgroup name and VDS name as a list
   # The first element is the portgroup name and the second is the VDS name
   def network_names(net)
-    net["portgroup"].match(/^(\b.*?)\ \((.*?)\)$/)
+    net["portgroup"].match(/^(\b.*\(*\)*\{*\}*\[*\]*?)\ \((.*?)\)$/)
     [$1,$2]
   end
 
