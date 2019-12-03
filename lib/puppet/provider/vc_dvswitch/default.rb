@@ -18,7 +18,12 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
     # build the spec for CreateDVS_Task
     create_spec = RbVmomi::VIM::DVSCreateSpec.new
     protocol = RbVmomi::VIM::LinkDiscoveryProtocolConfig.new(:operation => "listen", :protocol => "lldp")
-    create_spec.configSpec = RbVmomi::VIM::VMwareDVSConfigSpec.new(:linkDiscoveryProtocolConfig => protocol)
+    if resource[:enable_lacp]
+      create_spec.configSpec = RbVmomi::VIM::VMwareDVSConfigSpec.new(:linkDiscoveryProtocolConfig => protocol,
+                                                                     :lacpApiVersion => "multipleLag")
+    else
+      create_spec.configSpec = RbVmomi::VIM::VMwareDVSConfigSpec.new(:linkDiscoveryProtocolConfig => protocol)
+    end
     create_spec.configSpec.name = basename
     if @dvswitch.nil? && resource[:vds_version]
       create_spec.productInfo = RbVmomi::VIM::DistributedVirtualSwitchProductSpec.new
@@ -34,6 +39,15 @@ Puppet::Type.type(:vc_dvswitch).provide(:vc_dvswitch, :parent => Puppet::Provide
       @dvswitch.config.uplinkPortgroup.first.
         Rename_Task(:newName => "#{basename}-uplink-pg").wait_for_completion
       @create_message << "uplink portgroup renamed to \"#{basename}-uplink-pg\""
+      if resource[:enable_lacp]
+        lacp_grp_config = RbVmomi::VIM::VMwareDvsLacpGroupConfig(:name => "lag1", :mode => "active")
+        lacp_grp_spec = RbVmomi::VIM::VMwareDvsLacpGroupSpec(:operation => "add", :lacpGroupConfig => lacp_grp_config)
+        create_lacp_lag_task = @dvswitch.UpdateDVSLacpGroupConfig_Task(:lacpGroupSpec => [lacp_grp_spec])
+        create_lacp_lag_task.wait_for_completion
+        if create_lacp_lag_task.info.state == "success"
+          @create_message << " LACP lag1 created"
+        end
+      end
     end
     @flush_required = false
   end

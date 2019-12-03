@@ -46,6 +46,12 @@ Puppet::Type.newtype(:vc_dvswitch) do
     desc "VDS Version that needs to be enforced for newly created VDS."
   end
 
+  newparam(:enable_lacp, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+    desc "Parameter to enable lacp lags on dvswitch"
+    newvalues(true, false)
+    defaultto(false)
+  end
+
   map = PuppetX::VMware::Mapper.new_map('VMwareDVSConfigSpecMap')
   map.leaf_list.each do |leaf|
     option = {}

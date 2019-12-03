@@ -3,6 +3,7 @@
 define vcenter::dvswitch (
   $ensure,
   $vds_version = undef,
+  $enable_lacp = false,
   $networkResourceManagementEnabled = undef,
   $spec = {},
   # transport is a metaparameter
@@ -23,6 +24,7 @@ define vcenter::dvswitch (
     ensure    => $ensure,
     transport => $transport,
     vds_version => $vds_version,
+    enable_lacp => $enable_lacp,
     config_version                           => nested_value($spec, ['configVersion']),
     contact_info                             => nested_value($spec, ['contact', 'contact']),
     contact_name                             => nested_value($spec, ['contact', 'name']),
