@@ -267,6 +267,7 @@ end
 
 def collect_distributed_switch_attributes(obj, parent)
   port_order = obj.config.defaultPortConfig.uplinkTeamingPolicy.uplinkPortOrder
+  lacp_lag_info = obj.config.lacpGroupConfig
   active_uplinks = port_order.activeUplinkPort || []
   standby_uplinks = port_order.standbyUplinkPort || []
   uplinks = active_uplinks + standby_uplinks
@@ -275,7 +276,7 @@ def collect_distributed_switch_attributes(obj, parent)
     { :host_id => host_config.host._ref, :devices => host_config.backing.pnicSpec.map { |pnic_spec| pnic_spec[:pnicDevice] }}
   end
 
-  {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks, :host_pnic_devices => host_pnic_devices}
+  {:active_uplinks => active_uplinks, :standby_uplinks => standby_uplinks, :uplink_names => uplinks, :host_pnic_devices => host_pnic_devices, :lacp_lag_info => lacp_lag_info}
 end
 
 def create_datastore_metadata(obj)
