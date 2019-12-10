@@ -16,7 +16,7 @@ Puppet::Type.type(:vc_dvswitch_migrate).provide( :vc_dvswitch_migrate,
     uplink_ports = []
     if resource[:lag] && !resource[:lag].empty?
       proxy_switch = host.config.network.proxySwitch.find{ |this_sw| this_sw.hostLag.find{ |this_lag| this_lag.lagName == resource[:lag]}}
-      host_lag = proxy_switch.hostLag.find{ |this_lag| this_lag.lagName == "lag1"} if proxy_switch
+      host_lag = proxy_switch.hostLag.find{ |this_lag| this_lag.lagName == resource[:lag]} if proxy_switch
       uplink_ports = host_lag.uplinkPort if host_lag
       raise ("Could not locate specified LACP lag %s on dvswitch %s during vmk and vmnic migration" % [resource[:lag], dvswitch.name]) unless uplink_ports && !uplink_ports.empty?
 
