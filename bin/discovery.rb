@@ -256,13 +256,16 @@ def collect_vm_attributes(vm)
     disk_size_gb = (vm_summary_storage.committed + vm_summary_storage.uncommitted) / (1024 * 1024 * 1024)
   end
 
+  datastores = vm.datastore&.map{ |ds| {:name => ds.name, :is_local => ds.info&.vmfs&.local || false}}
+
   {:template => vm_summary_config.template,
   :hostname => vm_summary.guest.hostName,
   :vm_ips => ip_list,
-  :datastore => vm.datastore&.first&.name || "",
+  :datastore => datastores || [],
   :num_cpu => vm_summary_config.numCpu,
   :disk_size_gb => disk_size_gb,
-  :memory_size_mb => vm_summary_config.memorySizeMB}
+  :memory_size_mb => vm_summary_config.memorySizeMB,
+  :power_state => vm_summary&.runtime&.powerState || "unknown"}
 end
 
 def collect_distributed_switch_attributes(obj, parent)
