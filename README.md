@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/vmware/vmware-vcenter.svg?branch=master)](https://travis-ci.org/vmware/vmware-vcenter)
 
+# VMware has ended active development of this project, this repository will no longer be updated.
 # VMware vCenter module
 
 This module manages resources in VMware vCenter such as folders, datacenter,
