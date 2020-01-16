@@ -212,10 +212,13 @@ def collect_host_pnic_mac(host)
 end
 
 def collect_datastore_attributes(ds, parent=nil)
-  ds_info = @datastore_info
   attributes = {}
+  host_datacenter_list = parent.path.find { |obj| obj[0].class == RbVmomi::VIM::Datacenter} if parent
+  host_datacenter = host_datacenter_list[0] if host_datacenter_list && !host_datacenter_list.empty?
+  ds_info = @datacenter_storage_info[host_datacenter._ref] if host_datacenter
 
-  if ds_info[ds.name] &&
+  if ds_info &&
+    ds_info[ds.name] &&
     ds_info[ds.name]["hosts"] &&
     ds_info[ds.name]["hosts"].include?(parent.name)
     attributes = ds_info[ds.name]["attributes"]
@@ -281,10 +284,10 @@ def collect_distributed_switch_attributes(obj, parent)
 end
 
 def create_datastore_metadata(obj)
-  datastore_info = {}
+  datacenter_storage_info = {}
   obj.children.each do |dc|
     next unless dc.respond_to?(:datastore)
-
+    datastore_info = {}
     dss = dc.datastore
     dss.each do |ds|
       attributes = {}
@@ -352,9 +355,9 @@ def create_datastore_metadata(obj)
       end
       datastore_info[ds.name]["attributes"] = attributes
     end
+    datacenter_storage_info[dc._ref] = datastore_info
   end
-
-  @datastore_info = datastore_info
+  @datacenter_storage_info = datacenter_storage_info
 end
 
 
