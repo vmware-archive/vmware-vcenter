@@ -257,7 +257,7 @@ def collect_vm_attributes(vm)
     disk_size_gb = (vm_summary_storage.committed + vm_summary_storage.uncommitted) / (1024 * 1024 * 1024)
   end
 
-  datastores = vm.datastore&.map{ |ds| {:name => ds.name, :is_local => ds.info&.vmfs&.local || false}}
+  datastores = vm.datastore&.map{ |ds| {:name => ds.name, :is_local => ds.info&.respond_to?(:vmfs) && ds.info.vmfs&.respond_to?(:local) ? ds.info.vmfs.local : false}}
 
   {:template => vm_summary_config.template,
   :hostname => vm_summary.guest.hostName,
