@@ -298,6 +298,16 @@ def create_datastore_metadata(obj)
       datastore_info[datastore_name] ||= {}
       datastore_info[datastore_name]["hosts"] ||= []
       datastore_info[datastore_name]["hosts"].push(*ds.host.map {|k| k.key.name})
+
+      begin
+        type = ds.summary.type
+        attributes[:is_local] = ds.info.vmfs.local if type == "VMFS"
+        STDOUT.puts("Skipping is_local attribute for non-vmfs ds: %s" % ds.name) unless type == "VMFS"
+      rescue
+        ## We don't want to fail whole inventory is something bad occurs with retrieving this attribute
+        STDOUT.puts("Unable to retrieve is_local attribute for ds: %s" % ds.name)
+      end
+
       next unless ds.host.first
       
       host = ds.host.first.key
