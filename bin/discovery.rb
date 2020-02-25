@@ -4,6 +4,7 @@ require "rbvmomi"
 require_relative "../lib/puppet_x/puppetlabs/transport/rbvmomi_patch" # Use patched library to workaround rbvmomi issues
 require "trollop"
 require "nokogiri"
+require "ipaddress"
 
 opts = Trollop::options do
   opt :server, 'vcenter address', :type => :string, :required => true
@@ -178,9 +179,25 @@ def collect_host_attributes(host)
     attributes[:productVersion] = @host_config[host.name].product.licenseProductVersion
     attributes[:maintenance_mode] = host.runtime.inMaintenanceMode
     attributes[:syslog] = host.configManager.advancedOption.setting.select { |x| x.key == "Syslog.global.logDir" }.first.value
+    attributes[:static_routes_result] = collect_host_static_routes(@host_config[host.name].network.routeTableInfo.ipRoute)
   end
 
   attributes
+end
+
+def collect_host_static_routes(ip_route)
+  static_routes = []
+  ip_route.each do |ip_route_entry|
+    next if ip_route_entry.gateway == "0.0.0.0" || ip_route_entry.network == "0.0.0.0"
+
+    ip_address = IPAddress::IPv4.new("%s/%s" % [ip_route_entry.network, ip_route_entry.prefixLength])
+    static_routes << {"destination_subnet_ip" => ip_address.address,
+                      "subnet_mask" => ip_address.prefix.to_ip,
+                      "static_route_gateway" => ip_route_entry.gateway,
+                      "static_route_device" => ip_route_entry.deviceName}
+  end
+
+  static_routes
 end
 
 def collect_host_vib_list(host)
