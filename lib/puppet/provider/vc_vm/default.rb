@@ -1237,6 +1237,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
 
   # Fixes issue with VMware Network mapping not being applied in logical order
   def adjust_networks_flex_svm(network_mappings, networks)
+    return network_mappings if networks.size == 1
     mgmt = network_mappings[networks[0]]
     d1 = network_mappings[networks[1]]
     d2 = network_mappings[networks[2]]
