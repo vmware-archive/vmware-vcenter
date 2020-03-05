@@ -281,7 +281,7 @@ describe "vm create and clone behavior testing" do
       ovf_url = File.join(provider_path, '/spec/fixtures/unit/puppet/provider/vc_vm/ovf.xml')
       net1.stubs(:name).returns("FlexMgmt")
       net2.stubs(:name).returns("FlexData1")
-      provider.resource[:network_interfaces] = [{"portgroup" => ["FlexMgmt", "VDS1"]}, {"portgroup" => ["FlexData1", "VDS2"]}]
+      provider.resource[:network_interfaces] = [{"portgroup" => {:pg_name => "FlexMgmt", :vds_name => "VDS1"}}, {"portgroup" => {:pg_name => "FlexData1", :vds_name => "VDS2"}}]
       computeResource.stubs(:network).returns([net1, net2])
       expect(provider.network_mappings(ovf_url,computeResource)).to eq({"VM Network" => net2, "VM Network 1" => net2, "VM Network 2" => net1})
     end  
