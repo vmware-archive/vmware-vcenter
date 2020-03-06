@@ -1131,7 +1131,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
   def network_specs(interfaces=resource[:network_interfaces], action='add')
     interfaces.each_with_index.collect do |nic, index|
       portgroup = nic['portgroup']
-      if portgroup.match(/^(\b.*?)\ \((.*?)\)$/)
+      if portgroup["vds_name"]
         backing = RbVmomi::VIM.VirtualEthernetCardDistributedVirtualPortBackingInfo
         port = RbVmomi::VIM.DistributedVirtualSwitchPortConnection
         port.portgroupKey = dvportgroup($2,$1).key
@@ -1211,7 +1211,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     if resource[:network_interfaces]
       this_net = nil
       resource[:network_interfaces].each_with_index do |net,index|
-        portgroup_name = network_names(net).first
+        portgroup_name = network_names(net)["pg_name"]
         this_net = cluster.network.find{|x| x.name == portgroup_name}
         raise("Input network name: %s is not found in cluster" % portgroup_name) unless this_net
         Puppet.debug("Mapping network %s to %s" % [networks[index], this_net.name])
