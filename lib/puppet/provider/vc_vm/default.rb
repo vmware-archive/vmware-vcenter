@@ -1134,9 +1134,10 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
       if portgroup["vds_name"]
         backing = RbVmomi::VIM.VirtualEthernetCardDistributedVirtualPortBackingInfo
         port = RbVmomi::VIM.DistributedVirtualSwitchPortConnection
-        port.portgroupKey = dvportgroup($2,$1).key
-        port.switchUuid = dvswitch($2).uuid
+        port.portgroupKey = dvportgroup(nic["portgroup"]["vds_name"], nic["portgroup"]["pg_name"]).key
+        port.switchUuid = dvswitch(nic["portgroup"]["vds_name"]).uuid
         backing.port = port
+        portgroup = nic["portgroup"]["pg_name"]
       else
         backing = RbVmomi::VIM.VirtualEthernetCardNetworkBackingInfo(:deviceName => portgroup)
       end
