@@ -1322,6 +1322,12 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
     dc = vim.serviceInstance.find_datacenter(resource[:datacenter])
     datastore = dc.find_datastore(resource[:datastore])
     cluster = dc.find_compute_resource(resource[:cluster])
+    if resource[:ovf_property_map] && !resource[:ovf_property_map].empty?
+      ovf_property_map = resource[:ovf_property_map]
+    else
+      ovf_property_map = {}
+    end
+    Puppet.debug("ovf_property_map: %s" % ovf_property_map)
     raise("Could not find datacenter, datastore, or cluster") unless dc && datastore && cluster
 
     Puppet.debug("Deploying vm %s, to datacenter: %s and cluster: %s and datastore: %s" % [vm_name.to_s, dc.name, cluster.name, datastore.name])
@@ -1348,7 +1354,7 @@ Puppet::Type.type(:vc_vm).provide(:vc_vm, :parent => Puppet::Provider::Vcenter) 
           resourcePool: cluster.resourcePool,
           datastore: datastore,
           networkMappings: network_mappings(ovf_url, cluster),
-          propertyMappings: {})
+          propertyMappings: ovf_property_map)
     rescue RbVmomi::Fault => fault
       Puppet.debug("Failure during OVF deployment for vm: %s with error %s: %s" % [vm_name.to_s, $!.to_s, $!.class])
       raise

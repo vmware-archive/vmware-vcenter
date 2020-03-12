@@ -312,4 +312,8 @@ Puppet::Type.newtype(:vc_vm) do
   newparam(:rdm_disk_details) do
     desc 'Set the RDM Disk details.This will be a hash containing disk serial numbers as key ,and value as a hash containing disk path and disk size'
   end
+
+  newparam(:ovf_property_map) do
+    desc 'Ovf property map'
+  end
 end
