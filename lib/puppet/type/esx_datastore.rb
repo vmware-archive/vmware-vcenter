@@ -24,6 +24,10 @@ Puppet::Type.newtype(:esx_datastore) do
     end
   end
 
+  newproperty(:datastore_size) do
+    desc "Increased size of the datastore."
+  end
+
   newparam(:host) do
     desc "The ESX host the datastore is attached to."
     validate do |value|

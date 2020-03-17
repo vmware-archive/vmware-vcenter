@@ -44,6 +44,19 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
     end
   end
 
+  #If volume is not expanded,it will return the same datastore value which will stop execution of datastore_size=(value)
+  def datastore_size
+    @datastoreExpandOption = host.configManager.datastoreSystem.QueryVmfsDatastoreExpandOptions(:datastore => @datastore)
+    if @datastoreExpandOption.length == 0
+      return resource[:datastore_size]
+    end
+  end
+
+  def datastore_size=(value)
+    expandSpec = @datastoreExpandOption[0].spec
+    host.configManager.datastoreSystem.ExpandVmfsDatastore(:datastore => @datastore, :spec => expandSpec)
+  end
+
   def find_disk
 
     target_iqn = resource[:target_iqn]
