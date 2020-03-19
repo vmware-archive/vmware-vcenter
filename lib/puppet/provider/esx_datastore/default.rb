@@ -68,7 +68,7 @@ Puppet::Type.type(:esx_datastore).provide(:esx_datastore, :parent => Puppet::Pro
       find_all{|disk| scsi_target_iqn(disk.uuid) == target_iqn }.last
     elsif target_model && target_disk_id
       @disk ||= host.configManager.datastoreSystem.QueryAvailableDisksForVmfs().
-        find_all{|disk| disk.model == target_model && disk.deviceName.include?(target_disk_id) && scsi_lun(disk.uuid) == resource[:lun]}.last
+        find_all{|disk| disk.model =~ /#{target_model}/ && disk.deviceName.include?(target_disk_id) && scsi_lun(disk.uuid) == resource[:lun]}.last
     else
       @disk ||= host.configManager.datastoreSystem.QueryAvailableDisksForVmfs().
       find_all{|disk| scsi_lun(disk.uuid) == resource[:lun]}.last
