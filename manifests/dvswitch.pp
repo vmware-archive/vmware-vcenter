@@ -2,6 +2,7 @@
 # Manage vcenter vmware distributed virtual switch
 define vcenter::dvswitch (
   $ensure,
+  $vds_version = undef,
   $networkResourceManagementEnabled = undef,
   $spec = {},
   # transport is a metaparameter
@@ -22,6 +23,7 @@ define vcenter::dvswitch (
   vc_dvswitch { $name:
     ensure    => $ensure,
     transport => $transport,
+    vds_version => $vds_version,
     config_version                           => nested_value($spec, ['configVersion']),
     contact_info                             => nested_value($spec, ['contact', 'contact']),
     contact_name                             => nested_value($spec, ['contact', 'name']),
